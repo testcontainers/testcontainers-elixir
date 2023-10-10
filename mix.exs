@@ -49,7 +49,8 @@ defmodule Meetup.MixProject do
     [
       {:mix_gleam, "~> 0.6"},
       {:gleam_hackney, "~> 1.1"},
-      {:gleam_http, "~> 3.5"}
+      {:gleam_http, "~> 3.5"},
+      {:ex_license, "~> 0.1.0"}
     ]
   end
 
