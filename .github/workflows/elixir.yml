@@ -34,6 +34,8 @@ jobs:
         path: deps
         key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
         restore-keys: ${{ runner.os }}-mix-
+    - name: Install mix_gleam
+      run: mix archive.install hex mix_gleam
     - name: Install dependencies
       run: mix deps.get
     - name: Run tests
