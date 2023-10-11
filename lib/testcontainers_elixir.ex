@@ -5,6 +5,8 @@ defmodule TestcontainersElixir do
   """
 
   def hello do
+    :hello.parse_docker_host(System.get_env("DOCKER_HOST", ""))
+    |> IO.inspect()
     :hello.fetch_hello("world")
   end
 end
