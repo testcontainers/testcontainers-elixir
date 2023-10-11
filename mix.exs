@@ -1,4 +1,4 @@
-defmodule Meetup.MixProject do
+defmodule TestcontainersElixir.MixProject do
   use Mix.Project
 
   @app :testcontainers_elixir
@@ -9,20 +9,7 @@ defmodule Meetup.MixProject do
       app: @app,
       version: @version,
       elixir: "~> 1.15",
-      elixirc_paths: elixirc_paths(Mix.env()),
       name: "#{@app}",
-      archives: [mix_gleam: "~> 0.6.1"],
-      compilers: [:gleam | Mix.compilers()],
-      aliases: [
-        "deps.get": ["deps.get", "gleam.deps.get"]
-      ],
-      erlc_paths: [
-        "build/dev/erlang/#{@app}/_gleam_artefacts",
-        # For Gleam < v0.25.0
-        "build/dev/erlang/#{@app}/build"
-      ],
-      erlc_include_path: "build/dev/erlang/#{@app}/include",
-      start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       deps: deps()
     ]
@@ -37,20 +24,13 @@ defmodule Meetup.MixProject do
     ]
   end
 
-  # Specifies which paths to compile per environment.
-  # , "test/support"]
-  defp elixirc_paths(:test), do: ["lib"]
-  defp elixirc_paths(_), do: ["lib"]
-
   # Specifies your project dependencies.
   #
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:mix_gleam, "~> 0.6"},
-      {:gleam_hackney, "~> 1.1"},
-      {:gleam_http, "~> 3.5"},
-      {:ex_license, "~> 0.1.0"}
+      {:ex_license, "~> 0.1.0"},
+      {:docker_engine_api, git: "https://github.com/jarlah/docker-engine-api.git", tag: "1.43.0-hackney"}
     ]
   end
 

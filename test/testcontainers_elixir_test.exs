@@ -3,6 +3,7 @@ defmodule TestcontainersElixirTest do
   doctest TestcontainersElixir
 
   test "greets the world" do
-    assert TestcontainersElixir.hello() == "{\"message\":\"Hello World\"}"
+    {:ok, list} = TestcontainersElixir.hello()
+    assert is_number(length(list))
   end
 end

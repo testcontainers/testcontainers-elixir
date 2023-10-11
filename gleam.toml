@@ -1,2 +1,0 @@
-name = "testcontainers_elixir"
-dependencies = { gleam_stdlib = "~> 0.31", gleam_http = "~> 3.5", gleam_hackney = "~> 1.1"}
