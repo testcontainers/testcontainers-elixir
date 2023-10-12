@@ -39,7 +39,7 @@ defmodule TestcontainersElixir.Reaper do
             # FIXME this will surely not work for all use cases
             Binds: ["/var/run/docker.sock:/var/run/docker.sock:rw"]
           },
-          Env: ["RYUK_PORT=8080"]
+          Env: ["RYUK_PORT=#{@ryuk_port}"]
         }
       )
 
@@ -49,7 +49,7 @@ defmodule TestcontainersElixir.Reaper do
 
     {:ok, socket} =
       connection
-      |> create_socket(container, @ryuk_port)
+      |> create_ryuk_socket(container)
 
     {:ok, socket}
   end
@@ -75,12 +75,11 @@ defmodule TestcontainersElixir.Reaper do
     :ok
   end
 
-  defp create_socket(
+  defp create_ryuk_socket(
          connection,
-         %DockerEngineAPI.Model.ContainerCreateResponse{Id: container_id},
-         port
+         %DockerEngineAPI.Model.ContainerCreateResponse{Id: container_id}
        ) do
-    port_str = "#{port}/tcp"
+    port_str = "#{@ryuk_port}/tcp"
 
     {:ok,
      %DockerEngineAPI.Model.ContainerInspectResponse{
