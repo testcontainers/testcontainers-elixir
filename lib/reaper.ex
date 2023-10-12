@@ -70,7 +70,7 @@ defmodule TestcontainersElixir.Reaper do
 
     {:ok,
      %DockerEngineAPI.Model.ContainerInspectResponse{
-       NetworkSettings: %{Ports: %{^port_str => [%{"HostPort" => host_port}]}}
+       NetworkSettings: %{Ports: %{^port_str => [%{"HostPort" => host_port} | _tail]}}
      }} = connection |> DockerEngineAPI.Api.Container.container_inspect(container_id)
 
     :gen_tcp.connect(~c"localhost", String.to_integer(host_port), [
