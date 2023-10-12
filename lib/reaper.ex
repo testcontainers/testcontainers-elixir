@@ -51,8 +51,14 @@ defmodule TestcontainersElixir.Reaper do
   end
 
   defp do_register(socket, {filter_key, filter_value}) do
-    :gen_tcp.send(socket, (docker_filter(filter_key, filter_value) <> "\n") |> IO.inspect())
-    wait_for_ack(socket)
+    :gen_tcp.send(
+      socket,
+      ("#{:uri_string.quote(filter_key)}=#{:uri_string.quote(filter_value)}" <> "\n")
+      |> IO.inspect()
+    )
+
+    {:ok, "ACK\n"} = :gen_tcp.recv(socket, 0, 1_000)
+
     :ok
   end
 
@@ -74,10 +80,4 @@ defmodule TestcontainersElixir.Reaper do
       packet: :line
     ])
   end
-
-  defp docker_filter(key, value), do: "#{url_encode(key)}=#{url_encode(value)}"
-
-  defp url_encode(string), do: :uri_string.quote(string)
-
-  defp wait_for_ack(socket), do: {:ok, "ACK\n"} = :gen_tcp.recv(socket, 0, 1_000)
 end
