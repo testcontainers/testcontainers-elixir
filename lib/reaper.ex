@@ -13,6 +13,14 @@ defmodule TestcontainersElixir.Reaper do
     GenServer.call(__MODULE__, {:register, filter})
   end
 
+  def ping do
+    try do
+      GenServer.call(__MODULE__, :ping)
+    catch
+      :exit, _reason -> :error
+    end
+  end
+
   @impl true
   def init(connection) do
     {:ok, _} =
@@ -48,6 +56,11 @@ defmodule TestcontainersElixir.Reaper do
   @impl true
   def handle_call({:register, filter}, _from, socket) do
     {:reply, register_filter(socket, filter), socket}
+  end
+
+  @impl true
+  def handle_call(:ping, _from, socket) do
+    {:reply, :ok, socket}
   end
 
   defp register_filter(socket, {filter_key, filter_value}) do
