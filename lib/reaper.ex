@@ -16,14 +16,6 @@ defmodule TestcontainersElixir.Reaper do
     GenServer.call(__MODULE__, {:register, filter})
   end
 
-  def ping do
-    try do
-      GenServer.call(__MODULE__, :ping)
-    catch
-      :exit, _reason -> :error
-    end
-  end
-
   @impl true
   def init(connection) do
     {:ok, _} =
@@ -32,19 +24,17 @@ defmodule TestcontainersElixir.Reaper do
 
     {:ok, %Model.ContainerCreateResponse{Id: container_id} = container} =
       connection
-      |> Api.Container.container_create(
-        %Model.ContainerCreateRequest{
-          Image: @ryuk_image,
-          ExposedPorts: %{"#{@ryuk_port}" => %{}},
-          HostConfig: %{
-            PortBindings: %{"#{@ryuk_port}" => [%{"HostPort" => ""}]},
-            Privileged: true,
-            # FIXME this will surely not work for all use cases
-            Binds: ["/var/run/docker.sock:/var/run/docker.sock:rw"]
-          },
-          Env: ["RYUK_PORT=#{@ryuk_port}"]
-        }
-      )
+      |> Api.Container.container_create(%Model.ContainerCreateRequest{
+        Image: @ryuk_image,
+        ExposedPorts: %{"#{@ryuk_port}" => %{}},
+        HostConfig: %{
+          PortBindings: %{"#{@ryuk_port}" => [%{"HostPort" => ""}]},
+          Privileged: true,
+          # FIXME this will surely not work for all use cases
+          Binds: ["/var/run/docker.sock:/var/run/docker.sock:rw"]
+        },
+        Env: ["RYUK_PORT=#{@ryuk_port}"]
+      })
 
     {:ok, _} =
       connection
@@ -60,11 +50,6 @@ defmodule TestcontainersElixir.Reaper do
   @impl true
   def handle_call({:register, filter}, _from, socket) do
     {:reply, register_filter(socket, filter), socket}
-  end
-
-  @impl true
-  def handle_call(:ping, _from, socket) do
-    {:reply, :ok, socket}
   end
 
   defp register_filter(socket, {filter_key, filter_value}) do

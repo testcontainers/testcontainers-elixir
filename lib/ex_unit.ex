@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 defmodule TestcontainersElixir.ExUnit do
-
   alias TestcontainersElixir.Reaper
   alias DockerEngineAPI.Connection
   alias DockerEngineAPI.Api
@@ -12,6 +11,7 @@ defmodule TestcontainersElixir.ExUnit do
       conn = Connection.new(base_url: docker_url)
 
       image = Keyword.get(unquote(options), :image, nil)
+
       {:ok, _} =
         conn
         |> Api.Image.image_create(fromImage: image)
@@ -20,19 +20,13 @@ defmodule TestcontainersElixir.ExUnit do
 
       {:ok, %Model.ContainerCreateResponse{Id: container_id}} =
         conn
-        |> Api.Container.container_create(
-          %Model.ContainerCreateRequest{
-            Image: image,
-            ExposedPorts: %{"#{port}" => %{}},
-            HostConfig: %{
-              PortBindings: %{"#{port}" => [%{"HostPort" => ""}]}
-            }
+        |> Api.Container.container_create(%Model.ContainerCreateRequest{
+          Image: image,
+          ExposedPorts: %{"#{port}" => %{}},
+          HostConfig: %{
+            PortBindings: %{"#{port}" => [%{"HostPort" => ""}]}
           }
-        )
-
-      {:ok, _} =
-        conn
-        |> Api.Container.container_start(container_id)
+        })
 
       :ok =
         case GenServer.whereis(Reaper) do
@@ -42,10 +36,11 @@ defmodule TestcontainersElixir.ExUnit do
 
           _ ->
             Reaper.register({"id", container_id})
-
         end
 
-      :ok = Reaper.register({"id", container_id})
+      {:ok, _} =
+        conn
+        |> Api.Container.container_start(container_id)
 
       {:ok, container_id}
     end
