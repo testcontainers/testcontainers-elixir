@@ -40,21 +40,20 @@ defmodule TestcontainersElixir.Reaper do
 
     {:ok, socket} =
       connection
-      |> connect_to_first_tcp_port(container, @ryuk_port)
+      |> create_socket(container, @ryuk_port)
 
-    {:ok, {container, socket}}
+    {:ok, socket}
   end
 
   @impl true
-  def handle_call({:register, filter}, _from, {_connection, socket} = state) do
-    {:reply, do_register(socket, filter), state}
+  def handle_call({:register, filter}, _from, socket) do
+    {:reply, do_register(socket, filter), socket}
   end
 
   defp do_register(socket, {filter_key, filter_value}) do
     :gen_tcp.send(
       socket,
-      ("#{:uri_string.quote(filter_key)}=#{:uri_string.quote(filter_value)}" <> "\n")
-      |> IO.inspect()
+      "#{:uri_string.quote(filter_key)}=#{:uri_string.quote(filter_value)}" <> "\n"
     )
 
     {:ok, "ACK\n"} = :gen_tcp.recv(socket, 0, 1_000)
@@ -62,7 +61,7 @@ defmodule TestcontainersElixir.Reaper do
     :ok
   end
 
-  defp connect_to_first_tcp_port(
+  defp create_socket(
          connection,
          %DockerEngineAPI.Model.ContainerCreateResponse{Id: container_id},
          port
