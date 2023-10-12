@@ -47,10 +47,10 @@ defmodule TestcontainersElixir.Reaper do
 
   @impl true
   def handle_call({:register, filter}, _from, socket) do
-    {:reply, do_register(socket, filter), socket}
+    {:reply, register_filter(socket, filter), socket}
   end
 
-  defp do_register(socket, {filter_key, filter_value}) do
+  defp register_filter(socket, {filter_key, filter_value}) do
     :gen_tcp.send(
       socket,
       "#{:uri_string.quote(filter_key)}=#{:uri_string.quote(filter_value)}" <> "\n"
