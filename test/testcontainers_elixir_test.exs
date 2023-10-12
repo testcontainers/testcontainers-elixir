@@ -4,6 +4,7 @@ defmodule TestcontainersElixirTest do
 
   test "greets the world" do
     {:ok, list} = TestcontainersElixir.hello()
+    assert is_list(list)
     assert is_number(length(list))
   end
 end

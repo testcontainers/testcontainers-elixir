@@ -6,7 +6,7 @@ Current in planning phase. Feedback is appreciated.
 
 The library will use 
 
-https://github.com/jarlah/docker-engine-api
+https://github.com/jarlah/docker-engine-api-elixir
 
 to communicate with docker engine api, if the library works (not yet tested, but generated for this very purpose)
 
