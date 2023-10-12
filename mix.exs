@@ -30,7 +30,8 @@ defmodule TestcontainersElixir.MixProject do
   defp deps do
     [
       {:ex_license, "~> 0.1.0"},
-      {:docker_engine_api, git: "https://github.com/jarlah/docker-engine-api-elixir.git", tag: "1.43.0.1-hackney"}
+      {:docker_engine_api,
+       git: "https://github.com/jarlah/docker-engine-api-elixir.git", tag: "1.43.0.1-hackney"}
     ]
   end
 

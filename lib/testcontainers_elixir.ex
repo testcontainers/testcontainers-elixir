@@ -5,10 +5,9 @@ defmodule TestcontainersElixir do
   """
 
   def hello do
-    DockerEngineAPI.Connection.new(
-      base_url: "http+unix://%2Fvar%2Frun%2Fdocker.sock/v1.43"
-    )
-    |> DockerEngineAPI.Api.Image.image_list()
+    connection =
+      DockerEngineAPI.Connection.new(base_url: "http+unix://%2Fvar%2Frun%2Fdocker.sock/v1.43")
+    {:ok, _pid} = connection |> TestcontainersElixir.Reaper.start_link()
+    connection |> DockerEngineAPI.Api.Image.image_list()
   end
-
 end
