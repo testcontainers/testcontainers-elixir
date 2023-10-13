@@ -30,8 +30,7 @@ defmodule TestcontainersElixir.Reaper do
          {:ok, %Model.ContainerInspectResponse{} = container_info} <-
            Api.Container.container_inspect(connection, container_id),
          container = Container.of(container_info),
-         {:ok, socket} <- create_ryuk_socket(container),
-         :ok <- register_filter(socket, {"id", "keep_ryuk_alive"}) do
+         {:ok, socket} <- create_ryuk_socket(container) do
       {:ok, socket}
     end
   end
