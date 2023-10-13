@@ -15,7 +15,8 @@ defmodule TestcontainersElixir.HttpChecker do
   end
 
   defp wait_for_http(ip, port, path, timeout, start_time)
-       when is_binary(ip) and is_integer(port) and is_binary(path) and is_integer(timeout) and is_integer(start_time) do
+       when is_binary(ip) and is_integer(port) and is_binary(path) and is_integer(timeout) and
+              is_integer(start_time) do
     if timeout + start_time < :os.system_time(:millisecond) do
       {:error, :timeout}
     else
@@ -33,11 +34,13 @@ defmodule TestcontainersElixir.HttpChecker do
 
   defp http_request(ip, port, path) do
     url = "http://" <> ip <> ":" <> Integer.to_string(port) <> path
+
     case :httpc.request(:get, {to_charlist(url), []}, [], []) do
-      {:ok, {{'HTTP/1.1', 200, _reason_phrase}, _headers, _body}} ->
+      {:ok, {{~c"HTTP/1.1", 200, _reason_phrase}, _headers, _body}} ->
         {:ok, :http_ok}
 
-      {:ok, {{'HTTP/1.1', status_code, _reason_phrase}, _headers, _body}} when status_code != 200 ->
+      {:ok, {{~c"HTTP/1.1", status_code, _reason_phrase}, _headers, _body}}
+      when status_code != 200 ->
         {:error, {:unexpected_status_code, status_code}}
 
       {:error, reason} ->
