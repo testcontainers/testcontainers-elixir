@@ -5,8 +5,6 @@ defmodule AnotherTest do
   alias TestcontainersElixir.Container
 
   test "creates and uses container" do
-    alias TestcontainersElixir.Container
-
     {:ok, container} =
       %Container{
         image: "httpd:latest",

@@ -3,8 +3,6 @@ defmodule TestcontainersElixir.Reaper do
   use GenServer
 
   alias TestcontainersElixir.Connection
-  alias DockerEngineAPI.Api
-  alias DockerEngineAPI.Model
   alias TestcontainersElixir.Container
 
   @ryuk_image "testcontainers/ryuk:0.5.1"
@@ -22,15 +20,7 @@ defmodule TestcontainersElixir.Reaper do
   def init(_) do
     connection = Connection.get_connection()
 
-    with {:ok, _image_create_response} <-
-           Api.Image.image_create(connection, fromImage: @ryuk_image),
-         {:ok, %Model.ContainerCreateResponse{Id: container_id}} <-
-           create_ryuk_container(connection),
-         {:ok, _container_start_response} <-
-           Api.Container.container_start(connection, container_id),
-         {:ok, %Model.ContainerInspectResponse{} = inspect_response} <-
-           Api.Container.container_inspect(connection, container_id),
-         container = Container.from(inspect_response),
+    with {:ok, container} <- create_ryuk_container(connection),
          {:ok, socket} <- create_ryuk_socket(container) do
       {:ok, socket}
     else
@@ -41,10 +31,10 @@ defmodule TestcontainersElixir.Reaper do
 
   @impl true
   def handle_call({:register, filter}, _from, socket) do
-    {:reply, register_filter(socket, filter), socket}
+    {:reply, register(socket, filter), socket}
   end
 
-  defp register_filter(socket, {filter_key, filter_value}, retries \\ 3) do
+  defp register(socket, {filter_key, filter_value}, retries \\ 3) do
     :gen_tcp.send(
       socket,
       "#{:uri_string.quote(filter_key)}=#{:uri_string.quote(filter_value)}" <> "\n"
@@ -56,7 +46,7 @@ defmodule TestcontainersElixir.Reaper do
 
       {:error, :closed} when retries > 0 ->
         IO.puts("Connection was closed, retrying...")
-        register_filter(socket, {filter_key, filter_value}, retries - 1)
+        register(socket, {filter_key, filter_value}, retries - 1)
 
       {:error, reason} ->
         IO.puts("Error receiving data: #{inspect(reason)}")
@@ -65,16 +55,12 @@ defmodule TestcontainersElixir.Reaper do
   end
 
   defp create_ryuk_container(connection) do
-    Api.Container.container_create(connection, %Model.ContainerCreateRequest{
-      Image: @ryuk_image,
-      ExposedPorts: %{"#{@ryuk_port}" => %{}},
-      HostConfig: %{
-        PortBindings: %{"#{@ryuk_port}" => [%{"HostIp" => "0.0.0.0", "HostPort" => ""}]},
-        # FIXME this will surely not work for all use cases
-        Binds: ["/var/run/docker.sock:/var/run/docker.sock:rw"]
-      },
-      Env: ["RYUK_PORT=#{@ryuk_port}", "RYUK_CONNECTION_TIMEOUT=120s"]
-    })
+    %Container{image: @ryuk_image}
+    |> Container.with_exposed_port(@ryuk_port)
+    |> Container.with_environment("RYUK_PORT", "#{@ryuk_port}")
+    |> Container.with_environment("RYUK_CONNECTION_TIMEOUT", "120s")
+    |> Container.with_bind_mount("/var/run/docker.sock", "/var/run/docker.sock", "rw")
+    |> Container.run(connection: connection, reap: false)
   end
 
   defp create_ryuk_socket(%Container{} = container) do

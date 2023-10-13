@@ -77,21 +77,27 @@ defmodule TestcontainersElixir.Container do
   end
 
   def run(%__MODULE__{} = container_config, options \\ []) do
-    conn = Connection.get_connection()
+    connection = Keyword.get_lazy(options, :connection, &Connection.get_connection/0)
     on_exit = Keyword.get(options, :on_exit, fn _, _ -> :ok end)
     waiting_strategy = Keyword.get(options, :waiting_strategy, nil)
+    reap = Keyword.get(options, :reap, true)
     create_request = container_create_request(container_config)
 
-    with {:ok, _} <- Api.Image.image_create(conn, fromImage: create_request."Image"),
+    with {:ok, _} <- Api.Image.image_create(connection, fromImage: create_request."Image"),
          {:ok, %ContainerCreateResponse{Id: container_id}} <-
-           Api.Container.container_create(conn, create_request),
-         {:ok, _} <- Api.Container.container_start(conn, container_id),
-         :ok <- on_exit.(:stop_container, fn -> stop_container(conn, container_id) end),
-         :ok <- reap_container(container_id),
-         {:ok, container} <- get_container(conn, container_id),
+           Api.Container.container_create(connection, create_request),
+         {:ok, _} <- Api.Container.container_start(connection, container_id),
+         :ok <- on_exit.(:stop_container, fn -> stop_container(connection, container_id) end),
+         :ok <-
+           (if reap do
+              reap_container(container_id)
+            else
+              :ok
+            end),
+         {:ok, container} <- get_container(connection, container_id),
          {:ok, _} <-
            (if waiting_strategy != nil do
-              waiting_strategy.(conn, container)
+              waiting_strategy.(connection, container)
             else
               {:ok, nil}
             end) do
