@@ -46,9 +46,18 @@ defmodule TestcontainersElixir.Reaper do
       "#{:uri_string.quote(filter_key)}=#{:uri_string.quote(filter_value)}" <> "\n"
     )
 
-    {:ok, "ACK\n"} = :gen_tcp.recv(socket, 0, 1_000)
+    case :gen_tcp.recv(socket, 0, 1_000) do
+      {:ok, "ACK\n"} ->
+        :ok
 
-    :ok
+      {:error, :closed} ->
+        IO.puts("Connection was closed")
+        register_filter(socket, {filter_key, filter_value})
+
+      {:error, reason} ->
+        IO.puts("Error receiving data: #{inspect(reason)}")
+        {:error, reason}
+    end
   end
 
   defp create_ryuk_container(connection) do
