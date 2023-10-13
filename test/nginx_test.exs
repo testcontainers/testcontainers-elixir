@@ -7,10 +7,7 @@ defmodule SimpleTest do
 
   test "creates and uses container" do
     {:ok, container} =
-      %Container{
-        image: "nginx:latest",
-        exposed_ports: [80]
-      }
+      Container.new("nginx:latest", exposed_ports: [80])
       |> Container.run(
         on_exit: &ExUnit.Callbacks.on_exit/2,
         waiting_strategy: fn _, container ->

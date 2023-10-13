@@ -9,8 +9,7 @@ defmodule TestcontainersElixir.CephContainer do
     secret_key = Keyword.get(options, :secret_key, "demo")
     bucket = Keyword.get(options, :bucket, "demo")
 
-    %Container{
-      image: image,
+    Container.new(image,
       exposed_ports: [3300, 8080],
       environment: %{
         CEPH_DEMO_UID: "demo",
@@ -21,7 +20,7 @@ defmodule TestcontainersElixir.CephContainer do
         MON_IP: "127.0.0.1",
         RGW_NAME: "localhost"
       }
-    }
+    )
   end
 
   def waiting_strategy(conn, container),

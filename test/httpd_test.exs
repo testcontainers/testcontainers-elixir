@@ -6,10 +6,7 @@ defmodule AnotherTest do
 
   test "creates and uses container" do
     {:ok, container} =
-      %Container{
-        image: "httpd:latest",
-        exposed_ports: [80]
-      }
+      Container.new("httpd:latest", exposed_ports: [80])
       |> Container.run(
         on_exit: &ExUnit.Callbacks.on_exit/2,
         waiting_strategy: fn _, container ->
