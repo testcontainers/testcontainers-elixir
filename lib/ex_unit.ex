@@ -1,22 +1,23 @@
 # SPDX-License-Identifier: Apache-2.0
 defmodule TestcontainersElixir.ExUnit do
   alias TestcontainersElixir.CephContainer
-  alias TestcontainersElixir.Containers
+  alias TestcontainersElixir.Container
   alias DockerEngineAPI.Model
 
-  def ceph_container(options \\ []) do
-    Containers.container(
+  def ceph_container(container_config, options \\ []) do
+    Container.run(
+      container_config,
       options
       |> Keyword.merge(
         on_exit: Keyword.get(options, :on_exit, &ExUnit.Callbacks.on_exit/2),
-        container_factory: &CephContainer.create_container/1,
         waiting_strategy: &CephContainer.waiting_strategy/2
       )
     )
   end
 
-  def generic_container(options \\ []) do
-    Containers.container(
+  def generic_container(container_config, options \\ []) do
+    Container.run(
+      container_config,
       options
       |> Keyword.merge(
         on_exit: Keyword.get(options, :on_exit, &ExUnit.Callbacks.on_exit/2),

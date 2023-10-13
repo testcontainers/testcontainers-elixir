@@ -28,13 +28,14 @@ defmodule TestcontainersElixir.Reaper do
            create_ryuk_container(connection),
          {:ok, _container_start_response} <-
            Api.Container.container_start(connection, container_id),
-         {:ok, %Model.ContainerInspectResponse{} = container_info} <-
+         {:ok, %Model.ContainerInspectResponse{} = inspect_response} <-
            Api.Container.container_inspect(connection, container_id),
-         container = Container.of(container_info),
+         container = Container.from(inspect_response),
          {:ok, socket} <- create_ryuk_socket(container) do
       {:ok, socket}
-    else error ->
-      {:stop, "Failed to start reaper: #{inspect(error)}"}
+    else
+      error ->
+        {:stop, "Failed to start reaper: #{inspect(error)}"}
     end
   end
 

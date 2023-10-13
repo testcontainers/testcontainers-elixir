@@ -1,15 +1,18 @@
 defmodule SimpleTest do
   use ExUnit.Case, async: true
 
-  import TestcontainersElixir.ExUnit
+  alias TestcontainersElixir.Container
   alias TestcontainersElixir.HttpChecker
   alias TestcontainersElixir.Container
 
   test "creates and uses container" do
     {:ok, container} =
-      generic_container(
+      %Container{
         image: "nginx:latest",
-        port: 80,
+        exposed_ports: [80]
+      }
+      |> Container.run(
+        on_exit: &ExUnit.Callbacks.on_exit/2,
         waiting_strategy: fn _, container ->
           HttpChecker.wait_for_http(
             "127.0.0.1",
