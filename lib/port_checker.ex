@@ -1,10 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
 defmodule TestcontainersElixir.PortChecker do
-  def wait_for_port(ip, port, timeout \\ 1000) do
+  def wait_for_port(ip, port, timeout \\ 1000)
+      when is_binary(ip) and is_integer(port) and is_integer(timeout) do
     wait_for_port(ip, port, timeout, :os.system_time(:millisecond))
   end
 
-  defp wait_for_port(ip, port, timeout, start_time) do
+  defp wait_for_port(ip, port, timeout, start_time)
+       when is_binary(ip) and is_integer(port) and is_integer(timeout) and is_integer(start_time) do
     if timeout + start_time < :os.system_time(:millisecond) do
       {:error, :timeout}
     else
@@ -18,7 +20,8 @@ defmodule TestcontainersElixir.PortChecker do
     end
   end
 
-  defp port_open?(ip, port, timeout \\ 1000) do
+  defp port_open?(ip, port, timeout \\ 1000)
+       when is_binary(ip) and is_integer(port) and is_integer(timeout) do
     IO.inspect("checking port #{port}")
 
     case :gen_tcp.connect(~c"#{ip}", port, [:binary, active: false], timeout) do
