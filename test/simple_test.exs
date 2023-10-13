@@ -1,12 +1,14 @@
 defmodule SimpleTest do
   use ExUnit.Case
   import TestcontainersElixir.ExUnit
+  alias TestcontainersElixir.PortChecker
   alias TestcontainersElixir.Container
 
   test "creates and reaps container" do
     {:ok, container} = container(image: "nginx:latest", port: 80)
 
     port = Container.mapped_port(container, 80)
+    PortChecker.wait_for_port("localhost", port, 5000)
 
     {:ok, 200, _headers, body_ref} = :hackney.get("http://localhost:#{port}")
     {:ok, body} = :hackney.body(body_ref)
