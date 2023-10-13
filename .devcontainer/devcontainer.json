@@ -11,9 +11,9 @@
 
     "features": {
         "docker-in-docker": {
-            "version": "1.42",
-            "moby": true,
-            "dockerDashComposeVersion": "v1"
+            "version": "latest",
+            "moby": false,
+            "dockerDashComposeVersion": "v3"
         }
     },
   
