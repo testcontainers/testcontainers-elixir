@@ -1,5 +1,18 @@
 # SPDX-License-Identifier: Apache-2.0
 defmodule TestcontainersElixir.HttpChecker do
+  @moduledoc """
+  A utility module for checking HTTP service availability and readiness.
+
+  The `TestcontainersElixir.HttpChecker` module provides functionality to wait for
+  an HTTP service to be ready at a specified IP address, port, and path. This ensures
+  that the HTTP service is not only reachable but also capable of providing HTTP responses,
+  indicating a degree of readiness.
+
+  The module includes a public function, `wait_for_http/4`, which returns `{:ok, :http_is_ready}`
+  once the HTTP service is accessible and responding with a 200 status code, and `{:error, :timeout}`
+  if the service does not become available within the specified timeout period.
+  """
+
   @doc """
   Waits for HTTP to be ready at the specified IP and port.
 

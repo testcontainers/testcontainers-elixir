@@ -1,9 +1,18 @@
 # SPDX-License-Identifier: Apache-2.0
 defmodule TestcontainersElixir.PortChecker do
-  @doc """
-  Waits for tcp service to be ready at the specified IP and port.
+  @moduledoc """
+  A utility module for checking the readiness of a TCP service on a given IP and port.
 
-  This doesn't mean that the service is ready to accept requests.
+  `TestcontainersElixir.PortChecker` provides functionality to wait until a TCP port
+  is open on a specified IP address, up to a provided timeout.
+
+  It is important to note that having a port open does not guarantee that
+  the associated service is fully ready to accept requests, just that the service
+  is reachable at the network level.
+  """
+
+  @doc """
+  Waits for the specified IP and port the be open.
 
   ## Params:
   - ip: The IP address as a string.
