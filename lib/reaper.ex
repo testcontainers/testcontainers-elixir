@@ -4,6 +4,7 @@ defmodule TestcontainersElixir.Reaper do
 
   alias DockerEngineAPI.Api
   alias DockerEngineAPI.Model
+  alias TestcontainersElixir.Container
 
   @ryuk_image "testcontainers/ryuk:0.5.1"
   @ryuk_port 8080
@@ -18,11 +19,16 @@ defmodule TestcontainersElixir.Reaper do
 
   @impl true
   def init(connection) do
-    with {:ok, _} <- Api.Image.image_create(connection, fromImage: @ryuk_image),
-         {:ok, container} <- create_ryuk_container(connection),
-         container_id = container."Id",
-         {:ok, _} <- Api.Container.container_start(connection, container_id),
-         {:ok, socket} <- create_ryuk_socket(connection, container_id) do
+    with {:ok, _image_create_response} <-
+           Api.Image.image_create(connection, fromImage: @ryuk_image),
+         {:ok, %Model.ContainerCreateResponse{Id: container_id}} <-
+           create_ryuk_container(connection),
+         {:ok, _container_start_response} <-
+           Api.Container.container_start(connection, container_id),
+         {:ok, %Model.ContainerInspectResponse{} = container_info} <-
+           Api.Container.container_inspect(connection, container_id),
+         container = Container.of(container_info),
+         {:ok, socket} <- create_ryuk_socket(container) do
       {:ok, socket}
     end
   end
@@ -56,19 +62,10 @@ defmodule TestcontainersElixir.Reaper do
     })
   end
 
-  defp create_ryuk_socket(
-         connection,
-         container_id
-       )
-       when is_binary(container_id) do
-    port_str = "#{@ryuk_port}/tcp"
+  defp create_ryuk_socket(%Container{} = container) do
+    host_port = Container.mapped_port(container, @ryuk_port)
 
-    {:ok,
-     %Model.ContainerInspectResponse{
-       NetworkSettings: %{Ports: %{^port_str => [%{"HostPort" => host_port} | _tail]}}
-     }} = connection |> Api.Container.container_inspect(container_id)
-
-    :gen_tcp.connect(~c"localhost", String.to_integer(host_port), [
+    :gen_tcp.connect(~c"localhost", host_port, [
       :binary,
       active: false,
       packet: :line
