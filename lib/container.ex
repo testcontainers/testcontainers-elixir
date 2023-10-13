@@ -11,9 +11,9 @@ defmodule TestcontainersElixir.Container do
     %__MODULE__{
       container_id: container_id,
       ports:
-        Enum.reduce(ports, [], fn {key, ports}, acc ->
+        Enum.reduce(ports || [], [], fn {key, ports}, acc ->
           acc ++
-            Enum.map(ports, fn %{"HostIp" => host_ip, "HostPort" => host_port} ->
+            Enum.map(ports || [], fn %{"HostIp" => host_ip, "HostPort" => host_port} ->
               %{exposed_port: key, host_ip: host_ip, host_port: host_port |> String.to_integer()}
             end)
         end)
