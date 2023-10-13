@@ -1,5 +1,15 @@
 # SPDX-License-Identifier: Apache-2.0
 defmodule TestcontainersElixir.PortChecker do
+  @doc """
+  Waits for tcp service to be ready at the specified IP and port.
+
+  This doesn't mean that the service is ready to accept requests.
+
+  ## Params:
+  - ip: The IP address as a string.
+  - port: The port number as an integer.
+  - timeout: The maximum time to wait (in milliseconds) as an integer.
+  """
   def wait_for_port(ip, port, timeout \\ 1000)
       when is_binary(ip) and is_integer(port) and is_integer(timeout) do
     wait_for_port(ip, port, timeout, :os.system_time(:millisecond))
