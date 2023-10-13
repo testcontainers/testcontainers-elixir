@@ -19,6 +19,7 @@ defmodule TestcontainersElixir.Reaper do
 
   @impl true
   def init(connection) do
+    Process.flag(:trap_exit, true)
     with {:ok, _image_create_response} <-
            Api.Image.image_create(connection, fromImage: @ryuk_image),
          {:ok, %Model.ContainerCreateResponse{Id: container_id}} <-
