@@ -40,7 +40,7 @@ defmodule TestcontainersElixir.Reaper do
     {:reply, register_filter(socket, filter), socket}
   end
 
-  defp register_filter(socket, {filter_key, filter_value}) do
+  defp register_filter(socket, {filter_key, filter_value}, retries \\ 3) do
     :gen_tcp.send(
       socket,
       "#{:uri_string.quote(filter_key)}=#{:uri_string.quote(filter_value)}" <> "\n"
@@ -50,9 +50,9 @@ defmodule TestcontainersElixir.Reaper do
       {:ok, "ACK\n"} ->
         :ok
 
-      {:error, :closed} ->
-        IO.puts("Connection was closed")
-        register_filter(socket, {filter_key, filter_value})
+      {:error, :closed} when retries > 0 ->
+        IO.puts("Connection was closed, retrying...")
+        register_filter(socket, {filter_key, filter_value}, retries - 1)
 
       {:error, reason} ->
         IO.puts("Error receiving data: #{inspect(reason)}")
