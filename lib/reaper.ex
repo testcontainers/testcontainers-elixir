@@ -49,7 +49,6 @@ defmodule TestcontainersElixir.Reaper do
       ExposedPorts: %{"#{@ryuk_port}" => %{}},
       HostConfig: %{
         PortBindings: %{"#{@ryuk_port}" => [%{"HostPort" => ""}]},
-        Privileged: true,
         # FIXME this will surely not work for all use cases
         Binds: ["/var/run/docker.sock:/var/run/docker.sock:rw"]
       },
