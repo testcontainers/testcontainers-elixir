@@ -17,9 +17,9 @@ defmodule TestcontainersElixir.ExUnit do
          {:ok, _} <- Api.Container.container_start(conn, container_id),
          :ok =
            on_exit.(:stop_container, fn ->
-            #  with :ok <- reap_container(conn, container_id) do
-            #    stop_container(conn, container_id)
-            #  end
+             with :ok <- reap_container(conn, container_id) do
+               stop_container(conn, container_id)
+             end
            end) do
       {:ok, get_container(conn, container_id)}
     end
