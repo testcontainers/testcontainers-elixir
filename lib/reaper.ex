@@ -2,7 +2,6 @@
 defmodule TestcontainersElixir.Reaper do
   use GenServer
 
-  alias TestcontainersElixir.Connection
   alias TestcontainersElixir.Container
 
   @ryuk_image "testcontainers/ryuk:0.5.1"
@@ -18,9 +17,7 @@ defmodule TestcontainersElixir.Reaper do
 
   @impl true
   def init(_) do
-    connection = Connection.get_connection()
-
-    with {:ok, container} <- create_ryuk_container(connection),
+    with {:ok, container} <- create_ryuk_container(),
          {:ok, socket} <- create_ryuk_socket(container) do
       {:ok, socket}
     else
@@ -54,13 +51,13 @@ defmodule TestcontainersElixir.Reaper do
     end
   end
 
-  defp create_ryuk_container(connection) do
+  defp create_ryuk_container do
     %Container{image: @ryuk_image}
     |> Container.with_exposed_port(@ryuk_port)
     |> Container.with_environment("RYUK_PORT", "#{@ryuk_port}")
     |> Container.with_environment("RYUK_CONNECTION_TIMEOUT", "120s")
     |> Container.with_bind_mount("/var/run/docker.sock", "/var/run/docker.sock", "rw")
-    |> Container.run(connection: connection, reap: false)
+    |> Container.run(reap: false)
   end
 
   defp create_ryuk_socket(%Container{} = container) do

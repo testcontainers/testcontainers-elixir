@@ -77,7 +77,7 @@ defmodule TestcontainersElixir.Container do
   end
 
   def run(%__MODULE__{} = container_config, options \\ []) do
-    connection = Keyword.get_lazy(options, :connection, &Connection.get_connection/0)
+    connection = Connection.get_connection()
     on_exit = Keyword.get(options, :on_exit, fn _, _ -> :ok end)
     waiting_strategy = Keyword.get(options, :waiting_strategy, nil)
     reap = Keyword.get(options, :reap, true)
