@@ -26,7 +26,7 @@ defmodule TestcontainersElixir.ExUnit do
             ExposedPorts: %{"#{Keyword.get(options, :port)}" => %{}},
             HostConfig: %{
               PortBindings: %{
-                "#{Keyword.get(options, :port)}/tcp" => [
+                "#{Keyword.get(options, :port)}" => [
                   %{"HostIp" => "0.0.0.0", "HostPort" => ""}
                 ]
               }

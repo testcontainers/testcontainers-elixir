@@ -23,7 +23,7 @@ defmodule TestcontainersElixir.Container do
   def mapped_port(%__MODULE__{} = container, port) when is_number(port) do
     container.ports
     |> Enum.filter(fn %{exposed_port: exposed_port} -> exposed_port == "#{port}/tcp" end)
-    |> List.first()
+    |> List.first(%{})
     |> Map.get(:host_port)
   end
 end
