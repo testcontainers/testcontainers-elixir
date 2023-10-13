@@ -8,6 +8,14 @@
     "settings": {
       "terminal.integrated.defaultProfile.linux": "bash"
     },
+
+    "features": {
+        "docker-in-docker": {
+            "version": "1.42",
+            "moby": true,
+            "dockerDashComposeVersion": "v1"
+        }
+    },
   
     "appPort": [],
   
