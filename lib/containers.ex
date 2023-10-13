@@ -23,12 +23,8 @@ defmodule TestcontainersElixir.Containers do
          {:ok, container} <- Api.Container.container_create(conn, container_factory.(options)),
          container_id = container."Id",
          {:ok, _} <- Api.Container.container_start(conn, container_id),
-         :ok =
-           on_exit.(:stop_container, fn ->
-             with :ok <- reap_container(conn, container_id) do
-               stop_container(conn, container_id)
-             end
-           end),
+         :ok <- on_exit.(:stop_container, fn -> stop_container(conn, container_id) end),
+         :ok <- reap_container(conn, container_id),
          {:ok, container} <- get_container(conn, container_id),
          {:ok, _} <- waiting_strategy.(conn, container) do
       {:ok, container}
