@@ -49,13 +49,11 @@ defmodule TestcontainersElixir.ExUnit do
   end
 
   defp reap_container(conn, container_id) when is_binary(container_id) do
-    case GenServer.whereis(Reaper) do
-      nil ->
-        {:ok, _} = conn |> Reaper.start_link()
-        Reaper.register({"id", container_id})
-
-      _ ->
-        Reaper.register({"id", container_id})
+    case conn |> Reaper.start_link() do
+      {:error, {:already_started, _}} -> :ok
+      {:ok, _} -> :ok
     end
+
+    Reaper.register({"id", container_id})
   end
 end
