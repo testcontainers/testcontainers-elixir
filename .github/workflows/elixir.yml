@@ -27,18 +27,15 @@ jobs:
       with:
         elixir-version: '1.15.2' # [Required] Define the Elixir version
         otp-version: '26.0'      # [Required] Define the Erlang/OTP version
-        gleam-version: '0.31'
     - name: Restore dependencies cache
       uses: actions/cache@v3
       with:
         path: deps
         key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
         restore-keys: ${{ runner.os }}-mix-
-    - name: Install mix_gleam
-      run: mix archive.install hex mix_gleam --force
     - name: Install dependencies
       run: mix deps.get
-    - name: Ensure Apache License
-      run: mix insert_license --verify --license apache
     - name: Run tests
       run: mix test
+    - name: Ensure Apache License
+      run: mix insert_license --verify --license apache
