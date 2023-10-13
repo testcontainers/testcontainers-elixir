@@ -18,33 +18,13 @@ defmodule TestcontainersElixir.Reaper do
 
   @impl true
   def init(connection) do
-    {:ok, _} =
-      connection
-      |> Api.Image.image_create(fromImage: @ryuk_image)
-
-    {:ok, %Model.ContainerCreateResponse{Id: container_id} = container} =
-      connection
-      |> Api.Container.container_create(%Model.ContainerCreateRequest{
-        Image: @ryuk_image,
-        ExposedPorts: %{"#{@ryuk_port}" => %{}},
-        HostConfig: %{
-          PortBindings: %{"#{@ryuk_port}" => [%{"HostPort" => ""}]},
-          Privileged: true,
-          # FIXME this will surely not work for all use cases
-          Binds: ["/var/run/docker.sock:/var/run/docker.sock:rw"]
-        },
-        Env: ["RYUK_PORT=#{@ryuk_port}"]
-      })
-
-    {:ok, _} =
-      connection
-      |> Api.Container.container_start(container_id)
-
-    {:ok, socket} =
-      connection
-      |> create_ryuk_socket(container)
-
-    {:ok, socket}
+    with {:ok, _} <- Api.Image.image_create(connection, fromImage: @ryuk_image),
+         {:ok, container} <- create_ryuk_container(connection),
+         container_id = container."Id",
+         {:ok, _} <- Api.Container.container_start(connection, container_id),
+         {:ok, socket} <- create_ryuk_socket(connection, container_id) do
+      {:ok, socket}
+    end
   end
 
   @impl true
@@ -63,10 +43,25 @@ defmodule TestcontainersElixir.Reaper do
     :ok
   end
 
+  defp create_ryuk_container(connection) do
+    Api.Container.container_create(connection, %Model.ContainerCreateRequest{
+      Image: @ryuk_image,
+      ExposedPorts: %{"#{@ryuk_port}" => %{}},
+      HostConfig: %{
+        PortBindings: %{"#{@ryuk_port}" => [%{"HostPort" => ""}]},
+        Privileged: true,
+        # FIXME this will surely not work for all use cases
+        Binds: ["/var/run/docker.sock:/var/run/docker.sock:rw"]
+      },
+      Env: ["RYUK_PORT=#{@ryuk_port}"]
+    })
+  end
+
   defp create_ryuk_socket(
          connection,
-         %Model.ContainerCreateResponse{Id: container_id}
-       ) do
+         container_id
+       )
+       when is_binary(container_id) do
     port_str = "#{@ryuk_port}/tcp"
 
     {:ok,

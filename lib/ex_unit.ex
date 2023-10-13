@@ -9,40 +9,37 @@ defmodule TestcontainersElixir.ExUnit do
     quote do
       docker_url = "http+unix://%2Fvar%2Frun%2Fdocker.sock/v1.43"
       conn = Connection.new(base_url: docker_url)
-
       image = Keyword.get(unquote(options), :image, nil)
-
-      {:ok, _} =
-        conn
-        |> Api.Image.image_create(fromImage: image)
-
       port = Keyword.get(unquote(options), :port, nil)
 
-      {:ok, %Model.ContainerCreateResponse{Id: container_id}} =
-        conn
-        |> Api.Container.container_create(%Model.ContainerCreateRequest{
-          Image: image,
-          ExposedPorts: %{"#{port}" => %{}},
-          HostConfig: %{
-            PortBindings: %{"#{port}" => [%{"HostPort" => ""}]}
-          }
-        })
+      with {:ok, _} <- Api.Image.image_create(conn, fromImage: image),
+           {:ok, container} <- simple_container(conn, image, port),
+           container_id = container."Id",
+           :ok <- reap_container(conn, container_id),
+           {:ok, _} <- Api.Container.container_start(conn, container_id) do
+        {:ok, container_id}
+      end
+    end
+  end
 
-      :ok =
-        case GenServer.whereis(Reaper) do
-          nil ->
-            {:ok, _} = conn |> Reaper.start_link()
-            Reaper.register({"id", container_id})
+  def simple_container(conn, image, port) when is_binary(image) and is_number(port) do
+    Api.Container.container_create(conn, %Model.ContainerCreateRequest{
+      Image: image,
+      ExposedPorts: %{"#{port}" => %{}},
+      HostConfig: %{
+        PortBindings: %{"#{port}" => [%{"HostPort" => ""}]}
+      }
+    })
+  end
 
-          _ ->
-            Reaper.register({"id", container_id})
-        end
+  def reap_container(conn, container_id) when is_binary(container_id) do
+    case GenServer.whereis(Reaper) do
+      nil ->
+        {:ok, _} = conn |> Reaper.start_link()
+        Reaper.register({"id", container_id})
 
-      {:ok, _} =
-        conn
-        |> Api.Container.container_start(container_id)
-
-      {:ok, container_id}
+      _ ->
+        Reaper.register({"id", container_id})
     end
   end
 end
