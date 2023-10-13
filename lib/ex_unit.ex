@@ -20,7 +20,7 @@ defmodule TestcontainersElixir.ExUnit do
     end
   end
 
-  def simple_container(conn, image, port) when is_binary(image) and is_number(port) do
+  defp simple_container(conn, image, port) when is_binary(image) and is_number(port) do
     Api.Container.container_create(conn, %Model.ContainerCreateRequest{
       Image: image,
       ExposedPorts: %{"#{port}" => %{}},
@@ -30,7 +30,7 @@ defmodule TestcontainersElixir.ExUnit do
     })
   end
 
-  def reap_container(conn, container_id) when is_binary(container_id) do
+  defp reap_container(conn, container_id) when is_binary(container_id) do
     case GenServer.whereis(Reaper) do
       nil ->
         {:ok, _} = conn |> Reaper.start_link()
