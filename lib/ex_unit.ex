@@ -14,12 +14,16 @@ defmodule TestcontainersElixir.ExUnit do
     port = Keyword.get(options, :port, nil)
 
     with {:ok, _} <- Api.Image.image_create(conn, fromImage: image),
-         {:ok, container} <- simple_container(conn, image, port),
+         {:ok, container} <- create_simple_container(conn, image, port),
          container_id = container."Id",
-         :ok <- reap_container(conn, container_id),
          {:ok, _} <- Api.Container.container_start(conn, container_id),
-         :ok = on_exit(:stop_container, fn -> stop_container(conn, container_id) end) do
-      {:ok, container_id}
+         :ok =
+           on_exit(:stop_container, fn ->
+             with :ok <- reap_container(conn, container_id) do
+               stop_container(conn, container_id)
+             end
+           end) do
+      {:ok, get_container(conn, container_id)}
     end
   end
 
@@ -30,7 +34,7 @@ defmodule TestcontainersElixir.ExUnit do
     end
   end
 
-  defp simple_container(conn, image, port) when is_binary(image) and is_number(port) do
+  defp create_simple_container(conn, image, port) when is_binary(image) and is_number(port) do
     Api.Container.container_create(conn, %Model.ContainerCreateRequest{
       Image: image,
       ExposedPorts: %{"#{port}" => %{}},
@@ -38,6 +42,12 @@ defmodule TestcontainersElixir.ExUnit do
         PortBindings: %{"#{port}" => [%{"HostPort" => ""}]}
       }
     })
+  end
+
+  defp get_container(conn, container_id) when is_binary(container_id) do
+    with {:ok, response} <- Api.Container.container_inspect(conn, container_id) do
+      TestcontainersElixir.Container.of(response)
+    end
   end
 
   defp reap_container(conn, container_id) when is_binary(container_id) do
