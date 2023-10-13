@@ -5,20 +5,18 @@ defmodule TestcontainersElixir.ExUnit do
   alias DockerEngineAPI.Api
   alias DockerEngineAPI.Model
 
-  defmacro container(options \\ []) do
-    quote do
-      docker_url = "http+unix://%2Fvar%2Frun%2Fdocker.sock/v1.43"
-      conn = Connection.new(base_url: docker_url)
-      image = Keyword.get(unquote(options), :image, nil)
-      port = Keyword.get(unquote(options), :port, nil)
+  def container(options \\ []) do
+    docker_url = "http+unix://%2Fvar%2Frun%2Fdocker.sock/v1.43"
+    conn = Connection.new(base_url: docker_url)
+    image = Keyword.get(options, :image, nil)
+    port = Keyword.get(options, :port, nil)
 
-      with {:ok, _} <- Api.Image.image_create(conn, fromImage: image),
-           {:ok, container} <- simple_container(conn, image, port),
-           container_id = container."Id",
-           :ok <- reap_container(conn, container_id),
-           {:ok, _} <- Api.Container.container_start(conn, container_id) do
-        {:ok, container_id}
-      end
+    with {:ok, _} <- Api.Image.image_create(conn, fromImage: image),
+         {:ok, container} <- simple_container(conn, image, port),
+         container_id = container."Id",
+         :ok <- reap_container(conn, container_id),
+         {:ok, _} <- Api.Container.container_start(conn, container_id) do
+      {:ok, container_id}
     end
   end
 
