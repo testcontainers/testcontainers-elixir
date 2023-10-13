@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 defmodule TestcontainersElixir.Containers do
   alias DockerEngineAPI.Api
   alias DockerEngineAPI.Model
