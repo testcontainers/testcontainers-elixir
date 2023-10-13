@@ -30,7 +30,8 @@ defmodule TestcontainersElixir.Reaper do
          {:ok, %Model.ContainerInspectResponse{} = container_info} <-
            Api.Container.container_inspect(connection, container_id),
          container = Container.of(container_info),
-         {:ok, socket} <- create_ryuk_socket(container) do
+         {:ok, socket} <- create_ryuk_socket(container),
+         :ok <- register_filter(socket, {"id", "keep_ryuk_alive"}) do
       {:ok, socket}
     end
   end
@@ -60,7 +61,7 @@ defmodule TestcontainersElixir.Reaper do
         # FIXME this will surely not work for all use cases
         Binds: ["/var/run/docker.sock:/var/run/docker.sock:rw"]
       },
-      Env: ["RYUK_PORT=#{@ryuk_port}"]
+      Env: ["RYUK_PORT=#{@ryuk_port}", "RYUK_CONNECTION_TIMEOUT=120s"]
     })
   end
 
