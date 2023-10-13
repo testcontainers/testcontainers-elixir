@@ -57,7 +57,7 @@ defmodule TestcontainersElixir.Reaper do
       Image: @ryuk_image,
       ExposedPorts: %{"#{@ryuk_port}" => %{}},
       HostConfig: %{
-        PortBindings: %{"#{@ryuk_port}" => [%{"HostPort" => ""}]},
+        PortBindings: %{"#{@ryuk_port}/tcp" => [%{"HostPort" => ""}]},
         # FIXME this will surely not work for all use cases
         Binds: ["/var/run/docker.sock:/var/run/docker.sock:rw"]
       },

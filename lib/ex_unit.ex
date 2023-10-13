@@ -37,7 +37,7 @@ defmodule TestcontainersElixir.ExUnit do
       Image: image,
       ExposedPorts: %{"#{port}" => %{}},
       HostConfig: %{
-        PortBindings: %{"#{port}" => [%{"HostPort" => ""}]}
+        PortBindings: %{"#{port}/tcp" => [%{"HostPort" => ""}]}
       }
     })
   end
