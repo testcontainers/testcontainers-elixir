@@ -6,7 +6,7 @@ defmodule TestcontainersElixir.Connection do
   @api_version "v1.41"
 
   def get_connection do
-    Connection.new(base_url: docker_base_url() |> IO.inspect())
+    Connection.new(base_url: docker_base_url())
   end
 
   defp docker_base_url do

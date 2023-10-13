@@ -24,7 +24,7 @@ defmodule TestcontainersElixir.Containers do
          container_id = container."Id",
          {:ok, _} <- Api.Container.container_start(conn, container_id),
          :ok <- on_exit.(:stop_container, fn -> stop_container(conn, container_id) end),
-         :ok <- reap_container(conn, container_id),
+         :ok <- reap_container(container_id),
          {:ok, container} <- get_container(conn, container_id),
          {:ok, _} <- waiting_strategy.(conn, container) do
       {:ok, container}
@@ -44,8 +44,8 @@ defmodule TestcontainersElixir.Containers do
     end
   end
 
-  defp reap_container(conn, container_id) when is_binary(container_id) do
-    case conn |> Reaper.start_link() do
+  defp reap_container(container_id) when is_binary(container_id) do
+    case Reaper.start_link() do
       {:error, {:already_started, _}} -> :ok
       {:ok, _} -> :ok
     end

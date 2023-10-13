@@ -2,6 +2,7 @@
 defmodule TestcontainersElixir.Reaper do
   use GenServer
 
+  alias TestcontainersElixir.Connection
   alias DockerEngineAPI.Api
   alias DockerEngineAPI.Model
   alias TestcontainersElixir.Container
@@ -9,8 +10,8 @@ defmodule TestcontainersElixir.Reaper do
   @ryuk_image "testcontainers/ryuk:0.5.1"
   @ryuk_port 8080
 
-  def start_link(connection) do
-    GenServer.start_link(__MODULE__, connection, name: __MODULE__)
+  def start_link() do
+    GenServer.start_link(__MODULE__, nil, name: __MODULE__)
   end
 
   def register(filter) do
@@ -18,8 +19,8 @@ defmodule TestcontainersElixir.Reaper do
   end
 
   @impl true
-  def init(connection) do
-    Process.flag(:trap_exit, true)
+  def init(_) do
+    connection = Connection.get_connection()
 
     with {:ok, _image_create_response} <-
            Api.Image.image_create(connection, fromImage: @ryuk_image),
@@ -32,6 +33,8 @@ defmodule TestcontainersElixir.Reaper do
          container = Container.of(container_info),
          {:ok, socket} <- create_ryuk_socket(container) do
       {:ok, socket}
+    else error ->
+      {:stop, "Failed to start reaper: #{inspect(error)}"}
     end
   end
 
