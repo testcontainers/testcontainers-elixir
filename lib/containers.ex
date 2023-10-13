@@ -5,9 +5,10 @@ defmodule TestcontainersElixir.Containers do
   alias DockerEngineAPI.Connection
   alias TestcontainersElixir.Reaper
   alias TestcontainersElixir.Container
+  alias TestcontainersElixir.Connection
 
   def container(options) do
-    conn = Keyword.get_lazy(options, :conn, &get_static_connection/0)
+    conn = Keyword.get_lazy(options, :conn, &Connection.get_connection/0)
     image = Keyword.get(options, :image, nil)
     port = Keyword.get(options, :port, nil)
     on_exit = Keyword.get(options, :on_exit, fn _, _ -> :ok end)
@@ -55,7 +56,4 @@ defmodule TestcontainersElixir.Containers do
 
     Reaper.register({"id", container_id})
   end
-
-  defp get_static_connection,
-    do: Connection.new(base_url: "http+unix://%2Fvar%2Frun%2Fdocker.sock/v1.43")
 end
