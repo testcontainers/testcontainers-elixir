@@ -5,9 +5,7 @@ defmodule TestcontainersElixir.ExUnit do
   alias DockerEngineAPI.Api
   alias DockerEngineAPI.Model
 
-  import ExUnit.Callbacks
-
-  def container(options \\ []) do
+  def container(options \\ [], on_exit \\ &ExUnit.Callbacks.on_exit/2) do
     docker_url = "http+unix://%2Fvar%2Frun%2Fdocker.sock/v1.43"
     conn = Connection.new(base_url: docker_url)
     image = Keyword.get(options, :image, nil)
@@ -18,7 +16,7 @@ defmodule TestcontainersElixir.ExUnit do
          container_id = container."Id",
          {:ok, _} <- Api.Container.container_start(conn, container_id),
          :ok =
-           on_exit(:stop_container, fn ->
+           on_exit.(:stop_container, fn ->
              with :ok <- reap_container(conn, container_id) do
                stop_container(conn, container_id)
              end
