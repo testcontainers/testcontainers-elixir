@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: MIT
 defmodule TestcontainersElixir.HttpChecker do
   @moduledoc """
   A utility module for checking HTTP service availability and readiness.

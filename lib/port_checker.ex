@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: MIT
 defmodule TestcontainersElixir.PortChecker do
   @moduledoc """
   A utility module for checking the readiness of a TCP service on a given IP and port.

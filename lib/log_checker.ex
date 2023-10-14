@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: MIT
 defmodule TestcontainersElixir.LogChecker do
   @moduledoc """
   A module for interacting and verifying logs of a Docker container.
