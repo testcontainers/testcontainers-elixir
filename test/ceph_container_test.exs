@@ -11,6 +11,17 @@ defmodule CephContainerTest do
   container(:ceph, CephContainer.new())
 
   test "creates and starts ceph container", %{ceph: ceph} do
-    assert is_number(Container.mapped_port(ceph, 8080))
+    host_port = Container.mapped_port(ceph, 8080)
+
+    {:ok, 404, _headers, _body_ref} =
+      :hackney.request(:get, "http://127.0.0.1:#{host_port}/bucket_that_does_not_exist")
+
+    {:ok, 403, _headers, body_ref} = :hackney.request(:get, "http://127.0.0.1:#{host_port}/demo")
+
+    {:ok, 200, _headers, _body_ref} = :hackney.request(:get, "http://127.0.0.1:#{host_port}")
+    {:ok, body} = :hackney.body(body_ref)
+    body_str = IO.iodata_to_binary(body)
+
+    assert String.contains?(body_str, "anonymous")
   end
 end
