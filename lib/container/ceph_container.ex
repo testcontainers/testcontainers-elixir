@@ -1,7 +1,12 @@
 # SPDX-License-Identifier: MIT
-defmodule TestcontainersElixir.CephContainer do
+defmodule TestcontainersElixir.Container.CephContainer do
+  alias TestcontainersElixir.WaitStrategy.LogWaitStrategy
   alias TestcontainersElixir.Container
-  alias TestcontainersElixir.LogChecker
+
+  @waiting_strategy LogWaitStrategy.new(
+                      ~r/.*Bucket 's3:\/\/.*\/' created.*/,
+                      300_000
+                    )
 
   def new(options \\ []) do
     image = Keyword.get(options, :image, "quay.io/ceph/demo:latest-quincy")
@@ -20,15 +25,7 @@ defmodule TestcontainersElixir.CephContainer do
         MON_IP: "127.0.0.1",
         RGW_NAME: "localhost"
       },
-      waiting_strategy: &waiting_strategy/1
+      waiting_strategy: @waiting_strategy
     )
   end
-
-  defp waiting_strategy(container),
-    do:
-      LogChecker.wait_for_log(
-        container.container_id,
-        ~r/.*Bucket 's3:\/\/.*\/' created.*/,
-        300_000
-      )
 end

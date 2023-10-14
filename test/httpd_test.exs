@@ -2,8 +2,9 @@ defmodule AnotherTest do
   use ExUnit.Case, async: true
 
   import TestcontainersElixir.ExUnit
-  alias TestcontainersElixir.HttpChecker
+
   alias TestcontainersElixir.Container
+  alias TestcontainersElixir.WaitStrategy.HttpWaitStrategy
 
   test "creates and uses container" do
     exposed_port = 80
@@ -11,14 +12,9 @@ defmodule AnotherTest do
     {:ok, container} =
       Container.new("httpd:latest")
       |> Container.with_exposed_port(exposed_port)
-      |> Container.with_waiting_strategy(fn container ->
-        HttpChecker.wait_for_http(
-          "127.0.0.1",
-          Container.mapped_port(container, exposed_port),
-          "/",
-          5000
-        )
-      end)
+      |> Container.with_waiting_strategy(
+        HttpWaitStrategy.new("127.0.0.1", exposed_port, "/", 10000)
+      )
       |> run_container()
 
     host_port = Container.mapped_port(container, 80)

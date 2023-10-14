@@ -3,8 +3,7 @@ defmodule CephContainerTest do
 
   import TestcontainersElixir.ExUnit
   alias TestcontainersElixir.Container
-  alias TestcontainersElixir.CephContainer
-  alias TestcontainersElixir.Container
+  alias TestcontainersElixir.Container.CephContainer
 
   @tag timeout: 300_000
 

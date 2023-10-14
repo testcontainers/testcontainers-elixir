@@ -1,16 +1,16 @@
+# SPDX-License-Identifier: MIT
 defmodule TestcontainersElixir.Docker.Api do
+  alias TestcontainersElixir.WaitStrategy
   alias DockerEngineAPI.Model.ContainerCreateRequest
   alias DockerEngineAPI.Model.ContainerCreateResponse
   alias DockerEngineAPI.Api
   alias TestcontainersElixir.Container
   alias TestcontainersElixir.Reaper
-  alias TestcontainersElixir.Container
   alias TestcontainersElixir.Connection
 
-  def run(%Container{} = container_config, options \\ []) do
-    conn = Connection.get_connection()
+  def run(%Container{} = container_config, options \\ [], conn \\ Connection.get_connection()) do
     on_exit = Keyword.get(options, :on_exit, nil)
-    wait_fn = container_config.waiting_strategy
+    wait_strategy = container_config.waiting_strategy
     create_request = container_create_request(container_config)
 
     with {:ok, _} <- Api.Image.image_create(conn, fromImage: create_request."Image"),
@@ -25,15 +25,33 @@ defmodule TestcontainersElixir.Docker.Api do
             else
               :ok
             end),
-         {:ok, container} <- get_container(conn, container_id),
-         {:ok, _} <- if(wait_fn != nil, do: wait_fn.(container), else: {:ok, nil}) do
+         {:ok, container} <- get_container(container_id, conn),
+         :ok <-
+           if(wait_strategy != nil,
+             do:
+               WaitStrategy.wait_until_container_is_ready(wait_strategy, container.container_id),
+             else: :ok
+           ) do
       {:ok, container}
     end
   end
 
-  def stdout_logs(container_id) do
-    conn = Connection.get_connection()
+  def stdout_logs(container_id, conn \\ Connection.get_connection()) do
     Api.Container.container_logs(conn, container_id, stdout: true)
+  end
+
+  def execute_cmd(container_id, cmd, conn \\ Connection.get_connection()) when is_list(cmd) do
+    with {:ok, %DockerEngineAPI.Model.IdResponse{Id: container_id}} <-
+           Api.Exec.container_exec(conn, container_id, %DockerEngineAPI.Model.ExecConfig{Cmd: cmd}) do
+      {:ok, container_id}
+    end
+  end
+
+  def get_container(container_id, conn \\ Connection.get_connection())
+      when is_binary(container_id) do
+    with {:ok, response} <- Api.Container.container_inspect(conn, container_id) do
+      {:ok, from(response)}
+    end
   end
 
   defp container_create_request(%Container{} = container_config) do
@@ -89,12 +107,6 @@ defmodule TestcontainersElixir.Docker.Api do
     with {:ok, _} <- Api.Container.container_kill(conn, container_id),
          {:ok, _} <- Api.Container.container_delete(conn, container_id) do
       :ok
-    end
-  end
-
-  defp get_container(conn, container_id) when is_binary(container_id) do
-    with {:ok, response} <- Api.Container.container_inspect(conn, container_id) do
-      {:ok, from(response)}
     end
   end
 
