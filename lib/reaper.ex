@@ -15,13 +15,13 @@ defmodule TestcontainersElixir.Reaper do
         "#{:uri_string.quote(filter_key)}=#{:uri_string.quote(filter_value)}" <> "\n"
       )
 
-      case :gen_tcp.recv(socket, 0, 5_000) do
+      case :gen_tcp.recv(socket, 0, 8_000) do
         {:ok, "ACK\n"} ->
           :ok
 
         {:error, reason} ->
-          IO.puts("Error receiving data: #{inspect(reason)}")
-          {:error, reason}
+          IO.puts("Reaper: Ignoring error acking data: #{inspect(reason)}")
+          :ok
       end
     end
   end
