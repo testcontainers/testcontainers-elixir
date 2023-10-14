@@ -16,9 +16,9 @@ defmodule CephContainerTest do
     {:ok, 404, _headers, _body_ref} =
       :hackney.request(:get, "http://127.0.0.1:#{host_port}/bucket_that_does_not_exist")
 
-    {:ok, 403, _headers, body_ref} = :hackney.request(:get, "http://127.0.0.1:#{host_port}/demo")
+    {:ok, 403, _headers, _body_ref} = :hackney.request(:get, "http://127.0.0.1:#{host_port}/demo")
 
-    {:ok, 200, _headers, _body_ref} = :hackney.request(:get, "http://127.0.0.1:#{host_port}")
+    {:ok, 200, _headers, body_ref} = :hackney.request(:get, "http://127.0.0.1:#{host_port}")
     {:ok, body} = :hackney.body(body_ref)
     body_str = IO.iodata_to_binary(body)
 
