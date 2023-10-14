@@ -54,8 +54,6 @@ defimpl TestcontainersElixir.WaitStrategy, for: TestcontainersElixir.WaitStrateg
 
   defp port_open?(ip, port, timeout \\ 1000)
        when is_binary(ip) and is_integer(port) and is_integer(timeout) do
-    IO.inspect("checking port #{port}")
-
     case :gen_tcp.connect(~c"#{ip}", port, [:binary, active: false], timeout) do
       {:ok, socket} ->
         :gen_tcp.close(socket)

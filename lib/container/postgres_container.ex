@@ -10,15 +10,6 @@ defmodule TestcontainersElixir.Container.PostgresContainer do
   alias TestcontainersElixir.WaitStrategy.CommandWaitStrategy
 
   @postgres_port 5432
-  @wait_strategy CommandWaitStrategy.new([
-                   "pg_isready",
-                   "-U",
-                   "test",
-                   "-d",
-                   "test",
-                   "-h",
-                   "localhost"
-                 ])
 
   @doc """
   Builds a PostgreSql container.
@@ -32,23 +23,26 @@ defmodule TestcontainersElixir.Container.PostgresContainer do
   - `database` sets the name of the database
   """
   def new(image \\ "postgres:13.1", opts \\ []) do
+    username = Keyword.get(opts, :username, "test")
+    database = Keyword.get(opts, :database, "test")
+    password = Keyword.get(opts, :password, "test")
+
     Container.new(
       image,
       exposed_ports: [@postgres_port],
       environment: %{
-        POSTGRES_USER: Keyword.get(opts, :username, "test"),
-        POSTGRES_PASSWORD: Keyword.get(opts, :password, "test"),
-        POSTGRES_DB: Keyword.get(opts, :database, "test")
+        POSTGRES_USER: username,
+        POSTGRES_PASSWORD: password,
+        POSTGRES_DB: database
       },
-      wait_strategy: @wait_strategy
+      wait_strategy: wait_strategy(username, database)
     )
   end
 
   @doc """
   Returns the port on the _host machine_ where the MySql container is listening.
   """
-  def port(%Container{} = container),
-    do: with({:ok, port} <- Container.mapped_port(container, @postgres_port), do: port)
+  def port(%Container{} = container), do: Container.mapped_port(container, @postgres_port)
 
   @doc """
   Returns the connection parameters to connect to the database from the _host machine_.
@@ -61,5 +55,9 @@ defmodule TestcontainersElixir.Container.PostgresContainer do
       password: container.environment[:POSTGRES_PASSWORD],
       database: container.environment[:POSTGRES_DB]
     ]
+  end
+
+  defp wait_strategy(username, database) do
+    CommandWaitStrategy.new(["sh", "-c", "pg_isready -U #{username} -d #{database} -h localhost"])
   end
 end

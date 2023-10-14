@@ -25,6 +25,7 @@ defmodule TestcontainersElixir.Container.MySqlContainer do
   def new(image \\ "mysql:8.0", opts \\ []) do
     username = Keyword.get(opts, :username, "test")
     password = Keyword.get(opts, :password, "test")
+    database = Keyword.get(opts, :database, "test")
 
     Container.new(
       image,
@@ -32,7 +33,7 @@ defmodule TestcontainersElixir.Container.MySqlContainer do
       environment: %{
         MYSQL_USER: username,
         MYSQL_PASSWORD: password,
-        MYSQL_DATABASE: Keyword.get(opts, :database, "test"),
+        MYSQL_DATABASE: database,
         MYSQL_RANDOM_ROOT_PASSWORD: "yes"
       },
       wait_strategy: wait_strategy(username, password)

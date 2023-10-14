@@ -25,8 +25,7 @@ defimpl TestcontainersElixir.WaitStrategy, for: TestcontainersElixir.WaitStrateg
         {:ok, :http_is_ready} ->
           :ok
 
-        other ->
-          IO.inspect(other)
+        _ ->
           :timer.sleep(100)
           wait_until_container_is_ready(wait_strategy, id_or_name)
       end

@@ -53,8 +53,8 @@ defimpl TestcontainersElixir.WaitStrategy, for: TestcontainersElixir.WaitStrateg
   end
 
   defp log_comparison(container_id, log_regex) do
-    with {:ok, %Tesla.Env{body: stdout_log}} when is_binary(stdout_log) <-
-           Docker.Api.stdout_logs(container_id) do
+    with {:ok, stdout_log} when is_binary(stdout_log) <-
+           Docker.Exec.stdout_logs(container_id) do
       Regex.match?(log_regex, stdout_log)
     else
       _ ->

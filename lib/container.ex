@@ -9,7 +9,7 @@ defmodule TestcontainersElixir.Container do
     cmd: nil,
     environment: %{},
     exposed_ports: [],
-    waiting_strategy: nil,
+    wait_strategy: nil,
     privileged: false,
     bind_mounts: [],
     labels: %{},
@@ -29,7 +29,7 @@ defmodule TestcontainersElixir.Container do
       exposed_ports: Keyword.get(opts, :exposed_ports, []),
       privileged: opts[:privileged] || false,
       auto_remove: opts[:auto_remove] || true,
-      waiting_strategy: opts[:waiting_strategy] || nil
+      wait_strategy: opts[:wait_strategy] || nil
     }
   end
 
@@ -37,7 +37,7 @@ defmodule TestcontainersElixir.Container do
   Sets a _waiting strategy_ for the _container_.
   """
   def with_waiting_strategy(%__MODULE__{} = config, wait_fn) do
-    %__MODULE__{config | waiting_strategy: wait_fn}
+    %__MODULE__{config | wait_strategy: wait_fn}
   end
 
   @doc """

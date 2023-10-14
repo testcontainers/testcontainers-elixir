@@ -4,9 +4,11 @@ defmodule TestcontainersElixir.Connection do
 
   @default_host "unix:///var/run/docker.sock"
   @api_version "v1.41"
+  @timeout 60_000
 
-  def get_connection do
-    Connection.new(base_url: docker_base_url())
+  def get_connection(options \\ []) do
+    options = Keyword.merge(options, base_url: docker_base_url(), recv_timeout: @timeout)
+    Connection.new(options)
   end
 
   defp docker_base_url do

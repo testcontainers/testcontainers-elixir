@@ -2,30 +2,28 @@
 defmodule TestcontainersElixir.Docker.Api do
   alias TestcontainersElixir.WaitStrategy
   alias DockerEngineAPI.Model.ContainerCreateRequest
-  alias DockerEngineAPI.Model.ContainerCreateResponse
   alias DockerEngineAPI.Api
   alias TestcontainersElixir.Container
   alias TestcontainersElixir.Reaper
   alias TestcontainersElixir.Connection
 
-  def run(%Container{} = container_config, options \\ [], conn \\ Connection.get_connection()) do
+  def run(%Container{} = container_config, options \\ []) do
     on_exit = Keyword.get(options, :on_exit, nil)
-    wait_strategy = container_config.waiting_strategy
+    wait_strategy = container_config.wait_strategy
     create_request = container_create_request(container_config)
 
-    with {:ok, _} <- Api.Image.image_create(conn, fromImage: create_request."Image"),
-         {:ok, %ContainerCreateResponse{Id: container_id}} <-
-           Api.Container.container_create(conn, create_request),
-         {:ok, _} <- Api.Container.container_start(conn, container_id),
+    with :ok <- pull_image(create_request."Image", recv_timeout: 60_000),
+         {:ok, id} <- create_container(create_request, recv_timeout: 2000),
+         :ok <- start_container(id, recv_timeout: 300_000),
          :ok <-
            (if on_exit do
-              with :ok <- on_exit.(:stop_container, fn -> stop_container(conn, container_id) end) do
-                reap_container(container_id)
+              with :ok <- on_exit.(:stop_container, fn -> stop_container(id) end) do
+                reap_container(id)
               end
             else
               :ok
             end),
-         {:ok, container} <- get_container(container_id, conn),
+         {:ok, container} <- get_container(id),
          :ok <-
            if(wait_strategy != nil,
              do:
@@ -33,24 +31,41 @@ defmodule TestcontainersElixir.Docker.Api do
              else: :ok
            ) do
       {:ok, container}
+    else
+      {:error, other} -> {:error, other}
+      other -> other
     end
   end
 
-  def stdout_logs(container_id, conn \\ Connection.get_connection()) do
-    Api.Container.container_logs(conn, container_id, stdout: true)
-  end
+  def get_container(container_id, options \\ []) when is_binary(container_id) do
+    conn = Connection.get_connection(options)
 
-  def execute_cmd(container_id, cmd, conn \\ Connection.get_connection()) when is_list(cmd) do
-    with {:ok, %DockerEngineAPI.Model.IdResponse{Id: container_id}} <-
-           Api.Exec.container_exec(conn, container_id, %DockerEngineAPI.Model.ExecConfig{Cmd: cmd}) do
-      {:ok, container_id}
-    end
-  end
-
-  def get_container(container_id, conn \\ Connection.get_connection())
-      when is_binary(container_id) do
     with {:ok, response} <- Api.Container.container_inspect(conn, container_id) do
       {:ok, from(response)}
+    end
+  end
+
+  defp pull_image(image, options) do
+    conn = Connection.get_connection(options)
+
+    with {:ok, %Tesla.Env{status: 200}} <- Api.Image.image_create(conn, fromImage: image) do
+      :ok
+    end
+  end
+
+  defp create_container(config, options) do
+    conn = Connection.get_connection(options)
+
+    with {:ok, %{Id: id}} <- Api.Container.container_create(conn, config) do
+      {:ok, id}
+    end
+  end
+
+  defp start_container(id, options) do
+    conn = Connection.get_connection(options)
+
+    with {:ok, %Tesla.Env{status: 204}} <- Api.Container.container_start(conn, id) do
+      :ok
     end
   end
 
@@ -103,7 +118,9 @@ defmodule TestcontainersElixir.Docker.Api do
     end)
   end
 
-  defp stop_container(conn, container_id) when is_binary(container_id) do
+  defp stop_container(container_id, options \\ []) when is_binary(container_id) do
+    conn = Connection.get_connection(options)
+
     with {:ok, _} <- Api.Container.container_kill(conn, container_id),
          {:ok, _} <- Api.Container.container_delete(conn, container_id) do
       :ok
@@ -119,11 +136,13 @@ defmodule TestcontainersElixir.Docker.Api do
     Reaper.register({"id", container_id})
   end
 
-  defp from(%DockerEngineAPI.Model.ContainerInspectResponse{
-         Id: container_id,
-         Image: image,
-         NetworkSettings: %{Ports: ports}
-       }) do
+  defp from(
+         %DockerEngineAPI.Model.ContainerInspectResponse{
+           Id: container_id,
+           Image: image,
+           NetworkSettings: %{Ports: ports}
+         } = res
+       ) do
     ports =
       Enum.reduce(ports || [], [], fn {key, ports}, acc ->
         acc ++
@@ -132,6 +151,17 @@ defmodule TestcontainersElixir.Docker.Api do
           end)
       end)
 
-    %Container{container_id: container_id, image: image, exposed_ports: ports}
+    environment =
+      Enum.reduce(res."Config"."Env" || [], %{}, fn env, acc ->
+        tokens = String.split(env, "=")
+        Map.merge(acc, %{"#{List.first(tokens)}": List.last(tokens)})
+      end)
+
+    %Container{
+      container_id: container_id,
+      image: image,
+      exposed_ports: ports,
+      environment: environment
+    }
   end
 end

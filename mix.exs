@@ -31,7 +31,10 @@ defmodule TestcontainersElixir.MixProject do
     [
       {:ex_license, "~> 0.1.0"},
       {:docker_engine_api,
-       git: "https://github.com/jarlah/docker-engine-api-elixir.git", tag: "1.43.0.1-hackney"}
+       git: "https://github.com/jarlah/docker-engine-api-elixir.git", tag: "1.43.0.5-hackney"},
+      {:myxql, "~> 0.6.0", only: [:dev, :test]},
+      {:postgrex, "~> 0.17", only: [:dev, :test]},
+      {:redix, "~> 1.2", only: [:dev, :test]}
     ]
   end
 
