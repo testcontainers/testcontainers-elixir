@@ -36,28 +36,28 @@ defmodule TestcontainersElixir.Container do
   @doc """
   Sets a _waiting strategy_ for the _container_.
   """
-  def with_waiting_strategy(config, wait_fn) do
+  def with_waiting_strategy(%__MODULE__{} = config, wait_fn) do
     %__MODULE__{config | waiting_strategy: wait_fn}
   end
 
   @doc """
   Sets an _environment variable_ to the _container_.
   """
-  def with_environment(config, key, value) do
+  def with_environment(%__MODULE__{} = config, key, value) do
     %__MODULE__{config | environment: Map.put(config.environment, key, value)}
   end
 
   @doc """
   Adds a _port_ to be exposed on the _container_.
   """
-  def with_exposed_port(config, port) do
+  def with_exposed_port(%__MODULE__{} = config, port) do
     %__MODULE__{config | exposed_ports: [port | config.exposed_ports]}
   end
 
   @doc """
   Sets a file or the directory on the _host machine_ to be mounted into a _container_.
   """
-  def with_bind_mount(config, host_src, container_dest, options \\ "ro") do
+  def with_bind_mount(%__MODULE__{} = config, host_src, container_dest, options \\ "ro") do
     new_bind_mount = %{host_src: host_src, container_dest: container_dest, options: options}
     %__MODULE__{config | bind_mounts: [new_bind_mount | config.bind_mounts]}
   end
@@ -65,10 +65,13 @@ defmodule TestcontainersElixir.Container do
   @doc """
   Sets a label to apply to the container object in docker.
   """
-  def with_label(config, key, value) do
+  def with_label(%__MODULE__{} = config, key, value) do
     %__MODULE__{config | labels: Map.put(config.labels, key, value)}
   end
 
+  @doc """
+  Gets the host port on the container for the given exposed port.
+  """
   def mapped_port(%__MODULE__{} = container, port) when is_number(port) do
     container.exposed_ports
     |> Enum.filter(fn

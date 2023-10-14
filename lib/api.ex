@@ -9,17 +9,22 @@ defmodule TestcontainersElixir.Docker.Api do
 
   def run(%Container{} = container_config, options \\ []) do
     conn = Connection.get_connection()
-    on_exit = Keyword.get(options, :on_exit, fn _, _ -> :ok end)
+    on_exit = Keyword.get(options, :on_exit, nil)
     wait_fn = container_config.waiting_strategy
-    reap = Keyword.get(options, :reap, true)
     create_request = container_create_request(container_config)
 
     with {:ok, _} <- Api.Image.image_create(conn, fromImage: create_request."Image"),
          {:ok, %ContainerCreateResponse{Id: container_id}} <-
            Api.Container.container_create(conn, create_request),
          {:ok, _} <- Api.Container.container_start(conn, container_id),
-         :ok <- on_exit.(:stop_container, fn -> stop_container(conn, container_id) end),
-         :ok <- if(reap, do: reap_container(container_id), else: :ok),
+         :ok <-
+           (if on_exit do
+              with :ok <- on_exit.(:stop_container, fn -> stop_container(conn, container_id) end) do
+                reap_container(container_id)
+              end
+            else
+              :ok
+            end),
          {:ok, container} <- get_container(conn, container_id),
          {:ok, _} <- if(wait_fn != nil, do: wait_fn.(container), else: {:ok, nil}) do
       {:ok, container}
