@@ -2,55 +2,34 @@
 # Original by: Marco Dallagiacoma @ 2023 in https://github.com/dallagi/excontainers
 # Modified by: Jarl André Hübenthal @ 2023
 defmodule TestcontainersElixir.Reaper do
-  use GenServer
-
   alias TestcontainersElixir.Docker
   alias TestcontainersElixir.Container
 
   @ryuk_image "testcontainers/ryuk:0.5.1"
   @ryuk_port 8080
 
-  def start_link() do
-    GenServer.start_link(__MODULE__, nil, name: __MODULE__)
-  end
+  def register({filter_key, filter_value}) do
+    with {:ok, socket} <- get_ryuk_socket() do
+      :gen_tcp.send(
+        socket,
+        "#{:uri_string.quote(filter_key)}=#{:uri_string.quote(filter_value)}" <> "\n"
+      )
 
-  def register(filter) do
-    GenServer.call(__MODULE__, {:register, filter})
-  end
+      case :gen_tcp.recv(socket, 0, 5_000) do
+        {:ok, "ACK\n"} ->
+          :ok
 
-  @impl true
-  def init(_) do
-    with {:ok, container} <- create_ryuk_container(),
-         {:ok, socket} <- create_ryuk_socket(container) do
-      {:ok, socket}
-    else
-      error ->
-        {:stop, "Failed to start reaper: #{inspect(error)}"}
+        {:error, reason} ->
+          IO.puts("Error receiving data: #{inspect(reason)}")
+          {:error, reason}
+      end
     end
   end
 
-  @impl true
-  def handle_call({:register, filter}, _from, socket) do
-    {:reply, register(socket, filter), socket}
-  end
-
-  defp register(socket, {filter_key, filter_value}, retries \\ 3) do
-    :gen_tcp.send(
-      socket,
-      "#{:uri_string.quote(filter_key)}=#{:uri_string.quote(filter_value)}" <> "\n"
-    )
-
-    case :gen_tcp.recv(socket, 0, 1_000) do
-      {:ok, "ACK\n"} ->
-        :ok
-
-      {:error, :closed} when retries > 0 ->
-        IO.puts("Connection was closed, retrying...")
-        register(socket, {filter_key, filter_value}, retries - 1)
-
-      {:error, reason} ->
-        IO.puts("Error receiving data: #{inspect(reason)}")
-        {:error, reason}
+  defp get_ryuk_socket() do
+    with {:ok, container} <- create_ryuk_container(),
+         {:ok, socket} <- create_ryuk_socket(container) do
+      {:ok, socket}
     end
   end
 

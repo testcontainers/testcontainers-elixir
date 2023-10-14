@@ -128,11 +128,6 @@ defmodule TestcontainersElixir.Docker.Api do
   end
 
   defp reap_container(container_id) when is_binary(container_id) do
-    case Reaper.start_link() do
-      {:error, {:already_started, _}} -> :ok
-      {:ok, _} -> :ok
-    end
-
     Reaper.register({"id", container_id})
   end
 
