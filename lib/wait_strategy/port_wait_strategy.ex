@@ -1,24 +1,37 @@
 # SPDX-License-Identifier: MIT
-defmodule TestcontainersElixir.PortChecker do
+defmodule TestcontainersElixir.WaitStrategy.PortWaitStrategy do
   @moduledoc """
-  A utility module for checking the readiness of a TCP service on a given IP and port.
-
-  `TestcontainersElixir.PortChecker` provides functionality to wait until a TCP port
-  is open on a specified IP address, up to a provided timeout.
-
-  It is important to note that having a port open does not guarantee that
-  the associated service is fully ready to accept requests, just that the service
-  is reachable at the network level.
+  Considers container as ready as soon as a command runs successfully inside the container.
   """
+  defstruct [:ip, :port, :timeout]
 
   @doc """
-  Waits for the specified IP and port the be open.
-
-  ## Params:
-  - ip: The IP address as a string.
-  - port: The port number as an integer.
-  - timeout: The maximum time to wait (in milliseconds) as an integer.
+  Creates a new CommandWaitStrategy to wait until the given command executes successfully inside the container.
   """
+  def new(ip, port, timeout \\ 5000),
+    do: %__MODULE__{ip: ip, port: port, timeout: timeout}
+end
+
+defimpl TestcontainersElixir.WaitStrategy, for: TestcontainersElixir.WaitStrategy.PortWaitStrategy do
+  alias TestcontainersElixir.Docker
+  alias TestcontainersElixir.Container
+
+  @impl true
+  def wait_until_container_is_ready(wait_strategy, id_or_name) do
+    with {:ok, %Container{} = container} <- Docker.Api.get_container(id_or_name) do
+      host_port = Container.mapped_port(container, wait_strategy.port)
+
+      case wait_for_port(wait_strategy.ip, host_port, wait_strategy.timeout) do
+        {:ok, :port_is_open} ->
+          :ok
+
+        _ ->
+          :timer.sleep(100)
+          wait_until_container_is_ready(wait_strategy, id_or_name)
+      end
+    end
+  end
+
   def wait_for_port(ip, port, timeout \\ 1000)
       when is_binary(ip) and is_integer(port) and is_integer(timeout) do
     wait_for_port(ip, port, timeout, :os.system_time(:millisecond))
