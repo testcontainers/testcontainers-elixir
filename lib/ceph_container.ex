@@ -19,14 +19,14 @@ defmodule TestcontainersElixir.CephContainer do
         CEPH_PUBLIC_NETWORK: "0.0.0.0/0",
         MON_IP: "127.0.0.1",
         RGW_NAME: "localhost"
-      }
+      },
+      waiting_strategy: &waiting_strategy/1
     )
   end
 
-  def waiting_strategy(conn, container),
+  defp waiting_strategy(container),
     do:
       LogChecker.wait_for_log(
-        conn,
         container.container_id,
         ~r/.*Bucket 's3:\/\/.*\/' created.*/,
         300_000

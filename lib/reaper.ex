@@ -1,7 +1,10 @@
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: MIT
+# Original by: Marco Dallagiacoma @ 2023 in https://github.com/dallagi/excontainers
+# Modified by: Jarl André Hübenthal @ 2023
 defmodule TestcontainersElixir.Reaper do
   use GenServer
 
+  alias TestcontainersElixir.Docker
   alias TestcontainersElixir.Container
 
   @ryuk_image "testcontainers/ryuk:0.5.1"
@@ -57,7 +60,7 @@ defmodule TestcontainersElixir.Reaper do
     |> Container.with_environment("RYUK_PORT", "#{@ryuk_port}")
     |> Container.with_environment("RYUK_CONNECTION_TIMEOUT", "120s")
     |> Container.with_bind_mount("/var/run/docker.sock", "/var/run/docker.sock", "rw")
-    |> Container.run(reap: false)
+    |> Docker.Api.run(reap: false)
   end
 
   defp create_ryuk_socket(%Container{} = container) do

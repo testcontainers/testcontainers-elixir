@@ -37,5 +37,3 @@ jobs:
       run: mix deps.get
     - name: Run tests
       run: mix test
-    - name: Ensure Apache License
-      run: mix insert_license --verify --license apache
