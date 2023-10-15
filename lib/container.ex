@@ -9,7 +9,7 @@ defmodule Testcontainers.Container do
     cmd: nil,
     environment: %{},
     exposed_ports: [],
-    wait_strategy: nil,
+    wait_strategies: [],
     privileged: false,
     bind_mounts: [],
     labels: %{},
@@ -29,7 +29,7 @@ defmodule Testcontainers.Container do
       exposed_ports: Keyword.get(opts, :exposed_ports, []),
       privileged: opts[:privileged] || false,
       auto_remove: opts[:auto_remove] || true,
-      wait_strategy: opts[:wait_strategy] || nil
+      wait_strategies: opts[:wait_strategies] || []
     }
   end
 
@@ -37,7 +37,14 @@ defmodule Testcontainers.Container do
   Sets a _waiting strategy_ for the _container_.
   """
   def with_waiting_strategy(%__MODULE__{} = config, wait_fn) do
-    %__MODULE__{config | wait_strategy: wait_fn}
+    %__MODULE__{config | wait_strategies: [wait_fn | config.wait_strategies]}
+  end
+
+  @doc """
+  Sets multiple _waiting strategies_ for the _container_.
+  """
+  def with_waiting_strategies(%__MODULE__{} = config, wait_fns) when is_list(wait_fns) do
+    %__MODULE__{config | wait_strategies: wait_fns ++ config.wait_strategies}
   end
 
   @doc """
@@ -52,6 +59,13 @@ defmodule Testcontainers.Container do
   """
   def with_exposed_port(%__MODULE__{} = config, port) do
     %__MODULE__{config | exposed_ports: [port | config.exposed_ports]}
+  end
+
+  @doc """
+  Adds multiple _ports_ to be exposed on the _container_.
+  """
+  def with_exposed_ports(%__MODULE__{} = config, ports) when is_list(ports) do
+    %__MODULE__{config | exposed_ports: ports ++ config.exposed_ports}
   end
 
   @doc """

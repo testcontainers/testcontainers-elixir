@@ -21,9 +21,9 @@ defmodule Testcontainers.Container.RedisContainer do
     Container.new(
       image,
       exposed_ports: [@redis_port],
-      environment: %{},
-      wait_strategy: @wait_strategy
+      environment: %{}
     )
+    |> Container.with_waiting_strategy(@wait_strategy)
   end
 
   @doc """

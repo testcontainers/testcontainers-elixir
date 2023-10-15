@@ -34,9 +34,9 @@ defmodule Testcontainers.Container.PostgresContainer do
         POSTGRES_USER: username,
         POSTGRES_PASSWORD: password,
         POSTGRES_DB: database
-      },
-      wait_strategy: wait_strategy(username, database)
+      }
     )
+    |> Container.with_waiting_strategy(wait_strategy(username, database))
   end
 
   @doc """

@@ -10,7 +10,7 @@ defmodule Testcontainers.Reaper do
     Process.flag(:trap_exit, true)
 
     children = [
-      {Testcontainers.ReaperWorker, []},
+      {Testcontainers.ReaperWorker, []}
     ]
 
     Supervisor.init(children, strategy: :one_for_one)

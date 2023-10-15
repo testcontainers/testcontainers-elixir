@@ -35,9 +35,9 @@ defmodule Testcontainers.Container.MySqlContainer do
         MYSQL_PASSWORD: password,
         MYSQL_DATABASE: database,
         MYSQL_RANDOM_ROOT_PASSWORD: "yes"
-      },
-      wait_strategy: wait_strategy(username, password)
+      }
     )
+    |> Container.with_waiting_strategy(wait_strategy(username, password))
   end
 
   @doc """

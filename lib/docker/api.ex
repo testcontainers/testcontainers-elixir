@@ -9,7 +9,7 @@ defmodule Testcontainers.Docker.Api do
 
   def run(%Container{} = container_config, options \\ []) do
     on_exit = Keyword.get(options, :on_exit, nil)
-    wait_strategy = container_config.wait_strategy
+    wait_strategies = container_config.wait_strategies
     create_request = container_create_request(container_config)
 
     with :ok <- pull_image(create_request."Image", recv_timeout: 60_000),
@@ -25,9 +25,11 @@ defmodule Testcontainers.Docker.Api do
             end),
          {:ok, container} <- get_container(id),
          :ok <-
-           if(wait_strategy != nil,
+           if(!Enum.empty?(wait_strategies),
              do:
-               WaitStrategy.wait_until_container_is_ready(wait_strategy, container.container_id),
+               Enum.each(wait_strategies, fn wait_strategy ->
+                 WaitStrategy.wait_until_container_is_ready(wait_strategy, container.container_id)
+               end),
              else: :ok
            ) do
       {:ok, container}
@@ -48,8 +50,15 @@ defmodule Testcontainers.Docker.Api do
   defp pull_image(image, options) do
     conn = Connection.get_connection(options)
 
-    with {:ok, %Tesla.Env{status: 200}} <- Api.Image.image_create(conn, fromImage: image) do
-      :ok
+    case Api.Image.image_create(conn, fromImage: image) do
+      {:ok, %Tesla.Env{status: 200}} ->
+        :ok
+
+      {:ok, %Tesla.Env{status: other}} ->
+        {:ok, {:http_error, other}}
+
+      {:ok, %DockerEngineAPI.Model.ErrorResponse{} = error} ->
+        {:error, {:failed_to_pull_image, error}}
     end
   end
 

@@ -10,7 +10,8 @@ defmodule TestcontainersElixir.MixProject do
       app: @app,
       name: "#{@app}",
       version: @version,
-      description: "Testcontainers is an Elixir library that supports ExUnit tests, providing lightweight, throwaway instances of common databases, Selenium web browsers, or anything else that can run in a Docker container.",
+      description:
+        "Testcontainers is an Elixir library that supports ExUnit tests, providing lightweight, throwaway instances of common databases, Selenium web browsers, or anything else that can run in a Docker container.",
       elixir: "~> 1.15",
       source_url: @source_url,
       homepage_url: @source_url,

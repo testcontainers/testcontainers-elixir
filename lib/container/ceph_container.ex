@@ -19,9 +19,9 @@ defmodule Testcontainers.Container.CephContainer do
         CEPH_PUBLIC_NETWORK: "0.0.0.0/0",
         MON_IP: "127.0.0.1",
         RGW_NAME: "localhost"
-      },
-      wait_strategy: wait_strategy(bucket)
+      }
     )
+    |> Container.with_waiting_strategy(wait_strategy(bucket))
   end
 
   defp wait_strategy(bucket) do
