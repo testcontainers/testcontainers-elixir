@@ -15,7 +15,7 @@ defmodule TestcontainersElixir.MySqlContainerTest do
   end
 
   describe "with custom configuration" do
-    @custom_mysql MySqlContainer.new("mysql:8.1.0",
+    @custom_mysql MySqlContainer.new("mysql/mysql-server:8.0.32-1.2.11-server",
                     username: "custom-user",
                     password: "custom-password",
                     database: "custom-database"
@@ -35,7 +35,7 @@ defmodule TestcontainersElixir.MySqlContainerTest do
       query_result = MyXQL.query!(pid, "SELECT version()", [])
 
       version_info = query_result.rows |> Enum.at(0) |> Enum.at(0)
-      assert version_info =~ "8.1.0"
+      assert version_info =~ "8.0.32"
     end
   end
 end
