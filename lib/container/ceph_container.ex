@@ -13,9 +13,9 @@ defmodule TestcontainersElixir.Container.CephContainer do
       exposed_ports: [3300, 8080],
       environment: %{
         CEPH_DEMO_UID: "demo",
-        CEPH_DEMO_BUCKET: "#{bucket}",
-        CEPH_DEMO_ACCESS_KEY: "#{access_key}",
-        CEPH_DEMO_SECRET_KEY: "#{secret_key}",
+        CEPH_DEMO_BUCKET: bucket,
+        CEPH_DEMO_ACCESS_KEY: access_key,
+        CEPH_DEMO_SECRET_KEY: secret_key,
         CEPH_PUBLIC_NETWORK: "0.0.0.0/0",
         MON_IP: "127.0.0.1",
         RGW_NAME: "localhost"

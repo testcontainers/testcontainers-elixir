@@ -2,34 +2,62 @@
 # Original by: Marco Dallagiacoma @ 2023 in https://github.com/dallagi/excontainers
 # Modified by: Jarl André Hübenthal @ 2023
 defmodule TestcontainersElixir.Reaper do
+  use GenServer
+
   alias TestcontainersElixir.Docker
   alias TestcontainersElixir.Container
 
   @ryuk_image "testcontainers/ryuk:0.5.1"
   @ryuk_port 8080
 
-  def register({filter_key, filter_value}) do
-    with {:ok, socket} <- get_ryuk_socket() do
-      :gen_tcp.send(
-        socket,
-        "#{:uri_string.quote(filter_key)}=#{:uri_string.quote(filter_value)}" <> "\n"
-      )
-
-      case :gen_tcp.recv(socket, 0, 8_000) do
-        {:ok, "ACK\n"} ->
-          :ok
-
-        {:error, reason} ->
-          IO.puts("Reaper: Ignoring error acking data: #{inspect(reason)}")
-          :ok
-      end
-    end
+  def start_link() do
+    GenServer.start_link(__MODULE__, nil, name: __MODULE__)
   end
 
-  defp get_ryuk_socket() do
+  def register(filter) do
+    :ok = ensure_reaper_is_alive()
+    GenServer.call(__MODULE__, {:register, filter}, 10000)
+  end
+
+  @impl true
+  def init(_) do
     with {:ok, container} <- create_ryuk_container(),
          {:ok, socket} <- create_ryuk_socket(container) do
       {:ok, socket}
+    else
+      error ->
+        {:stop, "Failed to start reaper: #{inspect(error)}"}
+    end
+  end
+
+  @impl true
+  def handle_call({:register, filter}, _from, socket) do
+    case register(socket, filter) do
+      :ok ->
+        {:reply, :ok, socket}
+      other ->
+        {:reply, {:error, "Failed to handle register: #{inspect(other)}"}, socket}
+    end
+
+  end
+
+  defp register(socket, {filter_key, filter_value}) do
+    :gen_tcp.send(
+      socket,
+      "#{:uri_string.quote(filter_key)}=#{:uri_string.quote(filter_value)}" <> "\n"
+    )
+
+    case :gen_tcp.recv(socket, 0, 1_000) do
+      {:ok, "ACK\n"} ->
+        :ok
+
+      {:error, :closed} ->
+        IO.puts("Reaper connection was closed, ignoring")
+        :ok
+
+      {:error, reason} ->
+        IO.puts("Error receiving data: #{inspect(reason)}")
+        {:error, reason}
     end
   end
 
@@ -50,5 +78,19 @@ defmodule TestcontainersElixir.Reaper do
       active: false,
       packet: :line
     ])
+  end
+
+  defp ensure_reaper_is_alive() do
+    case __MODULE__.start_link() do
+      {:error, {:already_started, _}} ->
+        :ok
+
+      {:ok, _} ->
+        :ok
+
+      other ->
+        IO.puts("Ignoring unexpected result from starting reaper: #{inspect(other)}")
+        :ok
+    end
   end
 end
