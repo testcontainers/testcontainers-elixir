@@ -1,4 +1,4 @@
-defmodule TestcontainersElixir.Reaper do
+defmodule Testcontainers.Reaper do
   use Supervisor
 
   def start_link(opts \\ []) do
@@ -10,20 +10,20 @@ defmodule TestcontainersElixir.Reaper do
     Process.flag(:trap_exit, true)
 
     children = [
-      {TestcontainersElixir.ReaperWorker, []},
+      {Testcontainers.ReaperWorker, []},
     ]
 
     Supervisor.init(children, strategy: :one_for_one)
   end
 end
 
-defmodule TestcontainersElixir.ReaperWorker do
+defmodule Testcontainers.ReaperWorker do
   use GenServer
 
   require Logger
 
-  alias TestcontainersElixir.Docker
-  alias TestcontainersElixir.Container
+  alias Testcontainers.Docker
+  alias Testcontainers.Container
 
   @ryuk_image "testcontainers/ryuk:0.5.1"
   @ryuk_port 8080
@@ -37,10 +37,10 @@ defmodule TestcontainersElixir.ReaperWorker do
       GenServer.cast(__MODULE__, {:register, filter})
     else
       Logger.warning("""
-      Reaper is not running! Ensure that TestcontainersElixir.Reaper
+      Reaper is not running! Ensure that Testcontainers.Reaper
       is started in your test_helper.exs.
       e.g.,
-        TestcontainersElixir.Reaper.start_link()
+        Testcontainers.Reaper.start_link()
       """)
     end
   end

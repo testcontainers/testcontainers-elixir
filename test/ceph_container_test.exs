@@ -1,9 +1,9 @@
 defmodule CephContainerTest do
   use ExUnit.Case, async: true
 
-  import TestcontainersElixir.ExUnit
-  alias TestcontainersElixir.Container
-  alias TestcontainersElixir.Container.CephContainer
+  import Testcontainers.ExUnit
+  alias Testcontainers.Container
+  alias Testcontainers.Container.CephContainer
 
   @tag timeout: 300_000
 

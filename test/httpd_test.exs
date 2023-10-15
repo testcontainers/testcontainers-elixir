@@ -1,10 +1,10 @@
 defmodule AnotherTest do
   use ExUnit.Case, async: true
 
-  import TestcontainersElixir.ExUnit
+  import Testcontainers.ExUnit
 
-  alias TestcontainersElixir.Container
-  alias TestcontainersElixir.WaitStrategy.HttpWaitStrategy
+  alias Testcontainers.Container
+  alias Testcontainers.WaitStrategy.HttpWaitStrategy
 
   test "creates and uses container" do
     exposed_port = 80

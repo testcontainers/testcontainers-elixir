@@ -1,10 +1,10 @@
 defmodule SimpleTest do
   use ExUnit.Case, async: true
 
-  import TestcontainersElixir.ExUnit
+  import Testcontainers.ExUnit
 
-  alias TestcontainersElixir.WaitStrategy.HttpWaitStrategy
-  alias TestcontainersElixir.Container
+  alias Testcontainers.WaitStrategy.HttpWaitStrategy
+  alias Testcontainers.Container
 
   test "creates and uses container" do
     exposed_port = 80

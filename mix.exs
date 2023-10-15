@@ -1,15 +1,19 @@
 defmodule TestcontainersElixir.MixProject do
   use Mix.Project
 
-  @app :testcontainers_elixir
-  @version "0.1.0"
+  @app :testcontainers
+  @version "1.0.0"
 
   def project do
     [
       app: @app,
-      version: @version,
-      elixir: "~> 1.15",
       name: "#{@app}",
+      version: @version,
+      description: "Testcontainers is an Elixir library that supports ExUnit tests, providing lightweight, throwaway instances of common databases, Selenium web browsers, or anything else that can run in a Docker container.",
+      elixir: "~> 1.15",
+      licenses: ["MIT"],
+      source_url: "https://github.com/jarlah/testcontainers-elixir",
+      homepage_url: "https://github.com/jarlah/testcontainers-elixir",
       aliases: aliases(),
       deps: deps()
     ]

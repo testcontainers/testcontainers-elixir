@@ -1,8 +1,8 @@
-defmodule TestcontainersElixir.MySqlContainerTest do
+defmodule Testcontainers.MySqlContainerTest do
   use ExUnit.Case, async: true
-  import TestcontainersElixir.ExUnit
 
-  alias TestcontainersElixir.Container.MySqlContainer
+  import Testcontainers.ExUnit
+  alias Testcontainers.Container.MySqlContainer
 
   describe "with default configuration" do
     container(:mysql, MySqlContainer.new())

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Original by: Marco Dallagiacoma @ 2023 in https://github.com/dallagi/excontainers
 # Modified by: Jarl André Hübenthal @ 2023
-defprotocol TestcontainersElixir.WaitStrategy do
+defprotocol Testcontainers.WaitStrategy do
   @moduledoc false
 
   @spec wait_until_container_is_ready(t, String.t()) :: :ok | {:error, atom()}

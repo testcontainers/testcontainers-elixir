@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: MIT
 # Original by: Marco Dallagiacoma @ 2023 in https://github.com/dallagi/excontainers
 # Modified by: Jarl André Hübenthal @ 2023
-defmodule TestcontainersElixir.Container.PostgresContainer do
+defmodule Testcontainers.Container.PostgresContainer do
   @moduledoc """
   Functions to build and interact with PostgreSql containers.
   """
 
-  alias TestcontainersElixir.Container
-  alias TestcontainersElixir.WaitStrategy.CommandWaitStrategy
+  alias Testcontainers.Container
+  alias Testcontainers.WaitStrategy.CommandWaitStrategy
 
   @postgres_port 5432
 

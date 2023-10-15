@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Original by: Marco Dallagiacoma @ 2023 in https://github.com/dallagi/excontainers
 # Modified by: Jarl André Hübenthal @ 2023
-defmodule TestcontainersElixir.WaitStrategy.CommandWaitStrategy do
+defmodule Testcontainers.WaitStrategy.CommandWaitStrategy do
   @moduledoc """
   Considers container as ready as soon as a command runs successfully inside the container.
   """
@@ -13,9 +13,9 @@ defmodule TestcontainersElixir.WaitStrategy.CommandWaitStrategy do
   def new(command), do: %__MODULE__{command: command}
 end
 
-defimpl TestcontainersElixir.WaitStrategy,
-  for: TestcontainersElixir.WaitStrategy.CommandWaitStrategy do
-  alias TestcontainersElixir.Docker.Exec
+defimpl Testcontainers.WaitStrategy,
+  for: Testcontainers.WaitStrategy.CommandWaitStrategy do
+  alias Testcontainers.Docker.Exec
 
   def wait_until_container_is_ready(wait_strategy, id_or_name) do
     case exec_and_wait(id_or_name, wait_strategy.command) do

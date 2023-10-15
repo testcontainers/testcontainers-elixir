@@ -1,7 +1,7 @@
-defmodule TestcontainersElixir.Docker.Exec do
+defmodule Testcontainers.Docker.Exec do
   @moduledoc false
 
-  alias TestcontainersElixir.Connection
+  alias Testcontainers.Connection
 
   def inspect(exec_id, options \\ []) do
     conn = Connection.get_connection(options)

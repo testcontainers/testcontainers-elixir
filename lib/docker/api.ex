@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: MIT
-defmodule TestcontainersElixir.Docker.Api do
-  alias TestcontainersElixir.WaitStrategy
+defmodule Testcontainers.Docker.Api do
+  alias Testcontainers.WaitStrategy
   alias DockerEngineAPI.Model.ContainerCreateRequest
   alias DockerEngineAPI.Api
-  alias TestcontainersElixir.Container
-  alias TestcontainersElixir.ReaperWorker
-  alias TestcontainersElixir.Connection
+  alias Testcontainers.Container
+  alias Testcontainers.ReaperWorker
+  alias Testcontainers.Connection
 
   def run(%Container{} = container_config, options \\ []) do
     on_exit = Keyword.get(options, :on_exit, nil)

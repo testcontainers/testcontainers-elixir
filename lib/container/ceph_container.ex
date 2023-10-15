@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
-defmodule TestcontainersElixir.Container.CephContainer do
-  alias TestcontainersElixir.WaitStrategy.LogWaitStrategy
-  alias TestcontainersElixir.Container
+defmodule Testcontainers.Container.CephContainer do
+  alias Testcontainers.WaitStrategy.LogWaitStrategy
+  alias Testcontainers.Container
 
   def new(options \\ []) do
     image = Keyword.get(options, :image, "quay.io/ceph/demo:latest-quincy")

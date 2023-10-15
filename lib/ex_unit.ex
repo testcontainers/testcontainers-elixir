@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: MIT
 # Original by: Marco Dallagiacoma @ 2023 in https://github.com/dallagi/excontainers
 # Modified by: Jarl André Hübenthal @ 2023
-defmodule TestcontainersElixir.ExUnit do
+defmodule Testcontainers.ExUnit do
   @moduledoc """
   Convenient macros to run containers within ExUnit tests.
   """
   import ExUnit.Callbacks
 
-  alias TestcontainersElixir.Docker
+  alias Testcontainers.Docker
 
   @doc """
   Sets a container to be created anew for each test in the module.

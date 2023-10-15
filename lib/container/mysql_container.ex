@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: MIT
 # Original by: Marco Dallagiacoma @ 2023 in https://github.com/dallagi/excontainers
 # Modified by: Jarl André Hübenthal @ 2023
-defmodule TestcontainersElixir.Container.MySqlContainer do
+defmodule Testcontainers.Container.MySqlContainer do
   @moduledoc """
   Functions to build and interact with MySql containers.
   """
 
-  alias TestcontainersElixir.Container
-  alias TestcontainersElixir.WaitStrategy.CommandWaitStrategy
+  alias Testcontainers.Container
+  alias Testcontainers.WaitStrategy.CommandWaitStrategy
 
   @mysql_port 3306
 

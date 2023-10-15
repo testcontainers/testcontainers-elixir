@@ -1,8 +1,8 @@
-defmodule TestcontainersElixir.RedisContainerTest do
+defmodule Testcontainers.RedisContainerTest do
   use ExUnit.Case, async: true
-  import TestcontainersElixir.ExUnit
+  import Testcontainers.ExUnit
 
-  alias TestcontainersElixir.Container.RedisContainer
+  alias Testcontainers.Container.RedisContainer
 
   describe "with default configuration" do
     container(:redis, RedisContainer.new())

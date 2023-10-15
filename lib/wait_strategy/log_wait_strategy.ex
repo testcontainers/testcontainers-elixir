@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-defmodule TestcontainersElixir.WaitStrategy.LogWaitStrategy do
+defmodule Testcontainers.WaitStrategy.LogWaitStrategy do
   @moduledoc """
   Considers container as ready as soon as a command runs successfully inside the container.
   """
@@ -12,8 +12,8 @@ defmodule TestcontainersElixir.WaitStrategy.LogWaitStrategy do
     do: %__MODULE__{log_regex: log_regex, timeout: timeout}
 end
 
-defimpl TestcontainersElixir.WaitStrategy, for: TestcontainersElixir.WaitStrategy.LogWaitStrategy do
-  alias TestcontainersElixir.Docker
+defimpl Testcontainers.WaitStrategy, for: Testcontainers.WaitStrategy.LogWaitStrategy do
+  alias Testcontainers.Docker
 
   @impl true
   def wait_until_container_is_ready(wait_strategy, id_or_name) do

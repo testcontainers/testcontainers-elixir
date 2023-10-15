@@ -1,8 +1,8 @@
-defmodule TestcontainersElixir.PostgresContainerTest do
+defmodule Testcontainers.PostgresContainerTest do
   use ExUnit.Case, async: true
-  import TestcontainersElixir.ExUnit
+  import Testcontainers.ExUnit
 
-  alias TestcontainersElixir.Container.PostgresContainer
+  alias Testcontainers.Container.PostgresContainer
 
   describe "with default configuration" do
     container(:postgres, PostgresContainer.new())
