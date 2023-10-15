@@ -9,7 +9,7 @@ defmodule Testcontainers.Docker.Api do
 
   def run(%Container{} = container_config, options \\ []) do
     on_exit = Keyword.get(options, :on_exit, nil)
-    wait_strategies = container_config.wait_strategies
+    wait_strategies = container_config.wait_strategies || []
     create_request = container_create_request(container_config)
 
     with :ok <- pull_image(create_request."Image", recv_timeout: 60_000),
@@ -25,20 +25,16 @@ defmodule Testcontainers.Docker.Api do
             end),
          {:ok, container} <- get_container(id),
          :ok <-
-           if(!Enum.empty?(wait_strategies),
-             do:
-               Enum.reduce(wait_strategies, :ok, fn
-                 wait_strategy, :ok ->
-                   WaitStrategy.wait_until_container_is_ready(
-                     wait_strategy,
-                     container.container_id
-                   )
+           Enum.reduce(wait_strategies, :ok, fn
+             wait_strategy, :ok ->
+               WaitStrategy.wait_until_container_is_ready(
+                 wait_strategy,
+                 container.container_id
+               )
 
-                 _, error ->
-                   error
-               end),
-             else: :ok
-           ) do
+             _, error ->
+               error
+           end) do
       {:ok, container}
     else
       {:error, other} -> {:error, other}

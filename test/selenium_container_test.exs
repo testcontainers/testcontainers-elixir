@@ -11,7 +11,9 @@ defmodule Testcontainers.SeleniumContainerTest do
     container(:selenium, SeleniumContainer.new())
 
     test "provides a ready-to-use selenium container", %{selenium: selenium} do
+      assert Container.mapped_port(selenium, 4400) > 0
       assert Container.mapped_port(selenium, 4400) != 4400
+      assert Container.mapped_port(selenium, 7900) > 0
       assert Container.mapped_port(selenium, 7900) != 7900
     end
   end
