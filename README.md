@@ -1,5 +1,10 @@
 # Testcontainers
 
+[![Hex.pm](https://img.shields.io/hexpm/v/testcontainers.svg)]()
+[![Hex.pm](https://img.shields.io/hexpm/dt/testcontainers.svg)]()
+[![Hex.pm](https://img.shields.io/hexpm/dw/testcontainers.svg)]()
+[![Hex.pm](https://img.shields.io/hexpm/dd/testcontainers.svg)]()
+
 > Testcontainers is an Elixir library that supports ExUnit tests, providing lightweight, throwaway instances of common databases, Selenium web browsers, or anything else that can run in a Docker container.
 
 ## Usage
