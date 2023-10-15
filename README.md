@@ -12,7 +12,7 @@ test/test_helper.exs
 ExUnit.start()
 ```
 
-test/myswql_container_test.exs
+test/mysql_container_test.exs
 ```elixir
 defmodule MySqlContainerTest do
   use ExUnit.Case, async: true
