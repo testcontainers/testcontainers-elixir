@@ -27,8 +27,15 @@ defmodule Testcontainers.Docker.Api do
          :ok <-
            if(!Enum.empty?(wait_strategies),
              do:
-               Enum.each(wait_strategies, fn wait_strategy ->
-                 WaitStrategy.wait_until_container_is_ready(wait_strategy, container.container_id)
+               Enum.reduce(wait_strategies, :ok, fn
+                 wait_strategy, :ok ->
+                   WaitStrategy.wait_until_container_is_ready(
+                     wait_strategy,
+                     container.container_id
+                   )
+
+                 _, error ->
+                   error
                end),
              else: :ok
            ) do

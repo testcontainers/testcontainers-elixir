@@ -21,13 +21,17 @@ defimpl Testcontainers.WaitStrategy, for: Testcontainers.WaitStrategy.PortWaitSt
     with {:ok, %Container{} = container} <- Docker.Api.get_container(id_or_name) do
       host_port = Container.mapped_port(container, wait_strategy.port)
 
-      case wait_for_port(wait_strategy.ip, host_port, wait_strategy.timeout) do
-        {:ok, :port_is_open} ->
-          :ok
+      if host_port == nil do
+        {:error, {:no_host_port, wait_strategy.port}}
+      else
+        case wait_for_port(wait_strategy.ip, host_port, wait_strategy.timeout) do
+          {:ok, :port_is_open} ->
+            :ok
 
-        _ ->
-          :timer.sleep(100)
-          wait_until_container_is_ready(wait_strategy, id_or_name)
+          _ ->
+            :timer.sleep(100)
+            wait_until_container_is_ready(wait_strategy, id_or_name)
+        end
       end
     end
   end
