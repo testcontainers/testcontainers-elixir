@@ -3,6 +3,7 @@ defmodule TestcontainersElixir.MixProject do
 
   @app :testcontainers
   @version "1.0.0"
+  @source_url "https://github.com/jarlah/testcontainers-elixir"
 
   def project do
     [
@@ -11,11 +12,14 @@ defmodule TestcontainersElixir.MixProject do
       version: @version,
       description: "Testcontainers is an Elixir library that supports ExUnit tests, providing lightweight, throwaway instances of common databases, Selenium web browsers, or anything else that can run in a Docker container.",
       elixir: "~> 1.15",
-      licenses: ["MIT"],
-      source_url: "https://github.com/jarlah/testcontainers-elixir",
-      homepage_url: "https://github.com/jarlah/testcontainers-elixir",
+      source_url: @source_url,
+      homepage_url: @source_url,
       aliases: aliases(),
-      deps: deps()
+      deps: deps(),
+      package: [
+        links: %{"GitHub" => @source_url},
+        licenses: ["MIT"]
+      ]
     ]
   end
 
@@ -33,9 +37,7 @@ defmodule TestcontainersElixir.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:ex_license, "~> 0.1.0"},
-      {:docker_engine_api,
-       git: "https://github.com/jarlah/docker-engine-api-elixir.git", tag: "1.43.0.5-hackney"},
+      {:ex_docker_engine_api, "~> 1.43"},
       {:myxql, "~> 0.6.0", only: [:dev, :test]},
       {:postgrex, "~> 0.17", only: [:dev, :test]},
       {:redix, "~> 1.2", only: [:dev, :test]}
