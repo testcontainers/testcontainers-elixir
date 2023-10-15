@@ -15,8 +15,10 @@ defmodule TestcontainersElixir.Reaper do
   end
 
   def register(filter) do
-    :ok = ensure_reaper_is_alive()
-    GenServer.call(__MODULE__, {:register, filter}, 10000)
+    case GenServer.whereis(__MODULE__) do
+      nil -> IO.puts("Reaper is not configured, add it to test_helper.exs with TestcontainersElixir.Reaper.start_link()")
+      _pid -> GenServer.call(__MODULE__, {:register, filter}, 5000)
+    end
   end
 
   @impl true
@@ -78,19 +80,5 @@ defmodule TestcontainersElixir.Reaper do
       active: false,
       packet: :line
     ])
-  end
-
-  defp ensure_reaper_is_alive() do
-    case __MODULE__.start_link() do
-      {:error, {:already_started, _}} ->
-        :ok
-
-      {:ok, _} ->
-        :ok
-
-      other ->
-        IO.puts("Ignoring unexpected result from starting reaper: #{inspect(other)}")
-        :ok
-    end
   end
 end
