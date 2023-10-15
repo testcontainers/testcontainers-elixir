@@ -1,4 +1,4 @@
-defmodule SimpleTest do
+defmodule Testcontainers.NginxTest do
   use ExUnit.Case, async: true
 
   import Testcontainers.ExUnit

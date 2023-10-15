@@ -1,4 +1,4 @@
-defmodule AnotherTest do
+defmodule Testcontainers.HttpdTest do
   use ExUnit.Case, async: true
 
   import Testcontainers.ExUnit

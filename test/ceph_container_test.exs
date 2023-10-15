@@ -1,4 +1,4 @@
-defmodule CephContainerTest do
+defmodule Testcontainers.CephContainerTest do
   use ExUnit.Case, async: true
 
   import Testcontainers.ExUnit
