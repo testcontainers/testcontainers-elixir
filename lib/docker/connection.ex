@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-defmodule Testcontainers.Connection do
+defmodule Testcontainers.Docker.Connection do
   alias DockerEngineAPI.Connection
 
   @default_host "unix:///var/run/docker.sock"

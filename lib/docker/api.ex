@@ -5,7 +5,7 @@ defmodule Testcontainers.Docker.Api do
   alias DockerEngineAPI.Api
   alias Testcontainers.Container
   alias Testcontainers.ReaperWorker
-  alias Testcontainers.Connection
+  alias Testcontainers.Docker.Connection
 
   def run(%Container{} = container_config, options \\ []) do
     on_exit = Keyword.get(options, :on_exit, nil)
