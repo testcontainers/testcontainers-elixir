@@ -1,6 +1,7 @@
 defmodule Testcontainers.Container.SeleniumContainer do
   @moduledoc """
   Work in progress. Not stable for use yet.
+  Can use https://github.com/stuart/elixir-webdriver for client in tests
   """
 
   alias Testcontainers.Container

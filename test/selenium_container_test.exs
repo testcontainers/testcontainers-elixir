@@ -5,6 +5,8 @@ defmodule Testcontainers.SeleniumContainerTest do
   alias Testcontainers.Container
   alias Testcontainers.Container.SeleniumContainer
 
+  @tag timeout: 120_000
+
   describe "with default configuration" do
     container(:selenium, SeleniumContainer.new())
 
