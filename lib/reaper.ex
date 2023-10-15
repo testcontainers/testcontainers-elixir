@@ -1,4 +1,4 @@
-defmodule TestcontainersElixir.ReaperSupervisor do
+defmodule TestcontainersElixir.Reaper do
   use Supervisor
 
   def start_link(opts \\ []) do
@@ -7,16 +7,20 @@ defmodule TestcontainersElixir.ReaperSupervisor do
 
   @impl true
   def init(:ok) do
+    Process.flag(:trap_exit, true)
+
     children = [
-      {TestcontainersElixir.Reaper, []}
+      {TestcontainersElixir.ReaperWorker, []},
     ]
 
     Supervisor.init(children, strategy: :one_for_one)
   end
 end
 
-defmodule TestcontainersElixir.Reaper do
+defmodule TestcontainersElixir.ReaperWorker do
   use GenServer
+
+  require Logger
 
   alias TestcontainersElixir.Docker
   alias TestcontainersElixir.Container
@@ -29,14 +33,26 @@ defmodule TestcontainersElixir.Reaper do
   end
 
   def register(filter) do
-    GenServer.cast(__MODULE__, {:register, filter})
+    if Process.whereis(__MODULE__) do
+      GenServer.cast(__MODULE__, {:register, filter})
+    else
+      Logger.warning("""
+      Reaper is not running! Ensure that TestcontainersElixir.Reaper
+      is started in your test_helper.exs.
+      e.g.,
+        TestcontainersElixir.Reaper.start_link()
+      """)
+    end
   end
 
   @impl true
   def init(_) do
+    Process.flag(:trap_exit, true)
+
     with {:ok, container} <- create_ryuk_container(),
          {:ok, socket} <- create_ryuk_socket(container) do
-      {:ok, socket}
+      Logger.info("Reaper initialized with containerId #{container.container_id}")
+      {:ok, %{socket: socket, container: container}}
     else
       error ->
         {:stop, "Failed to start reaper: #{inspect(error)}"}
@@ -44,13 +60,13 @@ defmodule TestcontainersElixir.Reaper do
   end
 
   @impl true
-  def handle_cast({:register, filter}, socket) do
+  def handle_cast({:register, filter}, %{socket: socket} = state) do
     case register(socket, filter) do
       :ok ->
-        {:noreply, socket}
+        {:noreply, state}
+
       {:error, _reason} ->
-        # Let it crash, and the supervisor will restart it
-        {:stop, :error_reason, socket}
+        {:stop, :error_reason, state}
     end
   end
 
@@ -64,12 +80,8 @@ defmodule TestcontainersElixir.Reaper do
       {:ok, "ACK\n"} ->
         :ok
 
-      {:error, :closed} ->
-        IO.puts("Reaper connection was closed, ignoring")
-        :ok
-
       {:error, reason} ->
-        IO.puts("Error receiving data: #{inspect(reason)}")
+        Logger.warning("Error receiving data: #{inspect(reason)}")
         {:error, reason}
     end
   end

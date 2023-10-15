@@ -4,7 +4,7 @@ defmodule TestcontainersElixir.Docker.Api do
   alias DockerEngineAPI.Model.ContainerCreateRequest
   alias DockerEngineAPI.Api
   alias TestcontainersElixir.Container
-  alias TestcontainersElixir.Reaper
+  alias TestcontainersElixir.ReaperWorker
   alias TestcontainersElixir.Connection
 
   def run(%Container{} = container_config, options \\ []) do
@@ -128,7 +128,7 @@ defmodule TestcontainersElixir.Docker.Api do
   end
 
   defp reap_container(container_id) when is_binary(container_id) do
-    Reaper.register({"id", container_id})
+    ReaperWorker.register({"id", container_id})
   end
 
   defp from(

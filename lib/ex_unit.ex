@@ -16,6 +16,8 @@ defmodule TestcontainersElixir.ExUnit do
   """
   defmacro container(name, config) do
     quote do
+      require Logger
+
       setup do
         {:ok, container} = run_container(unquote(config))
 
@@ -31,6 +33,8 @@ defmodule TestcontainersElixir.ExUnit do
   """
   defmacro shared_container(name, config) do
     quote do
+      require Logger
+
       setup_all do
         {:ok, container} = run_container(unquote(config))
 
