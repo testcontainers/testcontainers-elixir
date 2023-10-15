@@ -1,6 +1,20 @@
-# SPDX-License-Identifier: MIT
-# Original by: Marco Dallagiacoma @ 2023 in https://github.com/dallagi/excontainers
-# Modified by: Jarl André Hübenthal @ 2023
+defmodule TestcontainersElixir.ReaperSupervisor do
+  use Supervisor
+
+  def start_link(opts \\ []) do
+    Supervisor.start_link(__MODULE__, :ok, opts)
+  end
+
+  @impl true
+  def init(:ok) do
+    children = [
+      {TestcontainersElixir.Reaper, []}
+    ]
+
+    Supervisor.init(children, strategy: :one_for_one)
+  end
+end
+
 defmodule TestcontainersElixir.Reaper do
   use GenServer
 
@@ -10,15 +24,12 @@ defmodule TestcontainersElixir.Reaper do
   @ryuk_image "testcontainers/ryuk:0.5.1"
   @ryuk_port 8080
 
-  def start_link() do
+  def start_link(_) do
     GenServer.start_link(__MODULE__, nil, name: __MODULE__)
   end
 
   def register(filter) do
-    case GenServer.whereis(__MODULE__) do
-      nil -> IO.puts("Reaper is not configured, add it to test_helper.exs with TestcontainersElixir.Reaper.start_link()")
-      _pid -> GenServer.call(__MODULE__, {:register, filter}, 5000)
-    end
+    GenServer.cast(__MODULE__, {:register, filter})
   end
 
   @impl true
@@ -33,14 +44,14 @@ defmodule TestcontainersElixir.Reaper do
   end
 
   @impl true
-  def handle_call({:register, filter}, _from, socket) do
+  def handle_cast({:register, filter}, socket) do
     case register(socket, filter) do
       :ok ->
-        {:reply, :ok, socket}
-      other ->
-        {:reply, {:error, "Failed to handle register: #{inspect(other)}"}, socket}
+        {:noreply, socket}
+      {:error, _reason} ->
+        # Let it crash, and the supervisor will restart it
+        {:stop, :error_reason, socket}
     end
-
   end
 
   defp register(socket, {filter_key, filter_value}) do
