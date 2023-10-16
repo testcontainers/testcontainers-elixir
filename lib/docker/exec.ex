@@ -1,5 +1,4 @@
 defmodule Testcontainers.Docker.Exec do
-
   alias Testcontainers.Docker.Connection
 
   def inspect(exec_id, options \\ []) do

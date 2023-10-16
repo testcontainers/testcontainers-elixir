@@ -57,7 +57,9 @@ defimpl Testcontainers.WaitStrategy, for: Testcontainers.WaitStrategy.HttpWaitSt
   defp wait_for_http(container_id, wait_strategy, host_port, start_time)
        when is_integer(host_port) and is_integer(start_time) do
     if wait_strategy.timeout + start_time < :os.system_time(:millisecond) do
-      {:error, {:http_wait_strategy, :timeout, wait_strategy.timeout}}
+      {:error,
+       {:http_wait_strategy, :timeout, wait_strategy.timeout,
+        elapsed_time: :os.system_time(:millisecond) - start_time}}
     else
       case http_request(
              wait_strategy.ip,

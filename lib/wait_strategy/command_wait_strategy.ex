@@ -45,8 +45,8 @@ defimpl Testcontainers.WaitStrategy,
       {:ok, other_exit_code} ->
         if out_of_time(started_at, wait_strategy.timeout) do
           {:error,
-           {:timeout, wait_strategy.timeout, elapsed_time: current_time_millis() - started_at},
-           wait_strategy}
+           {:command_wait_strategy, :timeout, wait_strategy.timeout,
+            elapsed_time: current_time_millis() - started_at}, wait_strategy}
         else
           delay = max(0, wait_strategy.retry_delay)
 

@@ -38,7 +38,9 @@ defimpl Testcontainers.WaitStrategy, for: Testcontainers.WaitStrategy.LogWaitStr
        when is_binary(container_id) and is_integer(wait_strategy.timeout) and
               is_integer(start_time) do
     if wait_strategy.timeout + start_time < :os.system_time(:millisecond) do
-      {:error, {:log_wait_strategy, :timeout, wait_strategy.timeout}}
+      {:error,
+       {:log_wait_strategy, :timeout, wait_strategy.timeout,
+        elapsed_time: :os.system_time(:millisecond) - start_time}}
     else
       if log_comparison(container_id, wait_strategy.log_regex) do
         {:ok, :log_is_ready}
