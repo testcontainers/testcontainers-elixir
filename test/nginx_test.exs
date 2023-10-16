@@ -6,7 +6,7 @@ defmodule Testcontainers.NginxTest do
   alias Testcontainers.WaitStrategy.HttpWaitStrategy
   alias Testcontainers.Container
 
-  @tag timeout: 300_000
+  @moduletag timeout: 300_000
 
   test "creates and uses container" do
     exposed_port = 80

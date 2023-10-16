@@ -5,7 +5,7 @@ defmodule Testcontainers.CephContainerTest do
   alias Testcontainers.Container
   alias Testcontainers.Container.CephContainer
 
-  @tag timeout: 300_000
+  @moduletag timeout: 300_000
 
   container(:ceph, CephContainer.new())
 
