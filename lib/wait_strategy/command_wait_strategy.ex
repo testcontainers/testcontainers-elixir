@@ -98,7 +98,7 @@ defimpl Testcontainers.WaitStrategy,
 
   defp do_wait_unless_timed_out(exec_id, timeout, started_at, retry_delay) do
     if out_of_time(started_at, timeout) do
-      {:error, {:timeout, timeout, elapsed_time: current_time_millis() - started_at}}
+      {:error, {:command_wait_strategy, :timeout, timeout, elapsed_time: current_time_millis() - started_at}}
     else
       delay = max(0, retry_delay)
       :timer.sleep(delay)
