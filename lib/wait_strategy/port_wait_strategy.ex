@@ -16,13 +16,13 @@ defmodule Testcontainers.WaitStrategy.PortWaitStrategy do
 end
 
 defimpl Testcontainers.WaitStrategy, for: Testcontainers.WaitStrategy.PortWaitStrategy do
-  alias Testcontainers.Docker
+  alias Testcontainers.Connection
   alias Testcontainers.Container
 
   require Logger
 
   def wait_until_container_is_ready(wait_strategy, id_or_name) do
-    with {:ok, %Container{} = container} <- Docker.Api.get_container(id_or_name) do
+    with {:ok, %Container{} = container} <- Connection.get_container(id_or_name) do
       host_port = Container.mapped_port(container, wait_strategy.port)
 
       if host_port == nil do

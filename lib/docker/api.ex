@@ -1,31 +1,11 @@
 # SPDX-License-Identifier: MIT
 defmodule Testcontainers.Docker.Api do
-  alias Testcontainers.WaitStrategy
   alias DockerEngineAPI.Model.ContainerCreateRequest
   alias DockerEngineAPI.Api
   alias Testcontainers.Container
-  alias Testcontainers.ReaperWorker
-  alias Testcontainers.Docker.Connection
 
-  def run(%Container{} = container_config, options \\ []) do
-    on_exit = Keyword.get(options, :on_exit, nil)
-    wait_strategies = container_config.wait_strategies || []
-    create_request = container_create_request(container_config)
-
-    with :ok <- pull_image(create_request."Image", recv_timeout: 60_000),
-         {:ok, id} <- create_container(create_request, recv_timeout: 2000),
-         :ok <- start_container(id, recv_timeout: 300_000),
-         :ok <- if(on_exit, do: on_exit.(fn -> stop_container(id) end), else: :ok),
-         :ok <- reap_container(id),
-         :ok <- wait_for_container(id, wait_strategies) do
-      get_container(id)
-    end
-  end
-
-  def get_container(container_id, options \\ [])
+  def get_container(container_id, conn)
       when is_binary(container_id) do
-    conn = Connection.get_connection(options)
-
     case Api.Container.container_inspect(conn, container_id) do
       {:error, %Tesla.Env{status: other}} ->
         {:error, {:http_error, other}}
@@ -38,19 +18,7 @@ defmodule Testcontainers.Docker.Api do
     end
   end
 
-  defp wait_for_container(id, wait_strategies) when is_binary(id) do
-    Enum.reduce(wait_strategies, :ok, fn
-      wait_strategy, :ok ->
-        WaitStrategy.wait_until_container_is_ready(wait_strategy, id)
-
-      _, error ->
-        error
-    end)
-  end
-
-  defp pull_image(image, options) when is_binary(image) do
-    conn = Connection.get_connection(options)
-
+  def pull_image(image, conn) when is_binary(image) do
     case Api.Image.image_create(conn, fromImage: image) do
       {:ok, %Tesla.Env{status: 200}} ->
         :ok
@@ -63,10 +31,8 @@ defmodule Testcontainers.Docker.Api do
     end
   end
 
-  defp create_container(%ContainerCreateRequest{} = config, options) do
-    conn = Connection.get_connection(options)
-
-    case Api.Container.container_create(conn, config) do
+  def create_container(%Container{} = container, conn) do
+    case Api.Container.container_create(conn, container_create_request(container)) do
       {:error, %Tesla.Env{status: other}} ->
         {:error, {:http_error, other}}
 
@@ -78,9 +44,7 @@ defmodule Testcontainers.Docker.Api do
     end
   end
 
-  defp start_container(id, options) when is_binary(id) do
-    conn = Connection.get_connection(options)
-
+  def start_container(id, conn) when is_binary(id) do
     case Api.Container.container_start(conn, id) do
       {:ok, %Tesla.Env{status: 204}} ->
         :ok
@@ -91,6 +55,80 @@ defmodule Testcontainers.Docker.Api do
       {:ok, %DockerEngineAPI.Model.ErrorResponse{} = error} ->
         {:error, {:failed_to_start_container, error}}
     end
+  end
+
+  def stop_container(container_id, conn) when is_binary(container_id) do
+    with {:ok, _} <- Api.Container.container_kill(conn, container_id),
+         {:ok, _} <- Api.Container.container_delete(conn, container_id) do
+      :ok
+    end
+  end
+
+  def inspect_exec(exec_id, conn) do
+    case DockerEngineAPI.Api.Exec.exec_inspect(conn, exec_id) do
+      {:ok, %DockerEngineAPI.Model.ExecInspectResponse{} = body} ->
+        {:ok, parse_inspect_result(body)}
+
+      {:ok, %Tesla.Env{status: status}} ->
+        {:error, {:http_error, status}}
+
+      {:ok, %DockerEngineAPI.Model.ErrorResponse{message: message}} ->
+        {:error, message}
+
+      {:error, message} ->
+        {:error, message}
+    end
+  end
+
+  def create_exec(container_id, command, conn) do
+    data = %{"Cmd" => command}
+
+    case DockerEngineAPI.Api.Exec.container_exec(conn, container_id, data) do
+      {:ok, %DockerEngineAPI.Model.IdResponse{Id: id}} ->
+        {:ok, id}
+
+      {:ok, %Tesla.Env{status: status}} ->
+        {:error, {:http_error, status}}
+
+      {:ok, %DockerEngineAPI.Model.ErrorResponse{message: message}} ->
+        {:error, message}
+
+      {:error, message} ->
+        {:error, message}
+    end
+  end
+
+  def start_exec(exec_id, conn) do
+    case DockerEngineAPI.Api.Exec.exec_start(conn, exec_id, body: %{}) do
+      {:ok, %Tesla.Env{status: 200}} ->
+        :ok
+
+      {:ok, %Tesla.Env{status: status}} ->
+        {:error, {:http_error, status}}
+
+      {:ok, %DockerEngineAPI.Model.ErrorResponse{message: message}} ->
+        {:error, message}
+
+      {:error, message} ->
+        {:error, message}
+    end
+  end
+
+  def stdout_logs(container_id, conn) do
+    case DockerEngineAPI.Api.Container.container_logs(conn, container_id, stdout: true) do
+      {:ok, %Tesla.Env{body: body}} ->
+        {:ok, body}
+
+      {:ok, %DockerEngineAPI.Model.ErrorResponse{message: message}} ->
+        {:error, message}
+
+      {:error, message} ->
+        {:error, message}
+    end
+  end
+
+  defp parse_inspect_result(%DockerEngineAPI.Model.ExecInspectResponse{} = json) do
+    %{running: json."Running", exit_code: json."ExitCode"}
   end
 
   defp container_create_request(%Container{} = container_config) do
@@ -140,19 +178,6 @@ defmodule Testcontainers.Docker.Api do
     |> Enum.map(fn volume_binding ->
       "#{volume_binding.host_src}:#{volume_binding.container_dest}:#{volume_binding.options}"
     end)
-  end
-
-  defp stop_container(container_id, options \\ []) when is_binary(container_id) do
-    conn = Connection.get_connection(options)
-
-    with {:ok, _} <- Api.Container.container_kill(conn, container_id),
-         {:ok, _} <- Api.Container.container_delete(conn, container_id) do
-      :ok
-    end
-  end
-
-  defp reap_container(container_id) when is_binary(container_id) do
-    ReaperWorker.register({"id", container_id})
   end
 
   defp from(

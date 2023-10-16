@@ -6,17 +6,9 @@
 
 ## Usage
 
-For automatic cleanup of docker containers created in tests, for example if testcontainers fails to stop and remove the container, its suggested to register a reaper genserver in test_helper.exs like this:
-
-test/test_helper.exs
+test/a_simple_mysql_container_test.exs
 ```elixir
-{:ok, _} = Testcontainers.Reaper.start_link()
-ExUnit.start()
-```
-
-test/mysql_container_test.exs
-```elixir
-defmodule MySqlContainerTest do
+defmodule ASimpleMySqlContainerTest do
   use ExUnit.Case, async: true
 
   import Testcontainers.ExUnit
@@ -27,14 +19,7 @@ defmodule MySqlContainerTest do
     container(:mysql, MySqlContainer.new())
 
     test "provides a ready-to-use mysql container", %{mysql: mysql} do
-      assert true
-
-      # if you want to test like below, add 
-      # {:myxql, "~> 0.6.0", only: [:dev, :test]},
-      # to mix.exs and run mix deps.get
-
-      #{:ok, pid} = MyXQL.start_link(MySqlContainer.connection_parameters(mysql))
-      #assert %{num_rows: 1} = MyXQL.query!(pid, "SELECT 1", [])
+      assert mysql.environment[:MYSQL_MAJOR] == "8.0"
     end
   end
 ```

@@ -1,48 +1,32 @@
 defmodule Testcontainers.Reaper do
-  use Supervisor
-
-  def start_link(opts \\ []) do
-    Supervisor.start_link(__MODULE__, :ok, opts)
-  end
-
-  @impl true
-  def init(:ok) do
-    Process.flag(:trap_exit, true)
-
-    children = [
-      {Testcontainers.ReaperWorker, []}
-    ]
-
-    Supervisor.init(children, strategy: :one_for_one)
-  end
-end
-
-defmodule Testcontainers.ReaperWorker do
   use GenServer
 
   require Logger
 
-  alias Testcontainers.Docker
   alias Testcontainers.Container
 
   @ryuk_image "testcontainers/ryuk:0.5.1"
   @ryuk_port 8080
+
+  @doc """
+  Eagerly starts this genserver unlinked and waits until it is registered
+  """
+  def start_eager(opts \\ []) do
+    case GenServer.whereis(__MODULE__) do
+      nil ->
+        start_unlinked(opts)
+
+      pid when is_pid(pid) ->
+        {:ok, pid}
+    end
+  end
 
   def start_link(_) do
     GenServer.start_link(__MODULE__, nil, name: __MODULE__)
   end
 
   def register(filter) do
-    if Process.whereis(__MODULE__) do
-      GenServer.cast(__MODULE__, {:register, filter})
-    else
-      Logger.warning("""
-      Reaper is not running! Ensure that Testcontainers.Reaper
-      is started in your test_helper.exs.
-      e.g.,
-        Testcontainers.Reaper.start_link()
-      """)
-    end
+    GenServer.cast(__MODULE__, {:register, filter})
   end
 
   @impl true
@@ -51,7 +35,11 @@ defmodule Testcontainers.ReaperWorker do
 
     with {:ok, container} <- create_ryuk_container(),
          {:ok, socket} <- create_ryuk_socket(container) do
-      Logger.info("Reaper initialized with containerId #{container.container_id}")
+      Logger.log(
+        Testcontainers.Constants.get_log_level(),
+        "Reaper initialized with containerId #{container.container_id}"
+      )
+
       {:ok, %{socket: socket, container: container}}
     end
   end
@@ -88,7 +76,7 @@ defmodule Testcontainers.ReaperWorker do
     |> Container.with_environment("RYUK_PORT", "#{@ryuk_port}")
     |> Container.with_environment("RYUK_CONNECTION_TIMEOUT", "120s")
     |> Container.with_bind_mount("/var/run/docker.sock", "/var/run/docker.sock", "rw")
-    |> Docker.Api.run(reap: false)
+    |> Container.run(reap: false)
   end
 
   defp create_ryuk_socket(%Container{} = container) do
@@ -99,5 +87,28 @@ defmodule Testcontainers.ReaperWorker do
       active: false,
       packet: :line
     ])
+  end
+
+  defp start_unlinked(opts) do
+    spawn(fn -> GenServer.start(__MODULE__, opts, name: __MODULE__) end)
+
+    wait_for_start(__MODULE__, 10_000)
+  end
+
+  defp wait_for_start(name, timeout) do
+    wait_for_start(name, timeout, :timer.seconds(1))
+  end
+
+  defp wait_for_start(_name, 0, _interval), do: {:error, :timeout}
+
+  defp wait_for_start(name, remaining_time, interval) do
+    case GenServer.whereis(name) do
+      nil ->
+        Process.sleep(interval)
+        wait_for_start(name, remaining_time - interval, interval)
+
+      pid when is_pid(pid) ->
+        {:ok, pid}
+    end
   end
 end

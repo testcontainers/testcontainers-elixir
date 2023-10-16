@@ -7,7 +7,9 @@ defmodule Testcontainers.ExUnit do
   """
   import ExUnit.Callbacks
 
-  alias Testcontainers.Docker
+  alias Testcontainers.Reaper
+  alias Testcontainers.Connection
+  alias Testcontainers.Container
 
   @doc """
   Sets a container to be created anew for each test in the module.
@@ -19,6 +21,9 @@ defmodule Testcontainers.ExUnit do
       require Logger
 
       setup do
+        {:ok, _} = Connection.start_eager()
+        {:ok, _} = Reaper.start_eager()
+
         {:ok, container} = run_container(unquote(config))
 
         {:ok, %{unquote(name) => container}}
@@ -36,6 +41,9 @@ defmodule Testcontainers.ExUnit do
       require Logger
 
       setup_all do
+        {:ok, _} = Connection.start_eager()
+        {:ok, _} = Reaper.start_eager()
+
         {:ok, container} = run_container(unquote(config))
 
         {:ok, %{unquote(name) => container}}
@@ -49,6 +57,6 @@ defmodule Testcontainers.ExUnit do
   It also sets up the ExUnit callback to remove the container after the test finishes.
   """
   def run_container(config) do
-    Docker.Api.run(config, on_exit: &ExUnit.Callbacks.on_exit/1)
+    Container.run(config, on_exit: &ExUnit.Callbacks.on_exit/1)
   end
 end

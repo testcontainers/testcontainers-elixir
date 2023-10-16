@@ -19,7 +19,7 @@ end
 
 defimpl Testcontainers.WaitStrategy,
   for: Testcontainers.WaitStrategy.CommandWaitStrategy do
-  alias Testcontainers.Docker.Exec
+  alias Testcontainers.Connection
 
   require Logger
 
@@ -74,8 +74,8 @@ defimpl Testcontainers.WaitStrategy,
   end
 
   def exec(container_id, command) do
-    with {:ok, exec_id} <- Exec.create(container_id, command),
-         :ok <- Exec.start(exec_id) do
+    with {:ok, exec_id} <- Connection.exec_create(container_id, command),
+         :ok <- Connection.exec_start(exec_id) do
       {:ok, exec_id}
     end
   end
@@ -86,7 +86,7 @@ defimpl Testcontainers.WaitStrategy,
          started_at,
          retry_delay
        ) do
-    case Exec.inspect(exec_id) do
+    case Connection.exec_inspect(exec_id) do
       {:ok, %{running: true}} ->
         do_wait_unless_timed_out(exec_id, timeout_ms, started_at, retry_delay)
 

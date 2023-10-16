@@ -2,6 +2,10 @@
 # Original by: Marco Dallagiacoma @ 2023 in https://github.com/dallagi/excontainers
 # Modified by: Jarl André Hübenthal @ 2023
 defmodule Testcontainers.Container do
+  alias Testcontainers.WaitStrategy
+  alias Testcontainers.Reaper
+  alias Testcontainers.Connection
+
   @enforce_keys [:image]
 
   defstruct [
@@ -95,5 +99,29 @@ defmodule Testcontainers.Container do
     end)
     |> List.first(%{})
     |> Map.get(:host_port)
+  end
+
+  def run(%__MODULE__{} = container_config, options) do
+    on_exit = Keyword.get(options, :on_exit, nil)
+    wait_strategies = container_config.wait_strategies || []
+
+    with :ok <- Connection.pull_image(container_config.image),
+         {:ok, id} <- Connection.create_container(container_config),
+         :ok <- Connection.start_container(id),
+         :ok <- if(on_exit, do: on_exit.(fn -> Connection.stop_container(id) end), else: :ok),
+         :ok <- Reaper.register({"id", id}),
+         :ok <- wait_for_container(id, wait_strategies) do
+      Connection.get_container(id)
+    end
+  end
+
+  defp wait_for_container(id, wait_strategies) when is_binary(id) do
+    Enum.reduce(wait_strategies, :ok, fn
+      wait_strategy, :ok ->
+        WaitStrategy.wait_until_container_is_ready(wait_strategy, id)
+
+      _, error ->
+        error
+    end)
   end
 end

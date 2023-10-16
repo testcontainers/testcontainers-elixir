@@ -31,12 +31,12 @@ end
 
 defimpl Testcontainers.WaitStrategy, for: Testcontainers.WaitStrategy.HttpWaitStrategy do
   alias Testcontainers.Container
-  alias Testcontainers.Docker
+  alias Testcontainers.Connection
 
   require Logger
 
   def wait_until_container_is_ready(wait_strategy, container_id) do
-    with {:ok, %Container{} = container} <- Docker.Api.get_container(container_id) do
+    with {:ok, %Container{} = container} <- Connection.get_container(container_id) do
       host_port = Container.mapped_port(container, wait_strategy.port)
 
       case wait_for_http(

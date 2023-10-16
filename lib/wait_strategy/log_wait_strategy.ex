@@ -16,7 +16,7 @@ defmodule Testcontainers.WaitStrategy.LogWaitStrategy do
 end
 
 defimpl Testcontainers.WaitStrategy, for: Testcontainers.WaitStrategy.LogWaitStrategy do
-  alias Testcontainers.Docker
+  alias Testcontainers.Connection
 
   require Logger
 
@@ -57,7 +57,7 @@ defimpl Testcontainers.WaitStrategy, for: Testcontainers.WaitStrategy.LogWaitStr
   end
 
   defp log_comparison(container_id, log_regex) do
-    case Docker.Exec.stdout_logs(container_id) do
+    case Connection.stdout_logs(container_id) do
       {:ok, stdout_log} when is_binary(stdout_log) ->
         Regex.match?(log_regex, stdout_log)
 
