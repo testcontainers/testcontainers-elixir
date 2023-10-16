@@ -49,6 +49,6 @@ defmodule Testcontainers.ExUnit do
   It also sets up the ExUnit callback to remove the container after the test finishes.
   """
   def run_container(config) do
-    Docker.Api.run(config, on_exit: &ExUnit.Callbacks.on_exit/2)
+    Docker.Api.run(config, on_exit: &ExUnit.Callbacks.on_exit/1)
   end
 end

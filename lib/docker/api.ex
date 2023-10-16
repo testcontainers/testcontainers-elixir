@@ -15,27 +15,10 @@ defmodule Testcontainers.Docker.Api do
     with :ok <- pull_image(create_request."Image", recv_timeout: 60_000),
          {:ok, id} <- create_container(create_request, recv_timeout: 2000),
          :ok <- start_container(id, recv_timeout: 300_000),
-         :ok <-
-           (if on_exit do
-              with :ok <- on_exit.(:stop_container, fn -> stop_container(id) end) do
-                reap_container(id)
-              end
-            else
-              :ok
-            end),
-         {:ok, container} <- get_container(id),
-         :ok <-
-           Enum.reduce(wait_strategies, :ok, fn
-             wait_strategy, :ok ->
-               WaitStrategy.wait_until_container_is_ready(
-                 wait_strategy,
-                 container.container_id
-               )
-
-             _, error ->
-               error
-           end) do
-      {:ok, container}
+         :ok <- if(on_exit, do: on_exit.(fn -> stop_container(id) end), else: :ok),
+         :ok <- reap_container(id),
+         :ok <- wait_for_container(id, wait_strategies) do
+      get_container(id)
     end
   end
 
@@ -45,6 +28,16 @@ defmodule Testcontainers.Docker.Api do
     with {:ok, response} <- Api.Container.container_inspect(conn, container_id) do
       {:ok, from(response)}
     end
+  end
+
+  defp wait_for_container(id, wait_strategies) do
+    Enum.reduce(wait_strategies, :ok, fn
+      wait_strategy, :ok ->
+        WaitStrategy.wait_until_container_is_ready(wait_strategy, id)
+
+      _, error ->
+        error
+    end)
   end
 
   defp pull_image(image, options) do
