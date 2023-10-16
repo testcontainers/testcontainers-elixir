@@ -24,7 +24,7 @@ defimpl Testcontainers.WaitStrategy, for: Testcontainers.WaitStrategy.LogWaitStr
     case wait_for_log(
            id_or_name,
            wait_strategy,
-           :os.system_time(:millisecond)
+           current_time_millis()
          ) do
       {:ok, :log_is_ready} ->
         :ok
@@ -37,10 +37,8 @@ defimpl Testcontainers.WaitStrategy, for: Testcontainers.WaitStrategy.LogWaitStr
   defp wait_for_log(container_id, wait_strategy, start_time)
        when is_binary(container_id) and is_integer(wait_strategy.timeout) and
               is_integer(start_time) do
-    if wait_strategy.timeout + start_time < :os.system_time(:millisecond) do
-      {:error,
-       {:log_wait_strategy, :timeout, wait_strategy.timeout,
-        elapsed_time: :os.system_time(:millisecond) - start_time}}
+    if wait_strategy.timeout + start_time < current_time_millis() do
+      {:error, strategy_timed_out(wait_strategy.timeout, start_time)}
     else
       if log_comparison(container_id, wait_strategy.log_regex) do
         {:ok, :log_is_ready}
@@ -66,4 +64,9 @@ defimpl Testcontainers.WaitStrategy, for: Testcontainers.WaitStrategy.LogWaitStr
         false
     end
   end
+
+  defp current_time_millis, do: System.monotonic_time(:millisecond)
+
+  defp strategy_timed_out(timeout, started_at) when is_number(timeout) and is_number(started_at),
+    do: {:log_wait_strategy, :timeout, timeout, elapsed_time: current_time_millis() - started_at}
 end

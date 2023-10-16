@@ -28,7 +28,7 @@ defimpl Testcontainers.WaitStrategy, for: Testcontainers.WaitStrategy.PortWaitSt
       if host_port == nil do
         {:error, {:no_host_port, wait_strategy.port}}
       else
-        start_time = :os.system_time(:millisecond)
+        start_time = current_time_millis()
 
         case wait_for_port(wait_strategy, host_port, start_time) do
           {:ok, :port_is_open} ->
@@ -43,10 +43,8 @@ defimpl Testcontainers.WaitStrategy, for: Testcontainers.WaitStrategy.PortWaitSt
 
   defp wait_for_port(wait_strategy, host_port, start_time)
        when is_integer(host_port) and is_integer(start_time) do
-    if wait_strategy.timeout + start_time < :os.system_time(:millisecond) do
-      {:error,
-       {:port_wait_strategy, :timeout, wait_strategy.timeout,
-        elapsed_time: :os.system_time(:millisecond) - start_time}}
+    if wait_strategy.timeout + start_time < current_time_millis() do
+      {:error, strategy_timed_out(wait_strategy.timeout, start_time)}
     else
       if port_open?(wait_strategy.ip, host_port) do
         {:ok, :port_is_open}
@@ -74,4 +72,9 @@ defimpl Testcontainers.WaitStrategy, for: Testcontainers.WaitStrategy.PortWaitSt
         false
     end
   end
+
+  defp current_time_millis, do: System.monotonic_time(:millisecond)
+
+  defp strategy_timed_out(timeout, started_at) when is_number(timeout) and is_number(started_at),
+    do: {:port_wait_strategy, :timeout, timeout, elapsed_time: current_time_millis() - started_at}
 end

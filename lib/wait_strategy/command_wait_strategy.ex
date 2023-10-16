@@ -44,9 +44,7 @@ defimpl Testcontainers.WaitStrategy,
 
       {:ok, other_exit_code} ->
         if out_of_time(started_at, wait_strategy.timeout) do
-          {:error,
-           {:command_wait_strategy, :timeout, wait_strategy.timeout,
-            elapsed_time: current_time_millis() - started_at}, wait_strategy}
+          {:error, strategy_timed_out(wait_strategy.timeout, started_at), wait_strategy}
         else
           delay = max(0, wait_strategy.retry_delay)
 
@@ -98,7 +96,7 @@ defimpl Testcontainers.WaitStrategy,
 
   defp do_wait_unless_timed_out(exec_id, timeout, started_at, retry_delay) do
     if out_of_time(started_at, timeout) do
-      {:error, {:command_wait_strategy, :timeout, timeout, elapsed_time: current_time_millis() - started_at}}
+      {:error, strategy_timed_out(timeout, started_at)}
     else
       delay = max(0, retry_delay)
       :timer.sleep(delay)
@@ -109,4 +107,9 @@ defimpl Testcontainers.WaitStrategy,
   defp current_time_millis, do: System.monotonic_time(:millisecond)
 
   defp out_of_time(started_at, timeout_ms), do: current_time_millis() - started_at > timeout_ms
+
+  defp strategy_timed_out(timeout, started_at) when is_number(timeout) and is_number(started_at),
+    do:
+      {:command_wait_strategy, :timeout, timeout,
+       elapsed_time: current_time_millis() - started_at}
 end
