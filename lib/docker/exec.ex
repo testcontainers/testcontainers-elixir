@@ -1,5 +1,4 @@
 defmodule Testcontainers.Docker.Exec do
-  @moduledoc false
 
   alias Testcontainers.Docker.Connection
 
