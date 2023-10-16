@@ -15,7 +15,7 @@ defmodule Testcontainers.NginxTest do
       Container.new("nginx:latest")
       |> Container.with_exposed_port(exposed_port)
       |> Container.with_waiting_strategy(
-        HttpWaitStrategy.new("127.0.0.1", exposed_port, "/", 10000)
+        HttpWaitStrategy.new("127.0.0.1", exposed_port, "/", 200, 10000)
       )
       |> run_container()
 

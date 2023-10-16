@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT
 defmodule Testcontainers.Container.CephContainer do
+  alias Testcontainers.WaitStrategy.HttpWaitStrategy
   alias Testcontainers.WaitStrategy.LogWaitStrategy
   alias Testcontainers.Container
 
@@ -21,13 +22,17 @@ defmodule Testcontainers.Container.CephContainer do
         RGW_NAME: "localhost"
       }
     )
-    |> Container.with_waiting_strategy(wait_strategy(bucket))
+    |> Container.with_waiting_strategies(wait_strategies(8080, bucket))
   end
 
-  defp wait_strategy(bucket) do
-    LogWaitStrategy.new(
-      ~r/.*Bucket 's3:\/\/#{bucket}\/' created.*/,
-      300_000
-    )
+  defp wait_strategies(port, bucket) do
+    [
+      LogWaitStrategy.new(
+        ~r/.*Bucket 's3:\/\/#{bucket}\/' created.*/,
+        300_000,
+        5000
+      ),
+      HttpWaitStrategy.new("127.0.0.1", port, "/")
+    ]
   end
 end

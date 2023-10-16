@@ -11,9 +11,9 @@ defmodule Testcontainers.Container.SeleniumContainer do
   @default_image "selenium/standalone-chrome:latest"
   @log_regex ~r/.*(RemoteWebDriver instances should connect to|Selenium Server is up and running|Started Selenium Standalone).*\n/
   @wait_strategies [
-    PortWaitStrategy.new("127.0.0.1", 4400, 15_000),
-    PortWaitStrategy.new("127.0.0.1", 7900, 15_000),
-    LogWaitStrategy.new(@log_regex, 15_000)
+    PortWaitStrategy.new("127.0.0.1", 4400, 15_000, 1000),
+    PortWaitStrategy.new("127.0.0.1", 7900, 15_000, 1000),
+    LogWaitStrategy.new(@log_regex, 15_000, 1000)
   ]
 
   def new(options \\ []) do

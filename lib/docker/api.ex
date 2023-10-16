@@ -7,18 +7,7 @@ defmodule Testcontainers.Docker.Api do
   alias Testcontainers.ReaperWorker
   alias Testcontainers.Docker.Connection
 
-  @spec run(%Container{}, keyword()) ::
-          {:ok, %Container{}}
-          | {:error,
-             {:http_error, integer()}
-             | {:port_wait_strategy, :timeout}
-             | {:http_wait_strategy, :timeout}
-             | {:http_wait_strategy, :timeout}
-             | {:failed_to_pull_image, map()}
-             | {:failed_to_create_container, map()}
-             | {:failed_to_get_container, map()}
-             | {:failed_to_start_container, map()}}
-  def run(%Container{} = container_config, options \\ []) when is_list(options) do
+  def run(%Container{} = container_config, options \\ []) do
     on_exit = Keyword.get(options, :on_exit, nil)
     wait_strategies = container_config.wait_strategies || []
     create_request = container_create_request(container_config)
@@ -33,11 +22,6 @@ defmodule Testcontainers.Docker.Api do
     end
   end
 
-  @spec get_container(binary(), keyword()) ::
-          {:ok, %Container{}}
-          | {:error,
-             {:http_error, integer()}
-             | {:failed_to_get_container, DockerEngineAPI.Model.ErrorResponse.t()}}
   def get_container(container_id, options \\ [])
       when is_binary(container_id) do
     conn = Connection.get_connection(options)

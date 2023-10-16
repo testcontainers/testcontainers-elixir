@@ -59,10 +59,13 @@ defmodule Testcontainers.Container.MySqlContainer do
   end
 
   defp wait_strategy(username, password) do
-    CommandWaitStrategy.new([
-      "sh",
-      "-c",
-      "mysqladmin ping --user='#{username}' --password='#{password}' -h localhost | grep 'mysqld is alive'"
-    ])
+    CommandWaitStrategy.new(
+      [
+        "sh",
+        "-c",
+        "mysqladmin ping --user='#{username}' --password='#{password}' -h localhost | grep 'mysqld is alive'"
+      ],
+      10000
+    )
   end
 end

@@ -58,6 +58,9 @@ defmodule Testcontainers.Container.PostgresContainer do
   end
 
   defp wait_strategy(username, database) do
-    CommandWaitStrategy.new(["sh", "-c", "pg_isready -U #{username} -d #{database} -h localhost"])
+    CommandWaitStrategy.new(
+      ["sh", "-c", "pg_isready -U #{username} -d #{database} -h localhost"],
+      10000
+    )
   end
 end
