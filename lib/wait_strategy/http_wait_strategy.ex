@@ -41,7 +41,7 @@ defimpl Testcontainers.WaitStrategy, for: Testcontainers.WaitStrategy.HttpWaitSt
        when is_binary(ip) and is_integer(port) and is_binary(path) and is_integer(timeout) and
               is_integer(start_time) do
     if timeout + start_time < :os.system_time(:millisecond) do
-      {:error, :timeout}
+      {:error, {:http_wait_strategy, :timeout}}
     else
       case http_request(ip, port, path) do
         {:ok, _response} ->

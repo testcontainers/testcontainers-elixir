@@ -20,7 +20,7 @@ defmodule Testcontainers.Container do
   @doc """
   A constructor function to make it easier to construct a container
   """
-  def new(image, opts \\ []) do
+  def new(image, opts \\ []) when is_binary(image) do
     %__MODULE__{
       image: image,
       bind_mounts: opts[:bind_mounts] || [],
@@ -71,7 +71,8 @@ defmodule Testcontainers.Container do
   @doc """
   Sets a file or the directory on the _host machine_ to be mounted into a _container_.
   """
-  def with_bind_mount(%__MODULE__{} = config, host_src, container_dest, options \\ "ro") do
+  def with_bind_mount(%__MODULE__{} = config, host_src, container_dest, options \\ "ro")
+      when is_binary(host_src) and is_binary(container_dest) do
     new_bind_mount = %{host_src: host_src, container_dest: container_dest, options: options}
     %__MODULE__{config | bind_mounts: [new_bind_mount | config.bind_mounts]}
   end

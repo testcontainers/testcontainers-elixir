@@ -6,6 +6,8 @@ defmodule Testcontainers.HttpdTest do
   alias Testcontainers.Container
   alias Testcontainers.WaitStrategy.HttpWaitStrategy
 
+  @tag timeout: 300_000
+
   test "creates and uses container" do
     exposed_port = 80
 

@@ -53,9 +53,6 @@ defmodule Testcontainers.ReaperWorker do
          {:ok, socket} <- create_ryuk_socket(container) do
       Logger.info("Reaper initialized with containerId #{container.container_id}")
       {:ok, %{socket: socket, container: container}}
-    else
-      error ->
-        {:stop, "Failed to start reaper: #{inspect(error)}"}
     end
   end
 

@@ -7,7 +7,18 @@ defmodule Testcontainers.Docker.Api do
   alias Testcontainers.ReaperWorker
   alias Testcontainers.Docker.Connection
 
-  def run(%Container{} = container_config, options \\ []) do
+  @spec run(%Container{}, keyword()) ::
+          {:ok, %Container{}}
+          | {:error,
+             {:http_error, integer()}
+             | {:port_wait_strategy, :timeout}
+             | {:http_wait_strategy, :timeout}
+             | {:http_wait_strategy, :timeout}
+             | {:failed_to_pull_image, map()}
+             | {:failed_to_create_container, map()}
+             | {:failed_to_get_container, map()}
+             | {:failed_to_start_container, map()}}
+  def run(%Container{} = container_config, options \\ []) when is_list(options) do
     on_exit = Keyword.get(options, :on_exit, nil)
     wait_strategies = container_config.wait_strategies || []
     create_request = container_create_request(container_config)
@@ -22,15 +33,28 @@ defmodule Testcontainers.Docker.Api do
     end
   end
 
-  def get_container(container_id, options \\ []) when is_binary(container_id) do
+  @spec get_container(binary(), keyword()) ::
+          {:ok, %Container{}}
+          | {:error,
+             {:http_error, integer()}
+             | {:failed_to_get_container, DockerEngineAPI.Model.ErrorResponse.t()}}
+  def get_container(container_id, options \\ [])
+      when is_binary(container_id) do
     conn = Connection.get_connection(options)
 
-    with {:ok, response} <- Api.Container.container_inspect(conn, container_id) do
-      {:ok, from(response)}
+    case Api.Container.container_inspect(conn, container_id) do
+      {:error, %Tesla.Env{status: other}} ->
+        {:error, {:http_error, other}}
+
+      {:ok, %DockerEngineAPI.Model.ErrorResponse{} = error} ->
+        {:error, {:failed_to_get_container, error}}
+
+      {:ok, response} ->
+        {:ok, from(response)}
     end
   end
 
-  defp wait_for_container(id, wait_strategies) do
+  defp wait_for_container(id, wait_strategies) when is_binary(id) do
     Enum.reduce(wait_strategies, :ok, fn
       wait_strategy, :ok ->
         WaitStrategy.wait_until_container_is_ready(wait_strategy, id)
@@ -40,34 +64,48 @@ defmodule Testcontainers.Docker.Api do
     end)
   end
 
-  defp pull_image(image, options) do
+  defp pull_image(image, options) when is_binary(image) do
     conn = Connection.get_connection(options)
 
     case Api.Image.image_create(conn, fromImage: image) do
       {:ok, %Tesla.Env{status: 200}} ->
         :ok
 
-      {:ok, %Tesla.Env{status: other}} ->
-        {:ok, {:http_error, other}}
+      {:error, %Tesla.Env{status: other}} ->
+        {:error, {:http_error, other}}
 
       {:ok, %DockerEngineAPI.Model.ErrorResponse{} = error} ->
         {:error, {:failed_to_pull_image, error}}
     end
   end
 
-  defp create_container(config, options) do
+  defp create_container(%ContainerCreateRequest{} = config, options) do
     conn = Connection.get_connection(options)
 
-    with {:ok, %{Id: id}} <- Api.Container.container_create(conn, config) do
-      {:ok, id}
+    case Api.Container.container_create(conn, config) do
+      {:error, %Tesla.Env{status: other}} ->
+        {:error, {:http_error, other}}
+
+      {:ok, %{Id: id}} ->
+        {:ok, id}
+
+      {:ok, %DockerEngineAPI.Model.ErrorResponse{} = error} ->
+        {:error, {:failed_to_create_container, error}}
     end
   end
 
-  defp start_container(id, options) do
+  defp start_container(id, options) when is_binary(id) do
     conn = Connection.get_connection(options)
 
-    with {:ok, %Tesla.Env{status: 204}} <- Api.Container.container_start(conn, id) do
-      :ok
+    case Api.Container.container_start(conn, id) do
+      {:ok, %Tesla.Env{status: 204}} ->
+        :ok
+
+      {:error, %Tesla.Env{status: other}} ->
+        {:error, {:http_error, other}}
+
+      {:ok, %DockerEngineAPI.Model.ErrorResponse{} = error} ->
+        {:error, {:failed_to_start_container, error}}
     end
   end
 

@@ -44,7 +44,7 @@ defimpl Testcontainers.WaitStrategy, for: Testcontainers.WaitStrategy.PortWaitSt
   defp wait_for_port(ip, port, timeout, start_time)
        when is_binary(ip) and is_integer(port) and is_integer(timeout) and is_integer(start_time) do
     if timeout + start_time < :os.system_time(:millisecond) do
-      {:error, :timeout}
+      {:error, {:port_wait_strategy, :timeout}}
     else
       if port_open?(ip, port) do
         {:ok, :port_is_open}

@@ -23,9 +23,14 @@ defmodule Testcontainers.Docker.Exec do
     conn = Connection.get_connection(options)
 
     case DockerEngineAPI.Api.Exec.container_exec(conn, container_id, data) do
-      {:ok, %DockerEngineAPI.Model.IdResponse{Id: id}} -> {:ok, id}
-      {:ok, %Tesla.Env{status: status}} -> {:error, {:http_error, status}}
-      {:error, message} -> {:error, message}
+      {:ok, %DockerEngineAPI.Model.IdResponse{Id: id}} ->
+        {:ok, id}
+
+      {:ok, %Tesla.Env{status: status}} ->
+        {:error, {:http_error, status}}
+
+      {:error, message} ->
+        {:error, message}
     end
   end
 
@@ -33,9 +38,14 @@ defmodule Testcontainers.Docker.Exec do
     conn = Connection.get_connection(options)
 
     case DockerEngineAPI.Api.Exec.exec_start(conn, exec_id, body: %{}) do
-      {:ok, %Tesla.Env{status: 200}} -> :ok
-      {:ok, %Tesla.Env{status: status}} -> {:error, {:http_error, status}}
-      {:error, message} -> {:error, message}
+      {:ok, %Tesla.Env{status: 200}} ->
+        :ok
+
+      {:ok, %Tesla.Env{status: status}} ->
+        {:error, {:http_error, status}}
+
+      {:error, message} ->
+        {:error, message}
     end
   end
 
@@ -43,8 +53,11 @@ defmodule Testcontainers.Docker.Exec do
     conn = Connection.get_connection(options)
 
     case DockerEngineAPI.Api.Container.container_logs(conn, container_id, stdout: true) do
-      {:ok, %Tesla.Env{body: body}} -> {:ok, body}
-      {:error, message} -> {:error, message}
+      {:ok, %Tesla.Env{body: body}} ->
+        {:ok, body}
+
+      {:error, message} ->
+        {:error, message}
     end
   end
 

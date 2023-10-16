@@ -55,7 +55,7 @@ defimpl Testcontainers.WaitStrategy,
 
   defp do_wait_unless_timed_out(exec_id, timeout_ms, started_at) do
     if out_of_time(started_at, timeout_ms) do
-      {:error, :timeout}
+      {:error, {:command_wait_strategy, :timeout}}
     else
       :timer.sleep(100)
       wait_for_exec_result(exec_id, timeout_ms, started_at)

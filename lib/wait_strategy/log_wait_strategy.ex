@@ -40,7 +40,7 @@ defimpl Testcontainers.WaitStrategy, for: Testcontainers.WaitStrategy.LogWaitStr
   defp wait_for_log(container_id, log_regex, timeout, start_time)
        when is_binary(container_id) and is_integer(timeout) and is_integer(start_time) do
     if timeout + start_time < :os.system_time(:millisecond) do
-      {:error, :timeout}
+      {:error, {:log_wait_strategy, :timeout}}
     else
       if log_comparison(container_id, log_regex) do
         {:ok, :log_is_ready}
@@ -53,10 +53,10 @@ defimpl Testcontainers.WaitStrategy, for: Testcontainers.WaitStrategy.LogWaitStr
   end
 
   defp log_comparison(container_id, log_regex) do
-    with {:ok, stdout_log} when is_binary(stdout_log) <-
-           Docker.Exec.stdout_logs(container_id) do
-      Regex.match?(log_regex, stdout_log)
-    else
+    case Docker.Exec.stdout_logs(container_id) do
+      {:ok, stdout_log} when is_binary(stdout_log) ->
+        Regex.match?(log_regex, stdout_log)
+
       _ ->
         false
     end

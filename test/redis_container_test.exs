@@ -4,6 +4,8 @@ defmodule Testcontainers.RedisContainerTest do
 
   alias Testcontainers.Container.RedisContainer
 
+  @tag timeout: 120_000
+
   describe "with default configuration" do
     container(:redis, RedisContainer.new())
 

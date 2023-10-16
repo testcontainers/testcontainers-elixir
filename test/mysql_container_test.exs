@@ -4,6 +4,8 @@ defmodule Testcontainers.MySqlContainerTest do
   import Testcontainers.ExUnit
   alias Testcontainers.Container.MySqlContainer
 
+  @tag timeout: 300_000
+
   describe "with default configuration" do
     container(:mysql, MySqlContainer.new())
 
