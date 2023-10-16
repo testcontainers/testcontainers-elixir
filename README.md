@@ -39,7 +39,7 @@ defmodule MySqlContainerTest do
   end
 ```
 
-## Configure logging for wait strategies
+## Configure logging
 
 Testcontainers will not log anything, unless the global log level is set to debug, which is the default log level for new mix projects.
 
