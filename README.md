@@ -26,9 +26,9 @@ defmodule ASimpleMySqlContainerTest do
 
 ## Configure logging
 
-Testcontainers will not log anything, unless the global log level is set to debug, which is the default log level for new mix projects.
+For new mix projects with no log configuration Testcontainers will log everything at debug level.
 
-You can suppress this debug logging globally for tests in config/test.exs like this:
+You can suppress this debug logging globally for all tests in config/test.exs like this:
 
 ```elixir 
 import Config
