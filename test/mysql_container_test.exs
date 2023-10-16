@@ -31,7 +31,9 @@ defmodule Testcontainers.MySqlContainerTest do
           password: "custom-password",
           database: "custom-database",
           hostname: "localhost",
-          port: MySqlContainer.port(mysql)
+          port: MySqlContainer.port(mysql),
+          queue_target: 10_000,
+          queue_interval: 20_000
         )
 
       query_result = MyXQL.query!(pid, "SELECT version()", [])
