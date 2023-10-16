@@ -65,7 +65,7 @@ defmodule Testcontainers.Container.MySqlContainer do
         "-c",
         "mysqladmin ping --user='#{username}' --password='#{password}' -h localhost | grep 'mysqld is alive'"
       ],
-      10000
+      30_000
     )
   end
 end
