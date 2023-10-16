@@ -39,6 +39,38 @@ defmodule MySqlContainerTest do
   end
 ```
 
+## Configure logging for wait strategies
+
+Testcontainers will not log anything, unless the global log level is set to debug, which is the default log level for new mix projects.
+
+You can suppress this debug logging globally for tests in config/test.exs like this:
+
+```elixir 
+import Config
+
+config :logger, level: :warning
+```
+
+If you want to bring back the logs of Testcontainers later, you can change log level specifically like this in config/test.exs:
+
+```elixir
+config :testcontainers,
+  log_level: :warning
+```
+
+If you have a lot of libraries and code that have different log levels, your config/test.exs could look like this if you use Testcontainers:
+
+```elixir 
+import Config
+
+config :logger, level: :warning
+
+config :testcontainers,
+  log_level: :warning
+```
+
+This will set everything to :warning, including Testcontainers default log level.
+
 ## Contribution
 
 Do you want to contribute? Find spots to improve on, fire up an issue and get the discussion going.

@@ -51,7 +51,8 @@ defimpl Testcontainers.WaitStrategy, for: Testcontainers.WaitStrategy.PortWaitSt
       else
         delay = max(0, wait_strategy.retry_delay)
 
-        Logger.debug(
+        Logger.log(
+          Testcontainers.Constants.get_log_level(),
           "Port #{wait_strategy.port} not open on IP #{wait_strategy.ip}, retrying in #{delay}ms."
         )
 

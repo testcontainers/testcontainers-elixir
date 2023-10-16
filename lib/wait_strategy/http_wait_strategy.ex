@@ -71,7 +71,8 @@ defimpl Testcontainers.WaitStrategy, for: Testcontainers.WaitStrategy.HttpWaitSt
         {:error, _reason} ->
           delay = max(0, wait_strategy.retry_delay)
 
-          Logger.debug(
+          Logger.log(
+            Testcontainers.Constants.get_log_level(),
             "Http endpoint #{"http://#{wait_strategy.ip}:#{host_port}#{wait_strategy.path}"} in container #{container_id} didnt respond with #{wait_strategy.status_code}, retrying in #{delay}ms."
           )
 

@@ -48,7 +48,8 @@ defimpl Testcontainers.WaitStrategy,
         else
           delay = max(0, wait_strategy.retry_delay)
 
-          Logger.debug(
+          Logger.log(
+            Testcontainers.Constants.get_log_level(),
             "Command execution in container #{id_or_name} failed with exit_code #{other_exit_code}, retrying in #{delay}ms."
           )
 

@@ -45,7 +45,8 @@ defimpl Testcontainers.WaitStrategy, for: Testcontainers.WaitStrategy.LogWaitStr
       else
         delay = max(0, wait_strategy.retry_delay)
 
-        Logger.debug(
+        Logger.log(
+          Testcontainers.Constants.get_log_level(),
           "Logs in container #{container_id} didnt match regex #{inspect(wait_strategy.log_regex)}, retrying in #{delay}ms."
         )
 

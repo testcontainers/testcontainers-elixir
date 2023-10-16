@@ -11,6 +11,9 @@ defmodule Testcontainers.Docker.Exec do
       {:ok, %Tesla.Env{status: status}} ->
         {:error, {:http_error, status}}
 
+      {:ok, %DockerEngineAPI.Model.ErrorResponse{message: message}} ->
+        {:error, message}
+
       {:error, message} ->
         {:error, message}
     end
@@ -27,6 +30,9 @@ defmodule Testcontainers.Docker.Exec do
       {:ok, %Tesla.Env{status: status}} ->
         {:error, {:http_error, status}}
 
+      {:ok, %DockerEngineAPI.Model.ErrorResponse{message: message}} ->
+        {:error, message}
+
       {:error, message} ->
         {:error, message}
     end
@@ -42,6 +48,9 @@ defmodule Testcontainers.Docker.Exec do
       {:ok, %Tesla.Env{status: status}} ->
         {:error, {:http_error, status}}
 
+      {:ok, %DockerEngineAPI.Model.ErrorResponse{message: message}} ->
+        {:error, message}
+
       {:error, message} ->
         {:error, message}
     end
@@ -53,6 +62,9 @@ defmodule Testcontainers.Docker.Exec do
     case DockerEngineAPI.Api.Container.container_logs(conn, container_id, stdout: true) do
       {:ok, %Tesla.Env{body: body}} ->
         {:ok, body}
+
+      {:ok, %DockerEngineAPI.Model.ErrorResponse{message: message}} ->
+        {:error, message}
 
       {:error, message} ->
         {:error, message}

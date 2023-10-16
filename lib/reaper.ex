@@ -78,7 +78,6 @@ defmodule Testcontainers.ReaperWorker do
         :ok
 
       {:error, reason} ->
-        Logger.warning("Error receiving data: #{inspect(reason)}")
         {:error, reason}
     end
   end
