@@ -36,9 +36,6 @@ defmodule Testcontainers.Docker.Api do
                error
            end) do
       {:ok, container}
-    else
-      {:error, other} -> {:error, other}
-      other -> other
     end
   end
 
