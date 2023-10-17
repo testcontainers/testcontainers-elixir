@@ -101,7 +101,7 @@ defmodule Testcontainers.Container do
     |> Map.get(:host_port)
   end
 
-  def run(%__MODULE__{} = container_config, options) do
+  def run(%__MODULE__{} = container_config, options \\ []) do
     on_exit = Keyword.get(options, :on_exit, nil)
     wait_strategies = container_config.wait_strategies || []
 

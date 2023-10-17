@@ -76,7 +76,7 @@ defmodule Testcontainers.Reaper do
     |> Container.with_environment("RYUK_PORT", "#{@ryuk_port}")
     |> Container.with_environment("RYUK_CONNECTION_TIMEOUT", "120s")
     |> Container.with_bind_mount("/var/run/docker.sock", "/var/run/docker.sock", "rw")
-    |> Container.run(reap: false)
+    |> Container.run()
   end
 
   defp create_ryuk_socket(%Container{} = container) do
