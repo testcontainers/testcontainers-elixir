@@ -4,7 +4,7 @@
 defmodule Testcontainers.Reaper do
   use GenServer
 
-  require Logger
+  alias Testcontainers.Utils
 
   alias Testcontainers.Container
 
@@ -38,10 +38,7 @@ defmodule Testcontainers.Reaper do
 
     with {:ok, container} <- create_ryuk_container(),
          {:ok, socket} <- create_ryuk_socket(container) do
-      Logger.log(
-        Testcontainers.Constants.get_log_level(),
-        "Reaper initialized with containerId #{container.container_id}"
-      )
+      Utils.log("Reaper initialized with containerId #{container.container_id}")
 
       {:ok, %{socket: socket, container: container}}
     end

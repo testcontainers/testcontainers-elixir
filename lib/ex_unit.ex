@@ -18,8 +18,6 @@ defmodule Testcontainers.ExUnit do
   """
   defmacro container(name, config) do
     quote do
-      require Logger
-
       setup do
         {:ok, _} = Connection.start_eager()
         {:ok, _} = Reaper.start_eager()
@@ -38,8 +36,6 @@ defmodule Testcontainers.ExUnit do
   """
   defmacro shared_container(name, config) do
     quote do
-      require Logger
-
       setup_all do
         {:ok, _} = Connection.start_eager()
         {:ok, _} = Reaper.start_eager()

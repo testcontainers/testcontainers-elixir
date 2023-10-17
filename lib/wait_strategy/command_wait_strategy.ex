@@ -20,8 +20,7 @@ end
 defimpl Testcontainers.WaitStrategy,
   for: Testcontainers.WaitStrategy.CommandWaitStrategy do
   alias Testcontainers.Connection
-
-  require Logger
+  alias Testcontainers.Utils
 
   def wait_until_container_is_ready(wait_strategy, id_or_name) do
     # Capture the start time of the process
@@ -48,8 +47,7 @@ defimpl Testcontainers.WaitStrategy,
         else
           delay = max(0, wait_strategy.retry_delay)
 
-          Logger.log(
-            Testcontainers.Constants.get_log_level(),
+          Utils.log(
             "Command execution in container #{id_or_name} failed with exit_code #{other_exit_code}, retrying in #{delay}ms."
           )
 

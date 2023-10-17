@@ -33,7 +33,7 @@ defimpl Testcontainers.WaitStrategy, for: Testcontainers.WaitStrategy.HttpWaitSt
   alias Testcontainers.Container
   alias Testcontainers.Connection
 
-  require Logger
+  alias Testcontainers.Utils
 
   def wait_until_container_is_ready(wait_strategy, container_id) do
     with {:ok, %Container{} = container} <- Connection.get_container(container_id) do
@@ -71,8 +71,7 @@ defimpl Testcontainers.WaitStrategy, for: Testcontainers.WaitStrategy.HttpWaitSt
         {:error, _reason} ->
           delay = max(0, wait_strategy.retry_delay)
 
-          Logger.log(
-            Testcontainers.Constants.get_log_level(),
+          Utils.log(
             "Http endpoint #{"http://#{wait_strategy.ip}:#{host_port}#{wait_strategy.path}"} in container #{container_id} didnt respond with #{wait_strategy.status_code}, retrying in #{delay}ms."
           )
 

@@ -22,39 +22,21 @@ defmodule ASimpleMySqlContainerTest do
       assert mysql.environment[:MYSQL_MAJOR] == "8.0"
     end
   end
+end
 ```
 
 ## Configure logging
 
-For new mix projects with no log configuration Testcontainers will log everything at debug level.
+Testontainers doesn't log anything by default.
 
-You can suppress this debug logging globally for all tests in config/test.exs like this:
-
-```elixir 
-import Config
-
-config :logger, level: :warning
-```
-
-If you want to bring back the logs of Testcontainers later, you can change log level specifically like this in config/test.exs:
+If you want Testcontainers to log, set the wanted log level in config/test.exs
 
 ```elixir
-config :testcontainers,
-  log_level: :warning
-```
-
-If you have a lot of libraries and code that have different log levels, your config/test.exs could look like this if you use Testcontainers:
-
-```elixir 
-import Config
-
-config :logger, level: :warning
+import Config 
 
 config :testcontainers,
   log_level: :warning
 ```
-
-This will set everything to :warning, including Testcontainers default log level.
 
 ## Contribution
 

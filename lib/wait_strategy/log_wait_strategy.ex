@@ -18,7 +18,7 @@ end
 defimpl Testcontainers.WaitStrategy, for: Testcontainers.WaitStrategy.LogWaitStrategy do
   alias Testcontainers.Connection
 
-  require Logger
+  alias Testcontainers.Utils
 
   def wait_until_container_is_ready(wait_strategy, id_or_name) do
     case wait_for_log(
@@ -45,8 +45,7 @@ defimpl Testcontainers.WaitStrategy, for: Testcontainers.WaitStrategy.LogWaitStr
       else
         delay = max(0, wait_strategy.retry_delay)
 
-        Logger.log(
-          Testcontainers.Constants.get_log_level(),
+        Utils.log(
           "Logs in container #{container_id} didnt match regex #{inspect(wait_strategy.log_regex)}, retrying in #{delay}ms."
         )
 
