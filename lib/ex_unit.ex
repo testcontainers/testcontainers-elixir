@@ -68,8 +68,7 @@ defmodule Testcontainers.ExUnit do
           end
         end
 
-      # stop users from sending invalid values like `shared: NOT_A_BOOL`
-      false ->
+      _ ->
         quote do
           setup do
             {:ok, container} = run_container(unquote(config))
