@@ -150,7 +150,13 @@ defmodule Testcontainers.Connection do
   defp construct_url_from_docker_host(docker_host) do
     uri = URI.parse(docker_host)
 
-    URI.to_string(%{uri | scheme: "http", path: "/#{@api_version}"})
+    case uri do
+      %URI{scheme: "tcp"} ->
+        URI.to_string(%{uri | scheme: "http", path: "/#{@api_version}"})
+
+      %URI{scheme: _, authority: _} = uri ->
+        URI.to_string(%{uri | path: "/#{@api_version}"})
+    end
   end
 
   defp start_unlinked(options) do
