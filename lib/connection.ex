@@ -6,10 +6,9 @@ defmodule Testcontainers.Connection do
 
   alias Testcontainers.Connection.DockerHostStrategyEvaluator
   alias Testcontainers.Connection.DockerHostStrategy.DockerSocketPath
-  alias Testcontainers.Connection.DockerHostStrategy.RootlessDockerSocketPath
   alias Testcontainers.Connection.DockerHostStrategy.DockerHostFromProperties
   alias Testcontainers.Connection.DockerHostStrategy.DockerHostFromEnv
-  alias Testcontainers.Connection.DockerHostStrategy.TestcontainersHostFromProperties
+  alias Testcontainers.Connection.DockerHostStrategy.DockerHostFromProperties
   alias Testcontainers.Container
   alias Testcontainers.Docker.Api
   alias DockerEngineAPI.Connection
@@ -122,7 +121,12 @@ defmodule Testcontainers.Connection do
 
   def get_connection(options \\ []) do
     docker_host_url = docker_base_url()
-    Logger.log(Testcontainers.Constants.get_log_level(), "Using docker host url: #{docker_host_url}")
+
+    Logger.log(
+      Testcontainers.Constants.get_log_level(),
+      "Using docker host url: #{docker_host_url}"
+    )
+
     options = Keyword.merge(options, base_url: docker_host_url, recv_timeout: @timeout)
 
     Connection.new(options)
@@ -130,11 +134,11 @@ defmodule Testcontainers.Connection do
 
   defp docker_base_url do
     strategies = [
-      %TestcontainersHostFromProperties{},
+      %DockerHostFromProperties{key: "tc.host"},
       %DockerHostFromEnv{},
-      %DockerSocketPath{},
-      %DockerHostFromProperties{},
-      %RootlessDockerSocketPath{}
+      %DockerSocketPath{socket_paths: ["/var/run/docker.sock"]},
+      %DockerHostFromProperties{key: "docker.host"},
+      %DockerSocketPath{}
     ]
 
     case DockerHostStrategyEvaluator.run_strategies(strategies, []) do
