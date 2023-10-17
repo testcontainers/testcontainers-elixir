@@ -32,7 +32,9 @@ defmodule Testcontainers.ExUnit do
       defmodule MyTest do
         use ExUnit.Case
 
-        container :my_container, %{image: "my_image"}
+        alias Testcontainers.Container
+
+        container :my_container, %Container{image: "my_image"}
         # ...
       end
 
@@ -41,7 +43,9 @@ defmodule Testcontainers.ExUnit do
       defmodule MySharedTest do
         use ExUnit.Case
 
-        container :my_shared_container, %{image: "my_shared_image"}, shared: true
+        alias Testcontainers.Container
+
+        container :my_shared_container, %Container{image: "my_shared_image"}, shared: true
         # ...
       end
 
@@ -58,9 +62,6 @@ defmodule Testcontainers.ExUnit do
       true ->
         quote do
           setup_all do
-            {:ok, _} = Connection.start_eager()
-            {:ok, _} = Reaper.start_eager()
-
             {:ok, container} = run_container(unquote(config))
 
             {:ok, %{unquote(name) => container}}
@@ -71,9 +72,6 @@ defmodule Testcontainers.ExUnit do
       false ->
         quote do
           setup do
-            {:ok, _} = Connection.start_eager()
-            {:ok, _} = Reaper.start_eager()
-
             {:ok, container} = run_container(unquote(config))
 
             {:ok, %{unquote(name) => container}}
@@ -83,11 +81,49 @@ defmodule Testcontainers.ExUnit do
   end
 
   @doc """
-  Runs a container for a single ExUnit test.
+  Initiates and manages the lifecycle of a Docker container within the scope of a single ExUnit test.
 
-  It also sets up the ExUnit callback to remove the container after the test finishes.
+  This function starts a new container using the provided configuration. It is designed to be used in conjunction with ExUnit's setup callbacks to facilitate the creation of a fresh, isolated environment for each test case. The container is guaranteed to terminate after the test completes, ensuring no carry-over state between tests.
+
+  The function also ensures that necessary prerequisites, such as establishing a connection and starting the reaper process, are handled. This abstraction allows test cases to focus solely on interacting with the container, confident in the knowledge that setup and teardown are managed.
+
+  ## Parameters
+
+    * `config`: A map or keyword list that includes the configuration settings for the container. This includes settings like the image to use, network configuration, bound volumes, exposed ports, and any command or entrypoint overrides.
+
+  ## Examples
+
+  In an ExUnit case, you might use `run_container` in a setup block:
+
+      defmodule MyContainerTest do
+        use ExUnit.Case
+
+        alias Testcontainers.Container
+
+        setup do
+          # Define container configuration
+          config = %Container{image: "my_image", exposed_ports: [80, 443]}
+
+          # Run the container for this test
+          {:ok, container} = run_container(config)
+
+          # Pass the container info to the test
+          {:ok, container: container}
+        end
+
+        test "example test", %{container: container} do
+          # Your test logic here, interacting with the container as needed
+        end
+      end
+
+  ## Notes
+
+    * The container is terminated after the test completes, regardless of the test's outcome, to prevent any state from persisting that might affect subsequent tests.
+    * This function is intended for use within ExUnit test cases and might not be suitable for managing containers outside of this context.
   """
   def run_container(config) do
+    {:ok, _} = Connection.start_eager()
+    {:ok, _} = Reaper.start_eager()
     Container.run(config, on_exit: &ExUnit.Callbacks.on_exit/1)
   end
 
