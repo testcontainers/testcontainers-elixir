@@ -121,7 +121,9 @@ defmodule Testcontainers.Connection do
   end
 
   def get_connection(options \\ []) do
-    options = Keyword.merge(options, base_url: docker_base_url(), recv_timeout: @timeout)
+    docker_host_url = docker_base_url()
+    Logger.log(Testcontainers.Constants.get_log_level(), "Using docker host url: #{docker_host_url}")
+    options = Keyword.merge(options, base_url: docker_host_url, recv_timeout: @timeout)
 
     Connection.new(options)
   end
