@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 defmodule Testcontainers.SeleniumContainerTest do
   use ExUnit.Case, async: true
   import Testcontainers.ExUnit

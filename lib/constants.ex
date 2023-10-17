@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 defmodule Testcontainers.Constants do
   @moduledoc """
   Defines constants shared across modules in `Testcontainers`.

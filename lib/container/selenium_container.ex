@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 defmodule Testcontainers.Container.SeleniumContainer do
   @moduledoc """
   Work in progress. Not stable for use yet.
