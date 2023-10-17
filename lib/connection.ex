@@ -20,10 +20,10 @@ defmodule Testcontainers.Connection do
   @doc """
   Eagerly starts this genserver unlinked and waits until it is registered
   """
-  def start_eager(opts \\ []) do
+  def start_eager(options \\ []) do
     case GenServer.whereis(__MODULE__) do
       nil ->
-        start_unlinked(opts)
+        start_unlinked(options)
 
       pid when is_pid(pid) ->
         {:ok, pid}
@@ -71,8 +71,8 @@ defmodule Testcontainers.Connection do
   end
 
   @impl true
-  def init(_) do
-    {:ok, get_connection()}
+  def init(options) do
+    {:ok, get_connection(options)}
   end
 
   @impl true
@@ -150,21 +150,11 @@ defmodule Testcontainers.Connection do
   defp construct_url_from_docker_host(docker_host) do
     uri = URI.parse(docker_host)
 
-    case uri do
-      %URI{scheme: "tcp", host: host, port: port} ->
-        actual_port = port || 80
-        "http://#{:uri_string.quote(host)}:#{actual_port}/#{@api_version}"
-
-      %URI{scheme: _, authority: _} = uri ->
-        URI.to_string(%{uri | scheme: "http", path: "/#{@api_version}"})
-
-      _ ->
-        exit("Invalid Docker host URL")
-    end
+    URI.to_string(%{uri | scheme: "http", path: "/#{@api_version}"})
   end
 
-  defp start_unlinked(opts) do
-    spawn(fn -> GenServer.start(__MODULE__, opts, name: __MODULE__) end)
+  defp start_unlinked(options) do
+    spawn(fn -> GenServer.start(__MODULE__, options, name: __MODULE__) end)
 
     wait_for_start(__MODULE__, 10_000)
   end
