@@ -2,7 +2,7 @@ name: Release Tag To Hex.pm
 
 on:
   push:
-    tags: [ "*" ]
+    tags: [ "v*" ]
 
 jobs:
   publish:
@@ -17,6 +17,8 @@ jobs:
         otp-version: '26.0'
     - name: Install dependencies
       run: mix deps.get
+    - name: Run tests
+      run: mix test
     - name: Publish to Hex.pm
       env:
         HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
