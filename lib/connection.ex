@@ -4,11 +4,16 @@ defmodule Testcontainers.Connection do
 
   require Logger
 
+  alias Testcontainers.Connection.DockerHostStrategyEvaluator
+  alias Testcontainers.Connection.DockerHostStrategy.DockerSocketPath
+  alias Testcontainers.Connection.DockerHostStrategy.RootlessDockerSocketPath
+  alias Testcontainers.Connection.DockerHostStrategy.DockerHostFromProperties
+  alias Testcontainers.Connection.DockerHostStrategy.DockerHostFromEnv
+  alias Testcontainers.Connection.DockerHostStrategy.TestcontainersHostFromProperties
   alias Testcontainers.Container
   alias Testcontainers.Docker.Api
   alias DockerEngineAPI.Connection
 
-  @default_host "unix:///var/run/docker.sock"
   @api_version "v1.41"
   @timeout 300_000
 
@@ -117,13 +122,44 @@ defmodule Testcontainers.Connection do
 
   def get_connection(options \\ []) do
     options = Keyword.merge(options, base_url: docker_base_url(), recv_timeout: @timeout)
+
     Connection.new(options)
   end
 
   defp docker_base_url do
-    case System.get_env("DOCKER_HOST", @default_host) do
-      "unix://" <> host -> "http+unix://" <> :uri_string.quote(host) <> "/" <> @api_version
-      "tcp://" <> host -> "http://" <> :uri_string.quote(host) <> "/" <> @api_version
+    strategies = [
+      %TestcontainersHostFromProperties{},
+      %DockerHostFromEnv{},
+      %DockerSocketPath{},
+      %DockerHostFromProperties{},
+      %RootlessDockerSocketPath{}
+    ]
+
+    case DockerHostStrategyEvaluator.run_strategies(strategies, []) do
+      {:ok, "unix://" <> path} ->
+        "http+unix://#{:uri_string.quote(path)}/#{@api_version}"
+
+      {:ok, docker_host} ->
+        construct_url_from_docker_host(docker_host)
+
+      :error ->
+        exit("Failed to find docker host")
+    end
+  end
+
+  defp construct_url_from_docker_host(docker_host) do
+    uri = URI.parse(docker_host)
+
+    case uri do
+      %URI{scheme: "tcp", host: host, port: port} ->
+        actual_port = port || 80
+        "http://#{:uri_string.quote(host)}:#{actual_port}/#{@api_version}"
+
+      %URI{scheme: _, authority: _} = uri ->
+        URI.to_string(%{uri | scheme: "http", path: "/#{@api_version}"})
+
+      _ ->
+        exit("Invalid Docker host URL")
     end
   end
 
