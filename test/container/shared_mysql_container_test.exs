@@ -9,7 +9,7 @@ defmodule Testcontainers.Container.SharedMySqlContainerTest do
 
   @moduletag timeout: 300_000
 
-  shared_container(:mysql, MySqlContainer.new())
+  container(:mysql, MySqlContainer.new(), shared: true)
 
   test "can select 1", %{mysql: mysql} do
     {:ok, pid} = MyXQL.start_link(MySqlContainer.connection_parameters(mysql))
