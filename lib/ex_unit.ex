@@ -123,10 +123,12 @@ defmodule Testcontainers.ExUnit do
     * The container is terminated after the test completes, regardless of the test's outcome, to prevent any state from persisting that might affect subsequent tests.
     * This function is intended for use within ExUnit test cases and might not be suitable for managing containers outside of this context.
   """
-  def run_container(config) do
+  def run_container(config, options \\ []) do
+    default_options = [on_exit: &ExUnit.Callbacks.on_exit/1]
+    options = Keyword.merge(default_options, options)
     {:ok, _} = Connection.start_eager()
     {:ok, _} = Reaper.start_eager()
-    Container.run(config, on_exit: &ExUnit.Callbacks.on_exit/1)
+    Container.run(config, options)
   end
 
   defp validate_options(options) when is_list(options) do

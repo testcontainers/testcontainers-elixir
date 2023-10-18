@@ -190,8 +190,9 @@ defmodule Testcontainers.Docker.Api do
     ports =
       Enum.reduce(ports || [], [], fn {key, ports}, acc ->
         acc ++
-          Enum.map(ports || [], fn %{"HostIp" => host_ip, "HostPort" => host_port} ->
-            %{exposed_port: key, host_ip: host_ip, host_port: host_port |> String.to_integer()}
+          Enum.map(ports || [], fn %{"HostPort" => host_port} ->
+            {key |> String.replace("/tcp", "") |> String.to_integer(),
+             host_port |> String.to_integer()}
           end)
       end)
 

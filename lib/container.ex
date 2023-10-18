@@ -54,15 +54,26 @@ defmodule Testcontainers.Container do
   @doc """
   Sets an _environment variable_ to the _container_.
   """
-  def with_environment(%__MODULE__{} = config, key, value) do
+  def with_environment(%__MODULE__{} = config, key, value)
+      when is_binary(key) and is_binary(value) do
     %__MODULE__{config | environment: Map.put(config.environment, key, value)}
   end
 
   @doc """
   Adds a _port_ to be exposed on the _container_.
   """
-  def with_exposed_port(%__MODULE__{} = config, port) do
+  def with_exposed_port(%__MODULE__{} = config, port) when is_integer(port) do
     %__MODULE__{config | exposed_ports: [port | config.exposed_ports]}
+  end
+
+  def with_fixed_port(%__MODULE__{} = config, port, host_port \\ nil)
+      when is_integer(port) and (is_nil(host_port) or is_integer(host_port)) do
+    %__MODULE__{
+      config
+      | exposed_ports: [
+          {port, host_port || port} | config.exposed_ports
+        ]
+    }
   end
 
   @doc """
@@ -84,7 +95,7 @@ defmodule Testcontainers.Container do
   @doc """
   Sets a label to apply to the container object in docker.
   """
-  def with_label(%__MODULE__{} = config, key, value) do
+  def with_label(%__MODULE__{} = config, key, value) when is_binary(key) and is_binary(value) do
     %__MODULE__{config | labels: Map.put(config.labels, key, value)}
   end
 
@@ -94,11 +105,12 @@ defmodule Testcontainers.Container do
   def mapped_port(%__MODULE__{} = container, port) when is_number(port) do
     container.exposed_ports
     |> Enum.filter(fn
-      %{exposed_port: exposed_port} -> exposed_port == "#{port}/tcp"
-      port -> port == "#{port}/tcp"
+      {exposed_port, _} -> exposed_port == port
+      port -> port == port
     end)
-    |> List.first(%{})
-    |> Map.get(:host_port)
+    |> List.first({})
+    |> Tuple.to_list()
+    |> List.last()
   end
 
   @doc """
