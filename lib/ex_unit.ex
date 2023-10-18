@@ -23,7 +23,7 @@ defmodule Testcontainers.ExUnit do
     * `name`: The key that should be used to reference the container in test cases.
     * `config`: Configuration necessary for initializing the container.
     * `options`: Optional keyword list. Supports the following options:
-      * `:shared` - If set to `true`, the container is shared across all tests in the module. If `false`, omitted, or an invalid value is provided, a new container is used for each test.
+      * `:shared` - If set to `true`, the container is shared across all tests in the module. If `false` or omitted, a new container is used for each test.
 
   ## Examples
 

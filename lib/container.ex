@@ -101,6 +101,39 @@ defmodule Testcontainers.Container do
     |> Map.get(:host_port)
   end
 
+  @doc """
+  Starts a new container based on the provided configuration, applying any specified wait strategies.
+
+  This function performs several steps:
+  1. Pulls the necessary Docker image.
+  2. Creates and starts a container with the specified configuration.
+  3. Registers the container with a reaper process for automatic cleanup, ensuring it is stopped and removed when the current process exits or in case of unforeseen failures.
+
+  ## Parameters
+
+  - `container_config`: A `%Container{}` struct containing the configuration settings for the container, such as the image to use, environment variables, bound ports, and volume bindings.
+  - `options`: Optional keyword list. Supports the following options:
+    - `:on_exit`: A callback function that's invoked when the current process exits. It receives a no-argument callable (often a lambda) that executes cleanup actions, such as stopping the container. This callback enhances the reaper's functionality by providing immediate cleanup actions at the process level, while the reaper ensures that containers are ultimately cleaned up in situations like abrupt process termination. It's especially valuable in test environments, complementing ExUnit's `on_exit` for resource cleanup after tests.
+
+  ## Examples
+
+      iex> config = %Container{
+            image: "mysql:latest",
+            wait_strategies: [CommandWaitStrategy.new(["bash", "sh", "command_that_returns_0_exit_code"])]
+          }
+      iex> {:ok, container} = Container.run(config)
+
+  ## Returns
+
+  - `{:ok, container}` if the container is successfully created, started, and passes all wait strategies.
+  - An error tuple, such as `{:error, reason}`, if there is a failure at any step in the process.
+
+  ## Notes
+
+  - The container is automatically registered with a reaper process, ensuring it is stopped and removed when the current process exits, or in the case of unforeseen failures.
+  - It's important to specify appropriate wait strategies to ensure the container is fully ready for interaction, especially for containers that may take some time to start up services internally.
+
+  """
   def run(%__MODULE__{} = container_config, options \\ []) do
     on_exit = Keyword.get(options, :on_exit, nil)
     wait_strategies = container_config.wait_strategies || []
