@@ -58,24 +58,27 @@ defmodule Testcontainers.ExUnit do
   defmacro container(name, config, options \\ []) do
     validate_options(options)
 
-    case Keyword.get(options, :shared, false) do
-      true ->
-        quote do
+    shared = Keyword.get(options, :shared, false)
+
+    block =
+      quote do
+        {:ok, container} = run_container(unquote(config))
+
+        {:ok, %{unquote(name) => container}}
+      end
+
+    quote do
+      case unquote(shared) do
+        true ->
           setup_all do
-            {:ok, container} = run_container(unquote(config))
-
-            {:ok, %{unquote(name) => container}}
+            unquote(block)
           end
-        end
 
-      _ ->
-        quote do
+        _ ->
           setup do
-            {:ok, container} = run_container(unquote(config))
-
-            {:ok, %{unquote(name) => container}}
+            unquote(block)
           end
-        end
+      end
     end
   end
 
