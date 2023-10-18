@@ -123,7 +123,7 @@ defmodule Testcontainers.Container do
 
   ## Parameters
 
-  - `container_config`: A `%Container{}` struct containing the configuration settings for the container, such as the image to use, environment variables, bound ports, and volume bindings.
+  - `config`: A `%Container{}` struct containing the configuration settings for the container, such as the image to use, environment variables, bound ports, and volume bindings.
   - `options`: Optional keyword list. Supports the following options:
     - `:on_exit`: A callback function that's invoked when the current process exits. It receives a no-argument callable (often a lambda) that executes cleanup actions, such as stopping the container. This callback enhances the reaper's functionality by providing immediate cleanup actions at the process level, while the reaper ensures that containers are ultimately cleaned up in situations like abrupt process termination. It's especially valuable in test environments, complementing ExUnit's `on_exit` for resource cleanup after tests.
 
@@ -146,15 +146,16 @@ defmodule Testcontainers.Container do
   - It's important to specify appropriate wait strategies to ensure the container is fully ready for interaction, especially for containers that may take some time to start up services internally.
 
   """
-  def run(%__MODULE__{} = container_config, options \\ []) do
+  def run(%__MODULE__{} = config, options \\ []) do
     on_exit = Keyword.get(options, :on_exit, nil)
-    wait_strategies = container_config.wait_strategies || []
+    label = Keyword.get(options, :label, true)
+    wait_strategies = config.wait_strategies || []
 
-    with :ok <- Connection.pull_image(container_config.image),
-         {:ok, id} <- Connection.create_container(container_config),
+    with :ok <- Connection.pull_image(config.image),
+         {:ok, config} <- if(label, do: Reaper.label(config), else: {:ok, config}),
+         {:ok, id} <- Connection.create_container(config),
          :ok <- Connection.start_container(id),
          :ok <- if(on_exit, do: on_exit.(fn -> Connection.stop_container(id) end), else: :ok),
-         :ok <- Reaper.register({"id", id}),
          :ok <- wait_for_container(id, wait_strategies) do
       Connection.get_container(id)
     end

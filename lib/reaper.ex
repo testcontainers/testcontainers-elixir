@@ -29,6 +29,7 @@ defmodule Testcontainers.Reaper do
 
   @ryuk_image "testcontainers/ryuk:0.5.1"
   @ryuk_port 8080
+  @ryuk_filter_label "reaper"
 
   @doc """
   Starts the Reaper process if it is not already running.
@@ -69,30 +70,10 @@ defmodule Testcontainers.Reaper do
   end
 
   @doc """
-  Registers a filter with the Ryuk container for resources to be reaped.
-
-  This function sends a message to the Reaper, which communicates with the Ryuk container
-  to establish a filter based on the provided criteria. Resources that match the filter will
-  be monitored and cleaned up by Ryuk once they are no longer needed.
-
-  ## Examples
-
-      iex> Testcontainers.Reaper.register({"label", "com.example.test-session"})
-      :ok
-
-  ## Parameters
-
-  - `filter`: A tuple representing the filter key and value. Resources within the scope of
-    Testcontainers that match this filter will be eligible for cleanup.
-
-  ## Note
-
-  The function is a cast operation; it does not return any value and will silently fail if
-  there's an issue. It's designed to be fire-and-forget for setting up cleanup filters,
-  to avoid tests failing if the reaper is not running.
+  Labels the container so that Ryuk can delete it.
   """
-  def register(filter) do
-    GenServer.cast(__MODULE__, {:register, filter})
+  def label(%Container{} = config) do
+    GenServer.call(__MODULE__, {:label, config})
   end
 
   @impl true
@@ -101,32 +82,39 @@ defmodule Testcontainers.Reaper do
 
     with {:ok, container} <- create_ryuk_container(),
          {:ok, socket} <- create_ryuk_socket(container) do
-      Utils.log("Reaper initialized with containerId #{container.container_id}")
+      ryuk_container_id = container.container_id
 
-      {:ok, %{socket: socket, container: container}}
+      Utils.log("Reaper initialized with containerId #{ryuk_container_id}")
+
+      # registers the label filter that ryuk uses to delete containers
+      send(self(), {:register, {"label", @ryuk_filter_label, ryuk_container_id}})
+
+      {:ok, %{socket: socket, container: container, id: ryuk_container_id}}
     end
   end
 
   @impl true
-  def handle_cast({:register, filter}, %{socket: socket} = state) do
-    case register(socket, filter) do
-      :ok ->
-        {:noreply, state}
+  def handle_call({:label, %Container{} = config}, _from, %{id: ryuk_container_id} = state) do
+    config =
+      Map.put(
+        config,
+        :labels,
+        Map.put(config.labels, @ryuk_filter_label, ryuk_container_id)
+      )
 
-      {:error, _reason} ->
-        {:stop, :error_reason, state}
-    end
+    {:reply, {:ok, config}, state}
   end
 
-  defp register(socket, {filter_key, filter_value}) do
+  @impl true
+  def handle_info({:register, {type, key, value}}, %{socket: socket} = state) do
     :gen_tcp.send(
       socket,
-      "#{:uri_string.quote(filter_key)}=#{:uri_string.quote(filter_value)}" <> "\n"
+      "#{:uri_string.quote(type)}=#{:uri_string.quote(key)}=#{:uri_string.quote(value)}" <> "\n"
     )
 
     case :gen_tcp.recv(socket, 0, 1_000) do
       {:ok, "ACK\n"} ->
-        :ok
+        {:noreply, state}
 
       {:error, reason} ->
         {:error, reason}
@@ -137,9 +125,8 @@ defmodule Testcontainers.Reaper do
     %Container{image: @ryuk_image}
     |> Container.with_exposed_port(@ryuk_port)
     |> Container.with_environment("RYUK_PORT", "#{@ryuk_port}")
-    |> Container.with_environment("RYUK_CONNECTION_TIMEOUT", "120s")
     |> Container.with_bind_mount("/var/run/docker.sock", "/var/run/docker.sock", "rw")
-    |> Container.run()
+    |> Container.run(label: false)
   end
 
   defp create_ryuk_socket(%Container{} = container) do
