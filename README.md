@@ -25,6 +25,29 @@ defmodule ASimpleMySqlContainerTest do
 end
 ```
 
+## Start container directly in test helper
+
+If you want to setup a globally shared database for all tests in the project, you can now configure and run a container inside the `test/test_helper.exs` file:
+
+```elixir
+import Testcontainers.ExUnit
+alias Testcontainers.Container
+alias Container.PostgresContainer
+
+exposed_port = 5432
+host_port = 2345
+
+postgres =
+  PostgresContainer.new("postgres:latest")
+  |> Container.with_fixed_port(exposed_port, host_port)
+
+{:ok, _} = run_container(postgres, on_exit: nil) # <- cannot use exunits on_exit callback here
+
+ExUnit.start()
+```
+
+The container will be deleted by Ryuk after the test session ends.
+
 ## Configure logging
 
 Testontainers doesn't log anything by default.
