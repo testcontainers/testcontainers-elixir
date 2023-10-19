@@ -64,7 +64,7 @@ defmodule ASimpleMySqlContainerTest do
 end
 ```
 
-### Gloab Setup
+### Global Setup
 
 If you prefer to set up a globally shared database for all tests in the project, you can configure and run a container inside the test/test_helper.exs file:
 
