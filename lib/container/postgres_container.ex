@@ -39,6 +39,18 @@ defmodule Testcontainers.Container.PostgresContainer do
     |> Container.with_waiting_strategy(wait_strategy(username, database))
   end
 
+  def with_user(%Container{} = container, user) when is_binary(user) do
+    %{container | environment: Map.put(container.environment, :POSTGRES_USER, user)}
+  end
+
+  def with_password(%Container{} = container, password) when is_binary(password) do
+    %{container | environment: Map.put(container.environment, :POSTGRES_PASSWORD, password)}
+  end
+
+  def with_database(%Container{} = container, database) when is_binary(database) do
+    %{container | environment: Map.put(container.environment, :POSTGRES_DB, database)}
+  end
+
   @doc """
   Returns the port on the _host machine_ where the MySql container is listening.
   """
