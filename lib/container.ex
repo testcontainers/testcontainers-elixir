@@ -68,10 +68,12 @@ defmodule Testcontainers.Container do
 
   def with_fixed_port(%__MODULE__{} = config, port, host_port \\ nil)
       when is_integer(port) and (is_nil(host_port) or is_integer(host_port)) do
+    filtered_ports = config.exposed_ports |> Enum.filter(fn port -> port != port end)
+
     %__MODULE__{
       config
       | exposed_ports: [
-          {port, host_port || port} | config.exposed_ports
+          {port, host_port || port} | filtered_ports
         ]
     }
   end

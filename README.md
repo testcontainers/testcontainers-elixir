@@ -40,6 +40,25 @@ end
 
 This section explains how to use the Testcontainers library in your own project.
 
+### In a Phoenix project:
+
+In simple terms you can add this in application.ex:
+
+```elixir
+  # In your application.ex file in your Phoenix project:
+
+  import Testcontainers.Ecto
+
+  @impl true
+  def start(_type, _args) do
+    postgres_container(app: :my_app),
+
+    # .. other setup code
+  end
+```
+
+see documentation on Testcontainers.Ecto for more information.
+
 ### Simple example
 
 Here's a simple example of how to use a MySQL container in your tests:
