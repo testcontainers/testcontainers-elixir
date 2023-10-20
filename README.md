@@ -57,7 +57,11 @@ In simple terms you can add this in application.ex:
   end
 ```
 
-see documentation on Testcontainers.Ecto for more information.
+see documentation on Testcontainers.Ecto for more information about the options it can take.
+
+There is an example repo here with a bare bones phoenix application, where the only changes are the inclusion of the ecto macro and removing the test alias that interferes with the macro:
+
+[https://github.com/jarlah/hello_testcontainers](https://github.com/jarlah/hello_testcontainers)
 
 ### Simple example
 
