@@ -98,19 +98,19 @@ import Testcontainers.ExUnit
 alias Testcontainers.Container
 alias Container.PostgresContainer
 
-exposed_port = 5432
-host_port = 2345
-
 postgres =
   PostgresContainer.new("postgres:latest")
-  |> Container.with_fixed_port(exposed_port, host_port)
+  |> Container.with_fixed_port(5432)
+  # or |> Container.with_fixed_port(5432, <OTHER_HOST_PORT>) 
 
-{:ok, _} = run_container(postgres, on_exit: nil) # <- cannot use exunits on_exit callback here
+{:ok, _} = run_container(postgres, on_exit: nil)
 
 ExUnit.start()
 ```
 
 The container will be deleted by Ryuk after the test session ends.
+
+NOTE: This will cause the test process to exit prematurely if the port is already used. Use with care!
 
 ### Logging
 
