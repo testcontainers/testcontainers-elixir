@@ -91,7 +91,7 @@ defmodule Testcontainers.Connection do
   - Network issues or invalid image tags can cause failures.
   """
   def pull_image(image) when is_binary(image) do
-    GenServer.call(__MODULE__, {:pull_image, image}, 300_000)
+    GenServer.call(__MODULE__, {:pull_image, image}, @timeout)
   end
 
   @doc """
@@ -114,7 +114,7 @@ defmodule Testcontainers.Connection do
       {:ok, container_id} = Testcontainers.Connection.create_container(config)
   """
   def create_container(%Container{} = container) do
-    GenServer.call(__MODULE__, {:create_container, container}, 300_000)
+    GenServer.call(__MODULE__, {:create_container, container}, @timeout)
   end
 
   @doc """
@@ -136,7 +136,7 @@ defmodule Testcontainers.Connection do
       :ok = Testcontainers.Connection.start_container("my_container_id")
   """
   def start_container(container_id) when is_binary(container_id) do
-    GenServer.call(__MODULE__, {:start_container, container_id}, 300_000)
+    GenServer.call(__MODULE__, {:start_container, container_id}, @timeout)
   end
 
   @doc """
@@ -158,7 +158,7 @@ defmodule Testcontainers.Connection do
       :ok = Testcontainers.Connection.stop_container("my_container_id")
   """
   def stop_container(container_id) when is_binary(container_id) do
-    GenServer.call(__MODULE__, {:stop_container, container_id}, 300_000)
+    GenServer.call(__MODULE__, {:stop_container, container_id}, @timeout)
   end
 
   @doc """
@@ -180,7 +180,7 @@ defmodule Testcontainers.Connection do
       {:ok, %Testcontainers.Container{}} = Testcontainers.Connection.get_container("my_container_id")
   """
   def get_container(container_id) when is_binary(container_id) do
-    GenServer.call(__MODULE__, {:get_container, container_id}, 300_000)
+    GenServer.call(__MODULE__, {:get_container, container_id}, @timeout)
   end
 
   @doc """
@@ -202,7 +202,7 @@ defmodule Testcontainers.Connection do
       {:ok, logs} = Testcontainers.Connection.stdout_logs("my_container_id")
   """
   def stdout_logs(container_id) when is_binary(container_id) do
-    GenServer.call(__MODULE__, {:stdout_logs, container_id}, 300_000)
+    GenServer.call(__MODULE__, {:stdout_logs, container_id}, @timeout)
   end
 
   @doc """
@@ -225,7 +225,7 @@ defmodule Testcontainers.Connection do
       {:ok, exec_id} = Testcontainers.Connection.exec_create("my_container_id", ["ls", "-la"])
   """
   def exec_create(container_id, command) when is_binary(container_id) and is_list(command) do
-    GenServer.call(__MODULE__, {:exec_create, command, container_id}, 300_000)
+    GenServer.call(__MODULE__, {:exec_create, command, container_id}, @timeout)
   end
 
   @doc """
@@ -247,7 +247,7 @@ defmodule Testcontainers.Connection do
       :ok = Testcontainers.Connection.exec_start("my_exec_id")
   """
   def exec_start(exec_id) when is_binary(exec_id) do
-    GenServer.call(__MODULE__, {:exec_start, exec_id}, 300_000)
+    GenServer.call(__MODULE__, {:exec_start, exec_id}, @timeout)
   end
 
   @doc """
@@ -269,7 +269,7 @@ defmodule Testcontainers.Connection do
       {:ok, exec_info} = Testcontainers.Connection.exec_inspect("my_exec_id")
   """
   def exec_inspect(exec_id) when is_binary(exec_id) do
-    GenServer.call(__MODULE__, {:exec_inspect, exec_id}, 300_000)
+    GenServer.call(__MODULE__, {:exec_inspect, exec_id}, @timeout)
   end
 
   # internal api

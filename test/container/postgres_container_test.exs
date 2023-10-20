@@ -20,25 +20,20 @@ defmodule Testcontainers.Container.PostgresContainerTest do
   end
 
   describe "with custom configuration" do
-    @custom_postgres PostgresContainer.new("postgres:12.1",
-                       username: "custom-user",
-                       password: "custom-password",
-                       database: "custom-database"
-                     )
+    import PostgresContainer
+
+    @custom_postgres new()
+                     |> with_image("postgres:12.1")
+                     |> with_user("custom-user")
+                     |> with_password("custom-password")
+                     |> with_database("custom-database")
 
     container(:postgres, @custom_postgres)
 
     test "provides a postgres container compliant with specified configuration", %{
       postgres: postgres
     } do
-      {:ok, pid} =
-        Postgrex.start_link(
-          username: "custom-user",
-          password: "custom-password",
-          database: "custom-database",
-          hostname: "localhost",
-          port: PostgresContainer.port(postgres)
-        )
+      {:ok, pid} = Postgrex.start_link(PostgresContainer.connection_parameters(postgres))
 
       query_result = Postgrex.query!(pid, "SELECT version()", [])
 

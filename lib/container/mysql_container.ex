@@ -3,59 +3,140 @@
 # Modified by: Jarl André Hübenthal @ 2023
 defmodule Testcontainers.Container.MySqlContainer do
   @moduledoc """
-  Functions to build and interact with MySql containers.
+  Provides functionality for creating and managing MySQL container configurations.
+
+  This module includes helper methods for setting up a MySQL container with specific parameters such as image, user, password, database, and more.
   """
 
   alias Testcontainers.Container
+  alias Testcontainers.ContainerBuilder
+  alias Testcontainers.Container.MySqlContainer
   alias Testcontainers.WaitStrategy.CommandWaitStrategy
 
-  @mysql_port 3306
+  @default_image "mysql"
+  @default_tag "8"
+  @default_port 3306
+  @wait_timeout 60_000
+
+  defstruct image: "#{@default_image}:#{@default_tag}",
+            wait_timeout: @wait_timeout,
+            port: @default_port,
+            user: "test",
+            password: "test",
+            database: "test"
 
   @doc """
-  Builds a MySql container.
-
-  Uses MySql 8.0 by default, but a custom image can also be set.
-
-  ## Options
-
-  - `username` sets the username for the user
-  - `password` sets the password for the user
-  - `database` sets the name of the database
+  Creates a new `MySqlContainer` struct with default configurations.
   """
-  def new(image \\ "mysql:8.0", opts \\ []) do
-    username = Keyword.get(opts, :username, "test")
-    password = Keyword.get(opts, :password, "test")
-    database = Keyword.get(opts, :database, "test")
+  def new, do: %__MODULE__{}
 
-    Container.new(
-      image,
-      exposed_ports: [@mysql_port],
-      environment: %{
-        MYSQL_USER: username,
-        MYSQL_PASSWORD: password,
-        MYSQL_DATABASE: database,
-        MYSQL_RANDOM_ROOT_PASSWORD: "yes"
-      }
-    )
-    |> Container.with_waiting_strategy(wait_strategy(username, password))
+  @doc """
+  Overrides the default image used for the MySQL container.
+
+  ## Examples
+
+      iex> config = MySqlContainer.new()
+      iex> new_config = MySqlContainer.with_image(config, "mysql:4")
+      iex> new_config.image
+      "mysql:4"
+  """
+  def with_image(%__MODULE__{} = config, image) when is_binary(image) do
+    %{config | image: image}
   end
 
-  def with_user(%Container{} = container, user) when is_binary(user) do
-    %{container | environment: Map.put(container.environment, :MYSQL_USER, user)}
+  @doc """
+  Overrides the default user used for the MySQL container.
+
+  ## Examples
+
+      iex> config = MySqlContainer.new()
+      iex> new_config = MySqlContainer.with_user(config, "another-user")
+      iex> new_config.user
+      "another-user"
+  """
+  def with_user(%__MODULE__{} = config, user) when is_binary(user) do
+    %{config | user: user}
   end
 
-  def with_password(%Container{} = container, password) when is_binary(password) do
-    %{container | environment: Map.put(container.environment, :MYSQL_PASSWORD, password)}
+  @doc """
+  Overrides the default password used for the MySQL container.
+
+  ## Examples
+
+      iex> config = MySqlContainer.new()
+      iex> new_config = MySqlContainer.with_password(config, "another-password")
+      iex> new_config.password
+      "another-password"
+  """
+  def with_password(%__MODULE__{} = config, password) when is_binary(password) do
+    %{config | password: password}
   end
 
-  def with_database(%Container{} = container, database) when is_binary(database) do
-    %{container | environment: Map.put(container.environment, :MYSQL_DATABASE, database)}
+  @doc """
+  Overrides the default database used for the MySQL container.
+
+  ## Examples
+
+      iex> config = MySqlContainer.new()
+      iex> new_config = MySqlContainer.with_database(config, "another-database")
+      iex> new_config.database
+      "another-database"
+  """
+  def with_database(%__MODULE__{} = config, database) when is_binary(database) do
+    %{config | database: database}
   end
+
+  @doc """
+  Overrides the default port used for the MySQL container.
+
+  Note: this will not change what port the docker container is listening to internally.
+
+  ## Examples
+
+      iex> config = MySqlContainer.new()
+      iex> new_config = MySqlContainer.with_port(config, 3307)
+      iex> new_config.port
+      3307
+  """
+  def with_port(%__MODULE__{} = config, port) when is_integer(port) or is_tuple(port) do
+    %{config | port: port}
+  end
+
+  @doc """
+  Overrides the default wait timeout used for the MySQL container.
+
+  Note: this timeout will be used for each individual wait strategy.
+
+  ## Examples
+
+      iex> config = MySqlContainer.new()
+      iex> new_config = MySqlContainer.with_wait_timeout(config, 8000)
+      iex> new_config.wait_timeout
+      8000
+  """
+  def with_wait_timeout(%__MODULE__{} = config, wait_timeout) when is_integer(wait_timeout) do
+    %{config | wait_timeout: wait_timeout}
+  end
+
+  @doc """
+  Retrieves the default exposed port for the MySQL container.
+  """
+  def default_port, do: @default_port
+
+  @doc """
+  Retrieves the default Docker image for the MySQL container.
+  """
+  def default_image, do: @default_image
+
+  @doc """
+  Retrieves the default Docker image including tag for the MySQL container.
+  """
+  def default_image_with_tag, do: @default_image <> ":" <> @default_tag
 
   @doc """
   Returns the port on the _host machine_ where the MySql container is listening.
   """
-  def port(container), do: Container.mapped_port(container, @mysql_port)
+  def port(%Container{} = container), do: Container.mapped_port(container, @default_port)
 
   @doc """
   Returns the connection parameters to connect to the database from the _host machine_.
@@ -72,14 +153,61 @@ defmodule Testcontainers.Container.MySqlContainer do
     ]
   end
 
-  defp wait_strategy(username, password) do
-    CommandWaitStrategy.new(
-      [
-        "sh",
-        "-c",
-        "mysqladmin ping --user='#{username}' --password='#{password}' -h localhost | grep 'mysqld is alive'"
-      ],
-      60_000
-    )
+  defimpl ContainerBuilder, for: __MODULE__ do
+    import Container
+
+    @doc """
+    Implementation of the `ContainerBuilder` protocol specific to `MySqlContainer`.
+
+    This function builds a new container configuration, ensuring the MySQL image is compatible, setting environment variables, and applying a waiting strategy for the container to be ready.
+
+    The build process raises an `ArgumentError` if the specified container image is not compatible with the expected MySql image.
+
+    ## Examples
+
+        # Assuming `ContainerBuilder.build/2` is called from somewhere in the application with a `MySqlContainer` configuration:
+        iex> config = MySqlContainer.new()
+        iex> built_container = ContainerBuilder.build(config, [])
+        # `built_container` is now a ready-to-use `%Container{}` configured specifically for Mysql.
+
+    ## Errors
+
+    - Raises `ArgumentError` if the provided image is not compatible with the default MySql image.
+    """
+    @spec build(%MySqlContainer{}, keyword()) :: %Container{}
+    @impl true
+    def build(%MySqlContainer{} = config, _options) do
+      if not String.starts_with?(config.image, MySqlContainer.default_image()) do
+        raise ArgumentError,
+          message:
+            "Image #{config.image} is not compatible with #{MySqlContainer.default_image()}"
+      end
+
+      port_fn =
+        case config.port do
+          {exposed_port, host_port} ->
+            fn container -> with_fixed_port(container, exposed_port, host_port) end
+
+          port ->
+            fn container -> with_exposed_port(container, port) end
+        end
+
+      new(config.image)
+      |> Kernel.then(port_fn)
+      |> with_environment(:MYSQL_USER, config.user)
+      |> with_environment(:MYSQL_PASSWORD, config.password)
+      |> with_environment(:MYSQL_DATABASE, config.database)
+      |> with_environment(:MYSQL_RANDOM_ROOT_PASSWORD, "yes")
+      |> with_waiting_strategy(
+        CommandWaitStrategy.new(
+          [
+            "sh",
+            "-c",
+            "mysqladmin ping --user='#{config.user}' --password='#{config.password}' -h localhost | grep 'mysqld is alive'"
+          ],
+          config.wait_timeout
+        )
+      )
+    end
   end
 end

@@ -4,6 +4,8 @@
 defmodule Testcontainers.Reaper do
   use GenServer
 
+  defstruct []
+
   @moduledoc """
   A GenServer that manages the lifecycle of the Ryuk container within the Testcontainers ecosystem.
 
@@ -23,12 +25,11 @@ defmodule Testcontainers.Reaper do
   by the higher-level Testcontainers APIs.
   """
 
+  alias Testcontainers.ContainerBuilder
   alias Testcontainers.Utils
 
   alias Testcontainers.Container
 
-  @ryuk_image "testcontainers/ryuk:0.5.1"
-  @ryuk_port 8080
   @ryuk_filter_label "testcontainers-elixir-reap"
 
   @doc """
@@ -75,7 +76,7 @@ defmodule Testcontainers.Reaper do
   def init(_) do
     Process.flag(:trap_exit, true)
 
-    with {:ok, container} <- create_ryuk_container(),
+    with {:ok, container} <- Container.run(%__MODULE__{}, on_exit: nil),
          {:ok, socket} <- create_ryuk_socket(container) do
       ryuk_container_id = container.container_id
 
@@ -104,16 +105,17 @@ defmodule Testcontainers.Reaper do
     end
   end
 
-  defp create_ryuk_container do
-    %Container{image: @ryuk_image}
-    |> Container.with_exposed_port(@ryuk_port)
-    |> Container.with_environment("RYUK_PORT", "#{@ryuk_port}")
-    |> Container.with_bind_mount("/var/run/docker.sock", "/var/run/docker.sock", "rw")
-    |> Container.run(label: false)
+  defimpl ContainerBuilder, for: __MODULE__ do
+    def build(_, _) do
+      Container.new("testcontainers/ryuk:0.5.1")
+      |> Container.with_exposed_port(8080)
+      |> Container.with_environment("RYUK_PORT", "8080")
+      |> Container.with_bind_mount("/var/run/docker.sock", "/var/run/docker.sock", "rw")
+    end
   end
 
   defp create_ryuk_socket(%Container{} = container) do
-    host_port = Container.mapped_port(container, @ryuk_port)
+    host_port = Container.mapped_port(container, 8080)
 
     :gen_tcp.connect(~c"localhost", host_port, [
       :binary,

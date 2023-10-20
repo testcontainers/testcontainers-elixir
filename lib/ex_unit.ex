@@ -7,6 +7,7 @@ defmodule Testcontainers.ExUnit do
   """
   import ExUnit.Callbacks
 
+  alias Testcontainers.ContainerBuilder
   alias Testcontainers.Reaper
   alias Testcontainers.Connection
   alias Testcontainers.Container
@@ -123,6 +124,7 @@ defmodule Testcontainers.ExUnit do
     * The container is terminated after the test completes, regardless of the test's outcome, to prevent any state from persisting that might affect subsequent tests.
     * This function is intended for use within ExUnit test cases and might not be suitable for managing containers outside of this context.
   """
+  @spec run_container(ContainerBuilder.t(), keyword()) :: {:ok, %Container{}} | {:error, any()}
   def run_container(config, options \\ []) do
     default_options = [on_exit: &ExUnit.Callbacks.on_exit/1]
     options = Keyword.merge(default_options, options)

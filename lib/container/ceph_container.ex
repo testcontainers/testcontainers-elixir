@@ -1,50 +1,216 @@
 # SPDX-License-Identifier: MIT
 defmodule Testcontainers.Container.CephContainer do
-  alias Testcontainers.WaitStrategy.HttpWaitStrategy
+  @moduledoc """
+  Module for building Ceph container configurations.
+
+  This module provides functions for creating and manipulating configurations for Ceph containers.
+  It allows the setting of specific parameters like image, access keys, secret keys,
+  and other parameters related to the Ceph container.
+  """
+
   alias Testcontainers.WaitStrategy.LogWaitStrategy
+  alias Testcontainers.Container.CephContainer
+  alias Testcontainers.ContainerBuilder
   alias Testcontainers.Container
 
-  def new(options \\ []) do
-    image = Keyword.get(options, :image, "quay.io/ceph/demo:latest-quincy")
-    access_key = Keyword.get(options, :access_key, "demo")
-    secret_key = Keyword.get(options, :secret_key, "demo")
-    bucket = Keyword.get(options, :bucket, "demo")
+  @default_image "quay.io/ceph/demo"
+  @default_tag "latest-quincy"
+  @default_port 8080
+  @wait_timeout 300_000
 
-    Container.new(image,
-      exposed_ports: [3300, 8080],
-      environment: %{
-        CEPH_DEMO_UID: "demo",
-        CEPH_DEMO_BUCKET: bucket,
-        CEPH_DEMO_ACCESS_KEY: access_key,
-        CEPH_DEMO_SECRET_KEY: secret_key,
-        CEPH_PUBLIC_NETWORK: "0.0.0.0/0",
-        MON_IP: "127.0.0.1",
-        RGW_NAME: "localhost"
-      }
-    )
-    |> Container.with_waiting_strategies(wait_strategies(8080, bucket))
+  defstruct image: "#{@default_image}:#{@default_tag}",
+            wait_timeout: @wait_timeout,
+            port: @default_port,
+            access_key: "test",
+            secret_key: "test",
+            bucket: "test"
+
+  @doc """
+  Creates a new `CephContainer` struct with default attributes.
+  """
+  def new, do: %__MODULE__{}
+
+  @doc """
+  Sets the `image` of the Ceph container configuration.
+
+  ## Examples
+
+      iex> config = CephContainer.new()
+      iex> new_config = CephContainer.with_image(config, "quay.io/ceph/alternative")
+      iex> new_config.image
+      "quay.io/ceph/alternative"
+  """
+  def with_image(%__MODULE__{} = config, image) when is_binary(image) do
+    %{config | image: image}
   end
 
-  def with_bucket(%Container{} = container, bucket) when is_binary(bucket) do
-    %{container | environment: Map.put(container.environment, :CEPH_DEMO_BUCKET, bucket)}
+  @doc """
+  Sets the `access_key` used for authentication with the Ceph container.
+
+  ## Examples
+
+      iex> config = CephContainer.new()
+      iex> new_config = CephContainer.with_access_key(config, "new_access_key")
+      iex> new_config.access_key
+      "new_access_key"
+  """
+  def with_access_key(%__MODULE__{} = config, access_key) when is_binary(access_key) do
+    %{config | access_key: access_key}
   end
 
-  def with_access_key(%Container{} = container, access_key) when is_binary(access_key) do
-    %{container | environment: Map.put(container.environment, :CEPH_DEMO_ACCESS_KEY, access_key)}
+  @doc """
+  Sets the `secret_key` used for authentication with the Ceph container.
+
+  ## Examples
+
+      iex> config = CephContainer.new()
+      iex> new_config = CephContainer.with_secret_key(config, "new_secret_key")
+      iex> new_config.secret_key
+      "new_secret_key"
+  """
+  def with_secret_key(%__MODULE__{} = config, secret_key) when is_binary(secret_key) do
+    %{config | secret_key: secret_key}
   end
 
-  def with_secret_key(%Container{} = container, secret_key) when is_binary(secret_key) do
-    %{container | environment: Map.put(container.environment, :CEPH_DEMO_SECRET_KEY, secret_key)}
+  @doc """
+  Sets the `bucket` that is automatically in the Ceph container.
+
+  ## Examples
+
+      iex> config = CephContainer.new()
+      iex> new_config = CephContainer.with_bucket(config, "test_bucket")
+      iex> new_config.bucket
+      "test_bucket"
+  """
+  def with_bucket(%__MODULE__{} = config, bucket) when is_binary(bucket) do
+    %{config | bucket: bucket}
   end
 
-  defp wait_strategies(port, bucket) do
-    [
-      LogWaitStrategy.new(
-        ~r/.*Bucket 's3:\/\/#{bucket}\/' created.*/,
-        300_000,
-        5000
-      ),
-      HttpWaitStrategy.new("127.0.0.1", port, "/")
-    ]
+  @doc """
+  Sets the port on which the Ceph container will be exposed.
+
+  ## Parameters
+
+  - `config`: The current Ceph container configuration.
+  - `port`: The target port number.
+
+  ## Examples
+
+      iex> config = CephContainer.new()
+      iex> new_config = CephContainer.with_port(config, 8081)
+      iex> new_config.port
+      8081
+  """
+  def with_port(%__MODULE__{} = config, port) when is_integer(port) do
+    %{config | port: port}
+  end
+
+  @doc """
+  Sets the maximum time (in milliseconds) the system will wait for the Ceph container to be ready before timing out.
+
+  ## Parameters
+
+  - `config`: The current Ceph container configuration.
+  - `wait_timeout`: The time to wait in milliseconds.
+
+  ## Examples
+
+      iex> config = CephContainer.new()
+      iex> new_config = CephContainer.with_wait_timeout(config, 400_000)
+      iex> new_config.wait_timeout
+      400_000
+  """
+  def with_wait_timeout(%__MODULE__{} = config, wait_timeout) when is_integer(wait_timeout) do
+    %{config | wait_timeout: wait_timeout}
+  end
+
+  @doc """
+  Retrieves the default Docker image used for the Ceph container.
+
+  ## Examples
+
+      iex> CephContainer.default_image()
+      "quay.io/ceph/demo"
+  """
+  def default_image, do: @default_image
+
+  @doc """
+  Retrieves the port mapped by the Docker host for the Ceph container.
+
+  ## Parameters
+
+  - `container`: The active Ceph container instance.
+
+  ## Examples
+
+      iex> CephContainer.port(container)
+      32768 # This value will be different depending on the mapped port.
+  """
+  def port(%Container{} = container), do: Container.mapped_port(container, @default_port)
+
+  @doc """
+  Generates the connection URL for accessing the Ceph service running within the container.
+
+  This URL is based on the standard localhost IP and the mapped port for the container.
+
+  ## Parameters
+
+  - `container`: The active Ceph container instance.
+
+  ## Examples
+
+      iex> CephContainer.connection_url(container)
+      "http://localhost:32768" # This value will be different depending on the mapped port.
+  """
+  def connection_url(%Container{} = container) do
+    "http://localhost:#{port(container)}"
+  end
+
+  defimpl ContainerBuilder, for: __MODULE__ do
+    import Container
+
+    @doc """
+    Implementation of the `ContainerBuilder` protocol for `CephContainer`.
+
+    This implementation provides the logic for building a container configuration specific to Ceph. It ensures the provided image is compatible, sets up necessary environment variables, configures network settings, and applies a waiting strategy to ensure the container is fully operational before it's used.
+
+    The build process raises an `ArgumentError` if the specified container image is not compatible with the expected Ceph image.
+
+    ## Examples
+
+        # Assuming `ContainerBuilder.build/2` is called from somewhere in the application with a `CephContainer` configuration:
+        iex> config = CephContainer.new()
+        iex> built_container = ContainerBuilder.build(config, [])
+        # `built_container` is now a ready-to-use `%Container{}` configured specifically for Ceph.
+
+    ## Errors
+
+    - Raises `ArgumentError` if the provided image is not compatible with the default Ceph image.
+    """
+    @spec build(%CephContainer{}, keyword()) :: %Container{}
+    @impl true
+    def build(%CephContainer{} = config, _options) do
+      if not String.starts_with?(config.image, CephContainer.default_image()) do
+        raise ArgumentError,
+          message: "Image #{config.image} is not compatible with #{CephContainer.default_image()}"
+      end
+
+      new(config.image)
+      |> with_exposed_port(config.port)
+      |> with_environment(:CEPH_DEMO_UID, "demo")
+      |> with_environment(:CEPH_DEMO_BUCKET, config.bucket)
+      |> with_environment(:CEPH_DEMO_ACCESS_KEY, config.access_key)
+      |> with_environment(:CEPH_DEMO_SECRET_KEY, config.secret_key)
+      |> with_environment(:CEPH_PUBLIC_NETWORK, "0.0.0.0/0")
+      |> with_environment(:MON_IP, "127.0.0.1")
+      |> with_environment(:RGW_NAME, "localhost")
+      |> with_waiting_strategy(
+        LogWaitStrategy.new(
+          ~r/.*Bucket 's3:\/\/#{config.bucket}\/' created.*/,
+          config.wait_timeout,
+          5000
+        )
+      )
+    end
   end
 end
