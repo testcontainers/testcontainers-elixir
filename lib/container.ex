@@ -2,6 +2,8 @@
 # Original by: Marco Dallagiacoma @ 2023 in https://github.com/dallagi/excontainers
 # Modified by: Jarl André Hübenthal @ 2023
 defmodule Testcontainers.Container do
+  alias Testcontainers.Container
+  alias Testcontainers.ContainerBuilder
   alias Testcontainers.WaitStrategy
   alias Testcontainers.Reaper
   alias Testcontainers.Connection
@@ -55,7 +57,7 @@ defmodule Testcontainers.Container do
   Sets an _environment variable_ to the _container_.
   """
   def with_environment(%__MODULE__{} = config, key, value)
-      when is_binary(key) and is_binary(value) do
+      when (is_binary(key) or is_atom(key)) and is_binary(value) do
     %__MODULE__{config | environment: Map.put(config.environment, key, value)}
   end
 
@@ -152,9 +154,11 @@ defmodule Testcontainers.Container do
   - It's important to specify appropriate wait strategies to ensure the container is fully ready for interaction, especially for containers that may take some time to start up services internally.
 
   """
-  def run(%__MODULE__{} = config, options \\ []) do
+  @spec run(ContainerBuilder.t(), keyword()) :: {:ok, %Container{}} | {:error, any()}
+  def run(config_builder, options \\ []) do
     on_exit = Keyword.get(options, :on_exit, nil)
     label = Keyword.get(options, :label, true)
+    config = ContainerBuilder.build(config_builder, options)
     wait_strategies = config.wait_strategies || []
 
     with :ok <- Connection.pull_image(config.image),
@@ -180,4 +184,9 @@ defmodule Testcontainers.Container do
         error
     end)
   end
+end
+
+defprotocol Testcontainers.ContainerBuilder do
+  @spec build(t(), keyword()) :: %Testcontainers.Container{}
+  def build(builder, options)
 end

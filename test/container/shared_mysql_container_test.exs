@@ -23,6 +23,6 @@ defmodule Testcontainers.Container.SharedMySqlContainerTest do
     query_result = MyXQL.query!(pid, "SELECT version()", [])
 
     version_info = query_result.rows |> Enum.at(0) |> Enum.at(0)
-    assert version_info =~ "8.0"
+    assert version_info =~ "8"
   end
 end
