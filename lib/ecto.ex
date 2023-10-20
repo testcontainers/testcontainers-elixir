@@ -60,7 +60,7 @@ defmodule Testcontainers.Ecto do
         username: "postgres",
         password: "postgres",
         hostname: "localhost",
-        database: "my_app_test#{System.get_env("MIX_TEST_PARTITION")}", # set this also in postgres_container macro database option, or remove the appending
+        database: "my_app_test\#{System.get_env("MIX_TEST_PARTITION")}", # set this also in postgres_container macro database option, or remove the appending
         pool: Ecto.Adapters.SQL.Sandbox,
         pool_size: 10
 
@@ -68,7 +68,7 @@ defmodule Testcontainers.Ecto do
 
       @impl true
       def start(_type, _args) do
-        postgres_container(app: :my_app, database: "my_app_test#{System.get_env("MIX_TEST_PARTITION")}"),
+        postgres_container(app: :my_app, database: "my_app_test\#{System.get_env("MIX_TEST_PARTITION")}"),
 
         # .. other setup code
       ]
