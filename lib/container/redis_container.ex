@@ -10,7 +10,7 @@ defmodule Testcontainers.Container.RedisContainer do
   alias Testcontainers.WaitStrategy.CommandWaitStrategy
 
   @redis_port 6379
-  @wait_strategy CommandWaitStrategy.new(["redis-cli", "PING"])
+  @wait_strategy CommandWaitStrategy.new(["redis-cli", "PING"], 60_000)
 
   @doc """
   Creates a Redis container.
