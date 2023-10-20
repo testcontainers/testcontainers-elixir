@@ -63,12 +63,14 @@ defmodule Testcontainers.Container do
   Adds a _port_ to be exposed on the _container_.
   """
   def with_exposed_port(%__MODULE__{} = config, port) when is_integer(port) do
-    %__MODULE__{config | exposed_ports: [port | config.exposed_ports]}
+    filtered_ports = config.exposed_ports |> Enum.reject(fn p -> p == port end)
+
+    %__MODULE__{config | exposed_ports: [port | filtered_ports]}
   end
 
   def with_fixed_port(%__MODULE__{} = config, port, host_port \\ nil)
       when is_integer(port) and (is_nil(host_port) or is_integer(host_port)) do
-    filtered_ports = config.exposed_ports |> Enum.filter(fn port -> port != port end)
+    filtered_ports = config.exposed_ports |> Enum.reject(fn p -> p == port end)
 
     %__MODULE__{
       config
@@ -82,7 +84,9 @@ defmodule Testcontainers.Container do
   Adds multiple _ports_ to be exposed on the _container_.
   """
   def with_exposed_ports(%__MODULE__{} = config, ports) when is_list(ports) do
-    %__MODULE__{config | exposed_ports: ports ++ config.exposed_ports}
+    filtered_ports = config.exposed_ports |> Enum.reject(fn port -> port in ports end)
+
+    %__MODULE__{config | exposed_ports: ports ++ filtered_ports}
   end
 
   @doc """
