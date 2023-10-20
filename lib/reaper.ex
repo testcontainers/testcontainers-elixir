@@ -29,7 +29,7 @@ defmodule Testcontainers.Reaper do
 
   @ryuk_image "testcontainers/ryuk:0.5.1"
   @ryuk_port 8080
-  @ryuk_filter_label "reaper"
+  @ryuk_filter_label "testcontainers-elixir-reap"
 
   @doc """
   Starts the Reaper process if it is not already running.
@@ -69,12 +69,7 @@ defmodule Testcontainers.Reaper do
     end
   end
 
-  @doc """
-  Labels the container so that Ryuk can delete it.
-  """
-  def label(%Container{} = config) do
-    GenServer.call(__MODULE__, {:label, config})
-  end
+  def get_filter_label, do: @ryuk_filter_label
 
   @impl true
   def init(_) do
@@ -87,22 +82,10 @@ defmodule Testcontainers.Reaper do
       Utils.log("Reaper initialized with containerId #{ryuk_container_id}")
 
       # registers the label filter that ryuk uses to delete containers
-      send(self(), {:register, {"label", @ryuk_filter_label, ryuk_container_id}})
+      send(self(), {:register, {"label", @ryuk_filter_label, "true"}})
 
       {:ok, %{socket: socket, container: container, id: ryuk_container_id}}
     end
-  end
-
-  @impl true
-  def handle_call({:label, %Container{} = config}, _from, %{id: ryuk_container_id} = state) do
-    config =
-      Map.put(
-        config,
-        :labels,
-        Map.put(config.labels, @ryuk_filter_label, ryuk_container_id)
-      )
-
-    {:reply, {:ok, config}, state}
   end
 
   @impl true

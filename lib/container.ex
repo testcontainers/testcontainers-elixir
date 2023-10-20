@@ -158,7 +158,11 @@ defmodule Testcontainers.Container do
     wait_strategies = config.wait_strategies || []
 
     with :ok <- Connection.pull_image(config.image),
-         {:ok, config} <- if(label, do: Reaper.label(config), else: {:ok, config}),
+         {:ok, config} <-
+           if(label,
+             do: {:ok, with_label(config, Reaper.get_filter_label(), "true")},
+             else: {:ok, config}
+           ),
          {:ok, id} <- Connection.create_container(config),
          :ok <- Connection.start_container(id),
          :ok <- if(on_exit, do: on_exit.(fn -> Connection.stop_container(id) end), else: :ok),
