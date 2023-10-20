@@ -95,17 +95,16 @@ defmodule Testcontainers.Ecto do
 
     app = Keyword.get(options, :app)
 
-    if app == nil or not is_atom(app) or
-         Application.ensure_loaded(app) != :ok do
+    if app == nil or not is_atom(app) do
       raise ArgumentError,
-            "Missing or ot an application: #{inspect(app)}"
+            "Missing or not an atom: app=#{inspect(app)}"
     end
 
     repo = Keyword.get(options, :repo)
 
     if repo != nil and not is_atom(repo) do
       raise ArgumentError,
-            "Not an atom: #{inspect(repo)}"
+            "Not an atom: repo=#{inspect(repo)}"
     end
 
     repo =
