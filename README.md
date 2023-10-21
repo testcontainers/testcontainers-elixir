@@ -51,7 +51,11 @@ In simple terms you can add this in application.ex:
 
   @impl true
   def start(_type, _args) do
-    postgres_container(app: :my_app),
+    postgres_container(
+      app: :my_app,
+      user: "postgres",
+      password: "postgres"
+    )
 
     # .. other setup code
   end

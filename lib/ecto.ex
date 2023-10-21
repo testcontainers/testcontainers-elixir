@@ -1,8 +1,8 @@
 defmodule Testcontainers.Ecto do
   @moduledoc """
-  Facilitates the creation of a Postgres container for testing with Ecto.
+  Facilitates the creation of a Postgres or MySql container for testing with Ecto.
 
-  This module simplifies the process of launching a real Postgres database instance within a Docker container for testing purposes. It leverages the `Testcontainers` library to instantiate a Postgres container with the desired configuration, providing an isolated database environment for each test session.
+  This module simplifies the process of launching a real Postgres or MySql database instance within a Docker container for testing purposes. It leverages the `Testcontainers` library to instantiate a Postgres or MySql container with the desired configuration, providing an isolated database environment for each test session.
   """
 
   alias Testcontainers.Container.PostgresContainer
@@ -40,7 +40,11 @@ defmodule Testcontainers.Ecto do
 
       @impl true
       def start(_type, _args) do
-        postgres_container(app: :my_app),
+        postgres_container(
+          app: :my_app,
+          user: "postgres",
+          password: "postgres"
+        )
 
         # .. other setup code
       end
@@ -72,10 +76,15 @@ defmodule Testcontainers.Ecto do
 
       @impl true
       def start(_type, _args) do
-        postgres_container(app: :my_app, database: "my_app_test\#{System.get_env("MIX_TEST_PARTITION")}"),
+        postgres_container(
+          app: :my_app,
+          user: "postgres",
+          password: "postgres",
+          database: "my_app_test\#{System.get_env("MIX_TEST_PARTITION")}"
+        )
 
         # .. other setup code
-      ]
+      end
 
   ## Returns
 
@@ -134,7 +143,11 @@ defmodule Testcontainers.Ecto do
 
       @impl true
       def start(_type, _args) do
-        mysql_container(app: :my_app),
+        mysql_container(
+          app: :my_app,
+          user: "postgres", # consider changing this to something else here and in config/test.exs
+          password: "postgres" # consider changing this to something else here and in config/test.exs
+        )
 
         # .. other setup code
       end
@@ -152,13 +165,13 @@ defmodule Testcontainers.Ecto do
       end
 
       # in your config/test.exs, if you want to keep appending the MIX_TEST_PARTITION env variable to the database name,
-      # you must set the database option in postgres_container macro to the same value
+      # you must set the database option in mysql_container macro to the same value
 
       config :my_app, MyApp.Repo,
-        username: "postgres",
-        password: "postgres",
+        username: "postgres", # <- consider changing this when using mysql
+        password: "postgres", # <- consider changing this when using mysql
         hostname: "localhost",
-        database: "my_app_test\#{System.get_env("MIX_TEST_PARTITION")}", # set this also in postgres_container macro database option, or remove the appending
+        database: "my_app_test\#{System.get_env("MIX_TEST_PARTITION")}", # set this also in mysql_container macro database option, or remove the appending
         pool: Ecto.Adapters.SQL.Sandbox,
         pool_size: 10
 
@@ -166,10 +179,15 @@ defmodule Testcontainers.Ecto do
 
       @impl true
       def start(_type, _args) do
-        postgres_container(app: :my_app, database: "my_app_test\#{System.get_env("MIX_TEST_PARTITION")}"),
+        mysql_container(
+          app: :my_app,
+          user: "postgres", # <- consider changing this when using mysql
+          password: "postgres", # <- consider changing this when using mysql
+          database: "my_app_test\#{System.get_env("MIX_TEST_PARTITION")}"
+        )
 
         # .. other setup code
-      ]
+      end
 
   ## Returns
 
@@ -180,7 +198,7 @@ defmodule Testcontainers.Ecto do
 
   - Raises `ArgumentError` if the application is missing, not an atom, or not loaded.
   - Raises `ArgumentError` if the repo is defined and not an atom
-  - Raises `ArgumentError` if the specified Docker image is not a valid Postgres image.
+  - Raises `ArgumentError` if the specified Docker image is not a valid MySql image.
 
   ## Note
 
