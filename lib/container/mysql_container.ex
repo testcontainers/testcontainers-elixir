@@ -153,7 +153,7 @@ defmodule Testcontainers.Container.MySqlContainer do
     ]
   end
 
-  defimpl ContainerBuilder, for: __MODULE__ do
+  defimpl ContainerBuilder do
     import Container
 
     @doc """

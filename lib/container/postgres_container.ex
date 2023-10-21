@@ -151,7 +151,7 @@ defmodule Testcontainers.Container.PostgresContainer do
     ]
   end
 
-  defimpl ContainerBuilder, for: __MODULE__ do
+  defimpl ContainerBuilder do
     import Container
 
     @doc """
