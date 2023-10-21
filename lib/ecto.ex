@@ -241,13 +241,14 @@ defmodule Testcontainers.Ecto do
       end
 
     image = Keyword.get(options, :image, container_module.default_image_with_tag())
-    port = Keyword.get(options, :port, container_module.default_port())
+    exposed_port = container_module.default_port()
+    host_port = Keyword.get(options, :port, exposed_port)
 
     quote do
       container =
         unquote(container_module).new()
         |> unquote(container_module).with_image(unquote(image))
-        |> unquote(container_module).with_port({unquote(port), unquote(port)})
+        |> unquote(container_module).with_port({unquote(exposed_port), unquote(host_port)})
         |> unquote(container_module).with_user(unquote(user))
         |> unquote(container_module).with_database(unquote(database))
         |> unquote(container_module).with_password(unquote(password))
