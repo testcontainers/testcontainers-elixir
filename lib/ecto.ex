@@ -5,6 +5,7 @@ defmodule Testcontainers.Ecto do
   This module simplifies the process of launching a real Postgres or MySql database instance within a Docker container for testing purposes. It leverages the `Testcontainers` library to instantiate a Postgres or MySql container with the desired configuration, providing an isolated database environment for each test session.
   """
 
+  alias Testcontainers.Container.MongodbContainer
   alias Testcontainers.Container.PostgresContainer
   alias Testcontainers.Container.MySqlContainer
   import Testcontainers.ExUnit
@@ -208,7 +209,11 @@ defmodule Testcontainers.Ecto do
     database_container(:mysql, options)
   end
 
-  defp database_container(type, options) when type in [:postgres, :mysql] do
+  defmacro mongodb_container(options \\ []) do
+    database_container(:mongodb, options)
+  end
+
+  defp database_container(type, options) when type in [:postgres, :mysql, :mongodb] do
     app = Keyword.get(options, :app)
 
     if app == nil or not is_atom(app) do
@@ -238,6 +243,7 @@ defmodule Testcontainers.Ecto do
       case type do
         :postgres -> PostgresContainer
         :mysql -> MySqlContainer
+        :mongodb -> MongodbContainer
       end
 
     image = Keyword.get(options, :image, container_module.default_image_with_tag())
@@ -252,17 +258,20 @@ defmodule Testcontainers.Ecto do
         |> unquote(container_module).with_user(unquote(user))
         |> unquote(container_module).with_database(unquote(database))
         |> unquote(container_module).with_password(unquote(password))
-
-      case run_container(container, on_exit: nil) do
+        |> IO.inspect()
+        case run_container(container, on_exit: nil) do
         {:ok, _} ->
-          {:ok, pid} = unquote(repo).start_link()
+          if unquote(container_module) == MongodbContainer do
+            :ok
+          else
+            {:ok, pid} = unquote(repo).start_link()
 
-          absolute_migrations_path =
-            Application.app_dir(unquote(app), unquote(migrations_path))
+            absolute_migrations_path =
+              Application.app_dir(unquote(app), unquote(migrations_path))
 
-          Ecto.Migrator.run(unquote(repo), absolute_migrations_path, :up, all: true)
-          GenServer.stop(pid)
-
+            Ecto.Migrator.run(unquote(repo), absolute_migrations_path, :up, all: true)
+            GenServer.stop(pid)
+          end
         {:error, reason} ->
           {:error, reason}
       end

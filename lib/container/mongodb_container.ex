@@ -22,7 +22,8 @@ defmodule Testcontainers.Container.MongodbContainer do
             wait_timeout: @wait_timeout,
             port: @default_port,
             user: "test",
-            password: "test"
+            password: "test",
+            database: "test"
 
   @doc """
   Creates a new `MongodbContainer` struct with default attributes.
@@ -58,6 +59,20 @@ defmodule Testcontainers.Container.MongodbContainer do
   end
 
   @doc """
+  Overrides the default database used for the Mongodb container.
+
+  ## Examples
+
+      iex> config = MongodbContainer.new()
+      iex> new_config = MongodbContainer.with_database(config, "another-database")
+      iex> new_config.database
+      "another-database"
+  """
+  def with_database(%__MODULE__{} = config, database) when is_binary(database) do
+    %{config | database: database}
+  end
+
+  @doc """
   Sets the `secret_key` used for authentication with the Mongodb container.
 
   ## Examples
@@ -69,6 +84,22 @@ defmodule Testcontainers.Container.MongodbContainer do
   """
   def with_password(%__MODULE__{} = config, password) when is_binary(password) do
     %{config | password: password}
+  end
+
+  @doc """
+  Overrides the default port used for the Mongodb container.
+
+  Note: this will not change what port the docker container is listening to internally.
+
+  ## Examples
+
+      iex> config = MongodbContainer.new()
+      iex> new_config = MongodbContainer.with_port(config, 3307)
+      iex> new_config.port
+      3307
+  """
+  def with_port(%__MODULE__{} = config, port) when is_integer(port) or is_tuple(port) do
+    %{config | port: port}
   end
 
   @doc """
@@ -95,10 +126,21 @@ defmodule Testcontainers.Container.MongodbContainer do
     @impl true
     def build(%MongodbContainer{} = config, _options) do
       import Container
+
+      port_fn =
+        case config.port do
+          {exposed_port, host_port} ->
+            fn container -> with_fixed_port(container, exposed_port, host_port) end
+
+          port ->
+            fn container -> with_exposed_port(container, port) end
+        end
+
       new(config.image)
-      |> with_exposed_port(config.port)
+      |> Kernel.then(port_fn)
       |> with_environment(:MONGO_INITDB_ROOT_USERNAME, config.user)
       |> with_environment(:MONGO_INITDB_ROOT_PASSWORD, config.password)
+      |> with_environment(:MONGO_INITDB_DATABASE, config.database)
       |> with_waiting_strategy(LogWaitStrategy.new(~r/.*Waiting for connections.*/, config.wait_timeout, 1000))
     end
   end
