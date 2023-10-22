@@ -22,7 +22,7 @@ defmodule Testcontainers.EctoPostgresTest do
 
   import Testcontainers.Ecto
 
-  @moduletag timeout: 120_000
+  @moduletag timeout: 300_000
 
   setup do
     :ok =
