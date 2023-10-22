@@ -20,7 +20,8 @@ defmodule TestcontainersElixir.MixProject do
       package: [
         links: %{"GitHub" => @source_url},
         licenses: ["MIT"]
-      ]
+      ],
+      test_coverage: [summary: [threshold: 70]]
     ]
   end
 

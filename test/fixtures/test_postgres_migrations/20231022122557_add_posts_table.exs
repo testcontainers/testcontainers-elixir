@@ -1,4 +1,4 @@
-defmodule Testcontainers.Test.Migrations.AddPostsTable do
+defmodule Testcontainers.Test.Postgres.Migrations.AddPostsTable do
   use Ecto.Migration
 
   def change do

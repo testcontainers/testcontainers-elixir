@@ -8,10 +8,10 @@ defmodule Testcontainers.MysqlUser do
   use Ecto.Schema
 
   schema "users" do
-    field :email, :string
-    field :password, :string, virtual: true, redact: true
-    field :hashed_password, :string, redact: true
-    field :confirmed_at, :naive_datetime
+    field(:email, :string)
+    field(:password, :string, virtual: true, redact: true)
+    field(:hashed_password, :string, redact: true)
+    field(:confirmed_at, :naive_datetime)
 
     timestamps()
   end
@@ -22,11 +22,13 @@ defmodule Testcontainers.EctoMysqlTest do
 
   import Testcontainers.Ecto
 
+  @moduletag timeout: 120_000
+
   setup do
     :ok =
       mysql_container(
         app: :testcontainers,
-        migrations_path: "../../../../test/fixtures/test_migrations",
+        migrations_path: "../../../../test/fixtures/test_mysql_migrations",
         repo: :"Elixir.Testcontainers.MysqlRepo"
       )
   end
