@@ -5,6 +5,7 @@ defmodule Testcontainers.Ecto do
   This module simplifies the process of launching a real Postgres or MySql database instance within a Docker container for testing purposes. It leverages the `Testcontainers` library to instantiate a Postgres or MySql container with the desired configuration, providing an isolated database environment for each test session.
   """
 
+  alias Testcontainers.Utils
   alias Testcontainers.Container.PostgresContainer
   alias Testcontainers.Container.MySqlContainer
   import Testcontainers.ExUnit
@@ -260,7 +261,17 @@ defmodule Testcontainers.Ecto do
           absolute_migrations_path =
             Application.app_dir(unquote(app), unquote(migrations_path))
 
+          :ok =
+            case File.exists?(absolute_migrations_path) do
+              false ->
+                Utils.log("Migrations directory does not exist, this will be ignored")
+
+              _ ->
+                :ok
+            end
+
           Ecto.Migrator.run(unquote(repo), absolute_migrations_path, :up, all: true)
+
           GenServer.stop(pid)
 
         {:error, reason} ->
