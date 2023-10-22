@@ -45,7 +45,7 @@ defmodule Testcontainers.Container.SeleniumContainer do
 
   def default_image, do: @default_image
 
-  defimpl ContainerBuilder, for: __MODULE__ do
+  defimpl ContainerBuilder do
     import Container
 
     @log_regex ~r/.*(RemoteWebDriver instances should connect to|Selenium Server is up and running|Started Selenium Standalone).*\n/

@@ -99,7 +99,7 @@ defmodule Testcontainers.Container.RedisContainer do
   """
   def connection_url(%Container{} = container), do: "redis://localhost:#{port(container)}/"
 
-  defimpl ContainerBuilder, for: __MODULE__ do
+  defimpl ContainerBuilder do
     import Container
 
     @doc """

@@ -166,7 +166,7 @@ defmodule Testcontainers.Container.CephContainer do
     "http://localhost:#{port(container)}"
   end
 
-  defimpl ContainerBuilder, for: __MODULE__ do
+  defimpl ContainerBuilder do
     import Container
 
     @doc """

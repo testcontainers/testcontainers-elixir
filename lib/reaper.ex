@@ -105,7 +105,9 @@ defmodule Testcontainers.Reaper do
     end
   end
 
-  defimpl ContainerBuilder, for: __MODULE__ do
+  defimpl ContainerBuilder do
+    @spec build(%Testcontainers.Reaper{}, keyword()) :: %Container{}
+    @impl true
     def build(_, _) do
       Container.new("testcontainers/ryuk:0.5.1")
       |> Container.with_exposed_port(8080)
