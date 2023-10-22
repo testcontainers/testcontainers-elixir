@@ -67,6 +67,10 @@ There is an example repo here with a bare bones phoenix application, where the o
 
 [https://github.com/jarlah/hello_testcontainers](https://github.com/jarlah/hello_testcontainers)
 
+There is also another example repo without Phoenix, just a bare mix project, which show cases that the ecto dependencies are in fact optional:
+
+[https://github.com/jarlah/mix_teststcontainers](https://github.com/jarlah/mix_teststcontainers)
+
 ### Simple example
 
 Here's a simple example of how to use a MySQL container in your tests:
