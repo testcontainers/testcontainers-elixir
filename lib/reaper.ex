@@ -76,14 +76,19 @@ defmodule Testcontainers.Reaper do
   def init(_) do
     Process.flag(:trap_exit, true)
 
-    with {:ok, container} <- Container.run(%__MODULE__{}, on_exit: nil),
+    ryuk_id = UUID.uuid4()
+
+    # register a globale variable accessible by all processes in the vm
+    :persistent_term.put(@ryuk_filter_label, ryuk_id)
+
+    with {:ok, container} <- Container.run(%__MODULE__{}, on_exit: nil, label: false),
          {:ok, socket} <- create_ryuk_socket(container) do
       ryuk_container_id = container.container_id
 
       Utils.log("Reaper initialized with containerId #{ryuk_container_id}")
 
       # registers the label filter that ryuk uses to delete containers
-      send(self(), {:register, {"label", @ryuk_filter_label, "true"}})
+      send(self(), {:register, {"label", @ryuk_filter_label, ryuk_id}})
 
       {:ok, %{socket: socket, container: container, id: ryuk_container_id}}
     end

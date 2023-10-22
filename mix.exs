@@ -40,6 +40,7 @@ defmodule TestcontainersElixir.MixProject do
   defp deps do
     [
       {:ex_docker_engine_api, "~> 1.43"},
+      {:uuid, ">= 0.0.0"},
       {:ecto_sql, "~> 3.10", optional: true},
       {:ecto, "~> 3.10", optional: true},
       {:dialyxir, "~> 1.3", only: [:dev], runtime: false},
