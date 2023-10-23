@@ -24,16 +24,14 @@ defmodule Testcontainers.EctoPostgresTest do
 
   @moduletag timeout: 300_000
 
-  setup do
+  test "can use ecto function" do
     :ok =
       postgres_container(
         app: :testcontainers,
         migrations_path: "../../../../test/fixtures/test_postgres_migrations",
         repo: :"Elixir.Testcontainers.PostgresRepo"
       )
-  end
 
-  test "can use ecto macro" do
     {:ok, _pid} = Testcontainers.PostgresRepo.start_link()
     assert Testcontainers.PostgresRepo.all(Testcontainers.PostgresUser) == []
   end

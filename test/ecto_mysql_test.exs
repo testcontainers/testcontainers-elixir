@@ -24,16 +24,14 @@ defmodule Testcontainers.EctoMysqlTest do
 
   @moduletag timeout: 300_000
 
-  setup do
+  test "can use ecto function" do
     :ok =
       mysql_container(
         app: :testcontainers,
         migrations_path: "../../../../test/fixtures/test_mysql_migrations",
         repo: :"Elixir.Testcontainers.MysqlRepo"
       )
-  end
 
-  test "can use ecto macro" do
     {:ok, _pid} = Testcontainers.MysqlRepo.start_link()
     assert Testcontainers.MysqlRepo.all(Testcontainers.MysqlUser) == []
   end

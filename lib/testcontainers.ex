@@ -8,7 +8,7 @@ defmodule Testcontainers do
   alias Testcontainers.Container
   alias Testcontainers.ContainerBuilder
 
-  @ryuk_filter_label "testcontainers-elixir-reap"
+  @ryuk_filter_label "org.testcontainers.sessionId"
   @timeout 300_000
 
   def start_link(options \\ []) do
@@ -32,7 +32,7 @@ defmodule Testcontainers do
          {:ok, socket} <- create_ryuk_socket(container),
          :ok <- register("label", @ryuk_filter_label, session_id, socket) do
       Testcontainers.Utils.log("Testcontainers initialized")
-      {:ok, %{socket: socket, container: container, conn: conn, session_id: session_id}}
+      {:ok, %{socket: socket, conn: conn, session_id: session_id}}
     end
   end
 

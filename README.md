@@ -53,7 +53,7 @@ In simple terms you can add this in application.ex:
 ```elixir
   # In your application.ex file in your Phoenix project:
 
-  import Testcontainers.Ecto
+  alias Testcontainers.Ecto
 
   @impl true
   def start(_type, _args) do
@@ -71,7 +71,7 @@ In simple terms you can add this in application.ex:
 
 see documentation on Testcontainers.Ecto for more information about the options it can take.
 
-There is an example repo here with a bare bones phoenix application, where the only changes are the inclusion of the ecto macro and removing the test alias that interferes with the macro:
+There is an example repo here with a bare bones phoenix application, where the only changes are the use of the ecto function and removing the test alias that interferes with it:
 
 [https://github.com/jarlah/hello_testcontainers](https://github.com/jarlah/hello_testcontainers)
 

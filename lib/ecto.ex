@@ -27,7 +27,7 @@ defmodule Testcontainers.Ecto do
 
   ## Database Lifecycle in Testing
 
-  It's important to note that the Postgres database initiated by this macro will remain operational for the duration of the test process and is not explicitly shut down by the macro. The database and its corresponding data are ephemeral, lasting only for the scope of the test session.
+  It's important to note that the Postgres database initiated by this function will remain operational for the duration of the test process and is not explicitly shut down by the test. The database and its corresponding data are ephemeral, lasting only for the scope of the test session.
 
   After the tests conclude, Testcontainers will clean up by removing the database container, ensuring no residual data persists. This approach helps maintain a clean testing environment and prevents any unintended side effects on subsequent tests due to data leftovers.
 
@@ -63,13 +63,13 @@ defmodule Testcontainers.Ecto do
       end
 
       # in your config/test.exs, if you want to keep appending the MIX_TEST_PARTITION env variable to the database name,
-      # you must set the database option in postgres_container macro to the same value
+      # you must set the database option in postgres_container function to the same value
 
       config :my_app, MyApp.Repo,
         username: "postgres",
         password: "postgres",
         hostname: "localhost",
-        database: "my_app_test\#{System.get_env("MIX_TEST_PARTITION")}", # set this also in postgres_container macro database option, or remove the appending
+        database: "my_app_test\#{System.get_env("MIX_TEST_PARTITION")}", # set this also in postgres_container function database option, or remove the appending
         pool: Ecto.Adapters.SQL.Sandbox,
         pool_size: 10
 
@@ -102,7 +102,7 @@ defmodule Testcontainers.Ecto do
 
   This utility is intended for testing environments requiring a genuine database instance. It is not suitable for production use. It mandates a valid Postgres Docker image to maintain consistent and reliable testing conditions.
   """
-  defmacro postgres_container(options \\ []) do
+  def postgres_container(options \\ []) do
     database_container(:postgres, options)
   end
 
@@ -123,7 +123,7 @@ defmodule Testcontainers.Ecto do
 
   ## Database Lifecycle in Testing
 
-  It's important to note that the Mysql database initiated by this macro will remain operational for the duration of the test process and is not explicitly shut down by the macro. The database and its corresponding data are ephemeral, lasting only for the scope of the test session.
+  It's important to note that the Mysql database initiated by this function will remain operational for the duration of the test process and is not explicitly shut down by the function. The database and its corresponding data are ephemeral, lasting only for the scope of the test session.
 
   After the tests conclude, Testcontainers will clean up by removing the database container, ensuring no residual data persists. This approach helps maintain a clean testing environment and prevents any unintended side effects on subsequent tests due to data leftovers.
 
@@ -166,13 +166,13 @@ defmodule Testcontainers.Ecto do
       end
 
       # in your config/test.exs, if you want to keep appending the MIX_TEST_PARTITION env variable to the database name,
-      # you must set the database option in mysql_container macro to the same value
+      # you must set the database option in mysql_container function to the same value
 
       config :my_app, MyApp.Repo,
         username: "postgres", # <- consider changing this when using mysql
         password: "postgres", # <- consider changing this when using mysql
         hostname: "localhost",
-        database: "my_app_test\#{System.get_env("MIX_TEST_PARTITION")}", # set this also in mysql_container macro database option, or remove the appending
+        database: "my_app_test\#{System.get_env("MIX_TEST_PARTITION")}", # set this also in mysql_container function database option, or remove the appending
         pool: Ecto.Adapters.SQL.Sandbox,
         pool_size: 10
 
@@ -205,11 +205,13 @@ defmodule Testcontainers.Ecto do
 
   This utility is intended for testing environments requiring a genuine database instance. It is not suitable for production use. It mandates a valid Postgres Docker image to maintain consistent and reliable testing conditions.
   """
-  defmacro mysql_container(options \\ []) do
+  def mysql_container(options \\ []) do
     database_container(:mysql, options)
   end
 
   defp database_container(type, options) when type in [:postgres, :mysql] do
+    Testcontainers.start_link()
+
     app = Keyword.get(options, :app)
 
     if app == nil or not is_atom(app) do
@@ -245,38 +247,36 @@ defmodule Testcontainers.Ecto do
     exposed_port = container_module.default_port()
     host_port = Keyword.get(options, :port, exposed_port)
 
-    quote do
-      container =
-        unquote(container_module).new()
-        |> unquote(container_module).with_image(unquote(image))
-        |> unquote(container_module).with_port({unquote(exposed_port), unquote(host_port)})
-        |> unquote(container_module).with_user(unquote(user))
-        |> unquote(container_module).with_database(unquote(database))
-        |> unquote(container_module).with_password(unquote(password))
+    container =
+      container_module.new()
+      |> container_module.with_image(image)
+      |> container_module.with_port({exposed_port, host_port})
+      |> container_module.with_user(user)
+      |> container_module.with_database(database)
+      |> container_module.with_password(password)
 
-      case run_container(container, on_exit: nil) do
-        {:ok, _} ->
-          {:ok, pid} = unquote(repo).start_link()
+    case run_container(container, on_exit: nil) do
+      {:ok, _} ->
+        {:ok, pid} = repo.start_link()
 
-          absolute_migrations_path =
-            Application.app_dir(unquote(app), unquote(migrations_path))
+        absolute_migrations_path =
+          Application.app_dir(app, migrations_path)
 
-          :ok =
-            case File.exists?(absolute_migrations_path) do
-              false ->
-                Utils.log("Migrations directory does not exist, this will be ignored")
+        :ok =
+          case File.exists?(absolute_migrations_path) do
+            false ->
+              Utils.log("Migrations directory does not exist, this will be ignored")
 
-              _ ->
-                :ok
-            end
+            _ ->
+              :ok
+          end
 
-          Ecto.Migrator.run(unquote(repo), absolute_migrations_path, :up, all: true)
+        Ecto.Migrator.run(repo, absolute_migrations_path, :up, all: true)
 
-          GenServer.stop(pid)
+        GenServer.stop(pid)
 
-        {:error, reason} ->
-          {:error, reason}
-      end
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
