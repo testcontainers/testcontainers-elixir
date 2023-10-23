@@ -30,13 +30,12 @@ defmodule Testcontainers.WaitStrategy.HttpWaitStrategy do
 
   defimpl Testcontainers.WaitStrategy do
     alias Testcontainers.Container
-    alias Testcontainers.Connection
     alias Testcontainers.WaitStrategy.HttpWaitStrategy
     alias Testcontainers.Utils
 
     @impl true
     def wait_until_container_is_ready(%HttpWaitStrategy{} = wait_strategy, container_id) do
-      with {:ok, %Container{} = container} <- Connection.get_container(container_id) do
+      with {:ok, %Container{} = container} <- Testcontainers.get_container(container_id) do
         host_port = Container.mapped_port(container, wait_strategy.port)
 
         case wait_for_http(

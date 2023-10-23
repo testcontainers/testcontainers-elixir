@@ -17,7 +17,6 @@ defmodule Testcontainers.WaitStrategy.CommandWaitStrategy do
     do: %__MODULE__{command: command, timeout: timeout, retry_delay: retry_delay}
 
   defimpl Testcontainers.WaitStrategy do
-    alias Testcontainers.Connection
     alias Testcontainers.Utils
     alias Testcontainers.WaitStrategy.CommandWaitStrategy
 
@@ -27,7 +26,7 @@ defmodule Testcontainers.WaitStrategy.CommandWaitStrategy do
       started_at = current_time_millis()
 
       # Call the recursive function
-      recursive_wait(%CommandWaitStrategy{} = wait_strategy, id_or_name, started_at)
+      recursive_wait(wait_strategy, id_or_name, started_at)
     end
 
     # Recursive function with breaking conditions
@@ -72,8 +71,8 @@ defmodule Testcontainers.WaitStrategy.CommandWaitStrategy do
     end
 
     def exec(container_id, command) do
-      with {:ok, exec_id} <- Connection.exec_create(container_id, command),
-           :ok <- Connection.exec_start(exec_id) do
+      with {:ok, exec_id} <- Testcontainers.exec_create(container_id, command),
+           :ok <- Testcontainers.exec_start(exec_id) do
         {:ok, exec_id}
       end
     end
@@ -84,7 +83,7 @@ defmodule Testcontainers.WaitStrategy.CommandWaitStrategy do
            started_at,
            retry_delay
          ) do
-      case Connection.exec_inspect(exec_id) do
+      case Testcontainers.exec_inspect(exec_id) do
         {:ok, %{running: true}} ->
           do_wait_unless_timed_out(exec_id, timeout_ms, started_at, retry_delay)
 

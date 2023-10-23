@@ -8,8 +8,6 @@ defmodule Testcontainers.ExUnit do
   import ExUnit.Callbacks
 
   alias Testcontainers.ContainerBuilder
-  alias Testcontainers.Reaper
-  alias Testcontainers.Connection
   alias Testcontainers.Container
 
   @doc """
@@ -128,8 +126,6 @@ defmodule Testcontainers.ExUnit do
   def run_container(config, options \\ []) do
     default_options = [on_exit: &ExUnit.Callbacks.on_exit/1]
     options = Keyword.merge(default_options, options)
-    {:ok, _} = Connection.start_eager()
-    {:ok, _} = Reaper.start_eager()
     Container.run(config, options)
   end
 

@@ -15,13 +15,12 @@ defmodule Testcontainers.WaitStrategy.PortWaitStrategy do
     do: %__MODULE__{ip: ip, port: port, timeout: timeout, retry_delay: retry_delay}
 
   defimpl Testcontainers.WaitStrategy do
-    alias Testcontainers.Connection
     alias Testcontainers.Container
     alias Testcontainers.WaitStrategy.PortWaitStrategy
     alias Testcontainers.Utils
 
     def wait_until_container_is_ready(%PortWaitStrategy{} = wait_strategy, id_or_name) do
-      with {:ok, %Container{} = container} <- Connection.get_container(id_or_name) do
+      with {:ok, %Container{} = container} <- Testcontainers.get_container(id_or_name) do
         host_port = Container.mapped_port(container, wait_strategy.port)
 
         if host_port == nil do

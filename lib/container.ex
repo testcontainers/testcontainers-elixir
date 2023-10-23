@@ -5,8 +5,6 @@ defmodule Testcontainers.Container do
   alias Testcontainers.Container
   alias Testcontainers.ContainerBuilder
   alias Testcontainers.WaitStrategy
-  alias Testcontainers.Reaper
-  alias Testcontainers.Connection
 
   @enforce_keys [:image]
 
@@ -154,24 +152,23 @@ defmodule Testcontainers.Container do
   - It's important to specify appropriate wait strategies to ensure the container is fully ready for interaction, especially for containers that may take some time to start up services internally.
 
   """
-  @spec run(ContainerBuilder.t(), keyword()) :: {:ok, %Container{}} | {:error, any()}
+  @spec run(ContainerBuilder.t(), keyword()) ::
+          {:ok, %Container{}} | {:error, any()}
   def run(config_builder, options \\ []) do
     on_exit = Keyword.get(options, :on_exit, nil)
-    label = Keyword.get(options, :label, true)
     config = ContainerBuilder.build(config_builder, options)
     wait_strategies = config.wait_strategies || []
 
-    with :ok <- Connection.pull_image(config.image),
-         {:ok, config} <-
-           if(label,
-             do: {:ok, with_label(config, Reaper.get_filter_label(), "true")},
-             else: {:ok, config}
+    with :ok <- Testcontainers.pull_image(config.image),
+         {:ok, id} <- Testcontainers.create_container(config),
+         :ok <- Testcontainers.start_container(id),
+         :ok <-
+           if(on_exit,
+             do: on_exit.(fn -> Testcontainers.stop_container(id) end),
+             else: :ok
            ),
-         {:ok, id} <- Connection.create_container(config),
-         :ok <- Connection.start_container(id),
-         :ok <- if(on_exit, do: on_exit.(fn -> Connection.stop_container(id) end), else: :ok),
          :ok <- wait_for_container(id, wait_strategies) do
-      Connection.get_container(id)
+      Testcontainers.get_container(id)
     end
   end
 

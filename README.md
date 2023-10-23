@@ -36,6 +36,12 @@ end
 
 2. Run mix deps.get
 
+3. Add the following to test/test_helper.exs
+
+```elixir
+{:ok, _} = Testcontainers.start_link()
+```
+
 ## Usage
 
 This section explains how to use the Testcontainers library in your own project.

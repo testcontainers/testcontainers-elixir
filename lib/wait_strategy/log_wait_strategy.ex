@@ -15,7 +15,6 @@ defmodule Testcontainers.WaitStrategy.LogWaitStrategy do
     do: %__MODULE__{log_regex: log_regex, timeout: timeout, retry_delay: retry_delay}
 
   defimpl Testcontainers.WaitStrategy do
-    alias Testcontainers.Connection
     alias Testcontainers.WaitStrategy.LogWaitStrategy
     alias Testcontainers.Utils
 
@@ -55,7 +54,7 @@ defmodule Testcontainers.WaitStrategy.LogWaitStrategy do
     end
 
     defp log_comparison(container_id, log_regex) do
-      case Connection.stdout_logs(container_id) do
+      case Testcontainers.stdout_logs(container_id) do
         {:ok, stdout_log} when is_binary(stdout_log) ->
           Regex.match?(log_regex, stdout_log)
 
