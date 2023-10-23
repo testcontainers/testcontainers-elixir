@@ -39,7 +39,7 @@ end
 3. Add the following to test/test_helper.exs
 
 ```elixir
-{:ok, _} = Testcontainers.start_link()
+Testcontainers.start_link()
 ```
 
 ## Usage

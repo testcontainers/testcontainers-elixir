@@ -5,12 +5,6 @@ defmodule Testcontainers do
   The main entry point into Testcontainers.
 
   This is a GenServer that needs to be started before anything can happen.
-
-  Add this line to test/test-helper.exs:
-
-  ```elixir
-  {:ok, _} = Testcontainers.start_link()
-  ```
   """
 
   defstruct []
