@@ -2,6 +2,7 @@
 # Original by: Marco Dallagiacoma @ 2023 in https://github.com/dallagi/excontainers
 # Modified by: Jarl André Hübenthal @ 2023
 defmodule Testcontainers.Container do
+  alias Testcontainers.Utils
   alias Testcontainers.Container
   alias Testcontainers.ContainerBuilder
   alias Testcontainers.WaitStrategy
@@ -161,23 +162,16 @@ defmodule Testcontainers.Container do
     config = ContainerBuilder.build(config_builder, options)
     wait_strategies = config.wait_strategies || []
 
-    session_id =
-      case :persistent_term.get(Reaper.get_filter_label(), nil) do
-        nil ->
-          System.halt("""
-          \n
-          Missing sessionId. Please add the following to test/test_helper.exs:
-          {:ok, _} = Testcontainers.Reaper.start()
-          """)
+    # access the globale variable registered by the reaper
+    ryuk_id = :persistent_term.get(Reaper.get_filter_label(), nil)
 
-        id ->
-          id
-      end
+    if ryuk_id == nil,
+      do: Utils.log("Missing Ryuk ID. Have Ryuk been started?")
 
     with :ok <- Connection.pull_image(config.image),
          {:ok, config} <-
            if(label,
-             do: {:ok, with_label(config, Reaper.get_filter_label(), session_id)},
+             do: {:ok, with_label(config, Reaper.get_filter_label(), ryuk_id || "false")},
              else: {:ok, config}
            ),
          {:ok, id} <- Connection.create_container(config),

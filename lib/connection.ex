@@ -55,9 +55,9 @@ defmodule Testcontainers.Connection do
 
   ## Examples
 
-      {:ok, pid} = Testcontainers.Connection.start()
+      {:ok, pid} = Testcontainers.Connection.start_eager()
   """
-  def start(options \\ []) do
+  def start_eager(options \\ []) do
     case GenServer.whereis(__MODULE__) do
       nil ->
         start_unlinked(options)
