@@ -25,7 +25,8 @@ defmodule Testcontainers do
 
     ryuk_config = ContainerBuilder.build(%__MODULE__{}, on_exit: nil)
 
-    with {:ok, id} <- Api.create_container(ryuk_config, conn),
+    with :ok <- Api.pull_image(ryuk_config.image, conn),
+         {:ok, id} <- Api.create_container(ryuk_config, conn),
          :ok <- Api.start_container(id, conn),
          {:ok, container} <- Api.get_container(id, conn),
          {:ok, socket} <- create_ryuk_socket(container),
