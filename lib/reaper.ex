@@ -30,7 +30,7 @@ defmodule Testcontainers.Reaper do
 
   alias Testcontainers.Container
 
-  @ryuk_filter_label "testcontainers-elixir-reap"
+  @ryuk_filter_label "org.testcontainers.sessionId"
 
   @doc """
   Starts the Reaper process if it is not already running.
@@ -43,7 +43,7 @@ defmodule Testcontainers.Reaper do
 
   ## Examples
 
-      iex> Testcontainers.Reaper.start_eager()
+      iex> Testcontainers.Reaper.start_with_session_id()
       {:ok, pid}
 
   ## Options
@@ -60,7 +60,7 @@ defmodule Testcontainers.Reaper do
   This function is designed to be used in setup scenarios, possibly within test suite setup
   callbacks.
   """
-  def start_eager(opts \\ []) do
+  def start(opts \\ []) do
     case GenServer.whereis(__MODULE__) do
       nil ->
         start_unlinked(opts)
@@ -76,29 +76,36 @@ defmodule Testcontainers.Reaper do
   def init(_) do
     Process.flag(:trap_exit, true)
 
-    ryuk_id = UUID.uuid4()
+    {:ok, _} = Testcontainers.Connection.start()
 
-    # register a globale variable accessible by all processes in the vm
-    :persistent_term.put(@ryuk_filter_label, ryuk_id)
+    session_id =
+      :crypto.hash(:sha, "#{inspect(self())}#{DateTime.utc_now() |> DateTime.to_string()}")
+      |> Base.encode16()
+
+    :persistent_term.put(@ryuk_filter_label, session_id)
 
     with {:ok, container} <- Container.run(%__MODULE__{}, on_exit: nil, label: false),
          {:ok, socket} <- create_ryuk_socket(container) do
       ryuk_container_id = container.container_id
 
-      Utils.log("Reaper initialized with containerId #{ryuk_container_id}")
+      Utils.log("Reaper initialized with sessionId: " <> session_id)
 
       # registers the label filter that ryuk uses to delete containers
-      send(self(), {:register, {"label", @ryuk_filter_label, ryuk_id}})
+      send(
+        self(),
+        {:register, {"label", @ryuk_filter_label, session_id}}
+      )
 
       {:ok, %{socket: socket, container: container, id: ryuk_container_id}}
     end
   end
 
   @impl true
-  def handle_info({:register, {type, key, value}}, %{socket: socket} = state) do
+  def handle_info({:register, {type, key, session_id}}, %{socket: socket} = state) do
     :gen_tcp.send(
       socket,
-      "#{:uri_string.quote(type)}=#{:uri_string.quote(key)}=#{:uri_string.quote(value)}" <> "\n"
+      "#{:uri_string.quote(type)}=#{:uri_string.quote(key)}=#{:uri_string.quote(session_id)}" <>
+        "\n"
     )
 
     case :gen_tcp.recv(socket, 0, 1_000) do

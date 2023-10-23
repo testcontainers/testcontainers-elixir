@@ -36,6 +36,14 @@ end
 
 2. Run mix deps.get
 
+3. Add Reaper initialization to test/test_helper.exs:
+
+```elixir
+{:ok, _} = Testcontainers.Reaper.start()
+```
+
+If this is not added, the tests will halt and inform you to add the line.
+
 ## Usage
 
 This section explains how to use the Testcontainers library in your own project.
