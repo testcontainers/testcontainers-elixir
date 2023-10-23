@@ -1,6 +1,16 @@
 defmodule Testcontainers do
   use GenServer
 
+  @moduledoc """
+  The main entry point into Testcontainers.
+
+  This is a GenServer that needs to be started before everything else can happen.
+
+  When using the Testcontainers.Ecto module functions, like postgres_container/2 or mysql_container/2, its started automatically.
+
+  If using it in inside unit tests, where macros are used, it needs to be started explicitely in test/test-helper.exs
+  """
+
   defstruct []
 
   alias Testcontainers.Docker.Api
