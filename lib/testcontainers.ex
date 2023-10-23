@@ -6,9 +6,11 @@ defmodule Testcontainers do
 
   This is a GenServer that needs to be started before everything else can happen.
 
-  When using the Testcontainers.Ecto module functions, like postgres_container/2 or mysql_container/2, its started automatically.
+  Add this line to test/test-helper.exs:
 
-  If using it in inside unit tests, where macros are used, it needs to be started explicitely in test/test-helper.exs
+  ```elixir
+  {:ok, _} = Testcontainers.start_link()
+  ```
   """
 
   defstruct []
