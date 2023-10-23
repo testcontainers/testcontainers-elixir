@@ -210,6 +210,8 @@ defmodule Testcontainers.Ecto do
   end
 
   defp database_container(type, options) when type in [:postgres, :mysql] do
+    Testcontainers.start_link()
+
     app = Keyword.get(options, :app)
 
     if app == nil or not is_atom(app) do
