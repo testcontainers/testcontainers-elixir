@@ -53,7 +53,7 @@ In simple terms you can add this in application.ex:
 ```elixir
   # In your application.ex file in your Phoenix project:
 
-  alias Testcontainers.Ecto
+  import Testcontainers.Ecto
 
   @impl true
   def start(_type, _args) do
