@@ -14,7 +14,10 @@ defmodule Testcontainers do
   alias Testcontainers.Container
   alias Testcontainers.ContainerBuilder
 
-  @ryuk_filter_label "org.testcontainers.sessionId"
+  @testcontainers_sessionId_label "org.testcontainers.sessionId"
+  @testcontainers_version_label "org.testcontainers.version"
+  @testcontainers_version "1.2.3"
+  @testcontainers_label "org.testcontainers"
   @timeout 300_000
 
   def start_link(options \\ []) do
@@ -36,7 +39,7 @@ defmodule Testcontainers do
          :ok <- Api.start_container(id, conn),
          {:ok, container} <- Api.get_container(id, conn),
          {:ok, socket} <- create_ryuk_socket(container),
-         :ok <- register("label", @ryuk_filter_label, session_id, socket) do
+         :ok <- register("label", @testcontainers_sessionId_label, session_id, socket) do
       Testcontainers.Utils.log("Testcontainers initialized")
       {:ok, %{socket: socket, conn: conn, session_id: session_id}}
     end
@@ -306,7 +309,10 @@ defmodule Testcontainers do
       ) do
     {:reply,
      Api.create_container(
-       container |> Container.with_label(@ryuk_filter_label, session_id),
+       container
+       |> Container.with_label(@testcontainers_sessionId_label, session_id)
+       |> Container.with_label(@testcontainers_version_label, @testcontainers_version)
+       |> Container.with_label(@testcontainers_label, "true"),
        conn
      ), state}
   end
