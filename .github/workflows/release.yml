@@ -19,6 +19,9 @@ jobs:
       run: mix deps.get
     - name: Run tests
       run: mix test --cover
+    - name: Verify version
+      run: |
+        mix run -e "if(Testcontainers.Constants.library_version() == Mix.Project.config()[:version], do: IO.puts("OK"), else: System.halt(\"version mismatch\"))"
     - name: Publish to Hex.pm
       env:
         HEX_API_KEY: ${{ secrets.HEX_API_KEY }}

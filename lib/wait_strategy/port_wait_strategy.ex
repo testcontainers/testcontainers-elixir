@@ -17,7 +17,7 @@ defmodule Testcontainers.WaitStrategy.PortWaitStrategy do
   defimpl Testcontainers.WaitStrategy do
     alias Testcontainers.Container
     alias Testcontainers.WaitStrategy.PortWaitStrategy
-    alias Testcontainers.Utils
+    alias Testcontainers.Logger
 
     def wait_until_container_is_ready(%PortWaitStrategy{} = wait_strategy, id_or_name) do
       with {:ok, %Container{} = container} <- Testcontainers.get_container(id_or_name) do
@@ -49,7 +49,7 @@ defmodule Testcontainers.WaitStrategy.PortWaitStrategy do
         else
           delay = max(0, wait_strategy.retry_delay)
 
-          Utils.log(
+          Logger.log(
             "Port #{wait_strategy.port} not open on IP #{wait_strategy.ip}, retrying in #{delay}ms."
           )
 

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 defmodule Testcontainers.Connection do
-  alias Testcontainers.Utils
 
+  alias Testcontainers.Logger
   alias Testcontainers.Connection.DockerHostStrategyEvaluator
   alias Testcontainers.Connection.DockerHostStrategy.DockerSocketPath
   alias Testcontainers.Connection.DockerHostStrategy.DockerHostFromProperties
@@ -15,7 +15,7 @@ defmodule Testcontainers.Connection do
   def get_connection(options \\ []) do
     docker_host_url = docker_base_url()
 
-    Utils.log("Using docker host url: #{docker_host_url}")
+    Logger.log("Using docker host url: #{docker_host_url}")
 
     options = Keyword.merge(options, base_url: docker_host_url, recv_timeout: @timeout)
 

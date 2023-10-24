@@ -9,6 +9,7 @@ defmodule Testcontainers do
 
   defstruct []
 
+  alias Testcontainers.Logger
   alias Testcontainers.Docker.Api
   alias Testcontainers.Connection
   alias Testcontainers.Container
@@ -41,7 +42,7 @@ defmodule Testcontainers do
          {:ok, container} <- Api.get_container(id, conn),
          {:ok, socket} <- create_ryuk_socket(container),
          :ok <- register("label", @testcontainers_sessionId_label, session_id, socket) do
-      Testcontainers.Utils.log("Testcontainers initialized")
+      Logger.log("Testcontainers initialized")
       {:ok, %{socket: socket, conn: conn, session_id: session_id}}
     end
   end

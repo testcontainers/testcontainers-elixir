@@ -17,7 +17,7 @@ defmodule Testcontainers.WaitStrategy.CommandWaitStrategy do
     do: %__MODULE__{command: command, timeout: timeout, retry_delay: retry_delay}
 
   defimpl Testcontainers.WaitStrategy do
-    alias Testcontainers.Utils
+    alias Testcontainers.Logger
     alias Testcontainers.WaitStrategy.CommandWaitStrategy
 
     @impl true
@@ -46,7 +46,7 @@ defmodule Testcontainers.WaitStrategy.CommandWaitStrategy do
           else
             delay = max(0, wait_strategy.retry_delay)
 
-            Utils.log(
+            Logger.log(
               "Command execution in container #{id_or_name} failed with exit_code #{other_exit_code}, retrying in #{delay}ms."
             )
 
