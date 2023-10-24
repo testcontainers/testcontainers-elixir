@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: MIT
 defmodule Testcontainers.Connection do
-
   alias Testcontainers.Logger
   alias Testcontainers.Connection.DockerHostStrategyEvaluator
   alias Testcontainers.Connection.DockerHostStrategy.DockerSocketPath

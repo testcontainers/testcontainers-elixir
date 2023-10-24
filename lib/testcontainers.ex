@@ -15,11 +15,8 @@ defmodule Testcontainers do
   alias Testcontainers.Container
   alias Testcontainers.ContainerBuilder
 
-  @testcontainers_sessionId_label "org.testcontainers.sessionId"
-  @testcontainers_version_label "org.testcontainers.version"
-  # TODO is there any way we can read this from somewhere?
-  @testcontainers_version "1.2.3"
-  @testcontainers_label "org.testcontainers"
+  import Testcontainers.Constants
+
   @timeout 300_000
 
   def start_link(options \\ []) do
@@ -41,16 +38,16 @@ defmodule Testcontainers do
          :ok <- Api.start_container(id, conn),
          {:ok, container} <- Api.get_container(id, conn),
          {:ok, socket} <- create_ryuk_socket(container),
-         :ok <- register("label", @testcontainers_sessionId_label, session_id, socket) do
+         :ok <- register(session_id, socket) do
       Logger.log("Testcontainers initialized")
       {:ok, %{socket: socket, conn: conn, session_id: session_id}}
     end
   end
 
-  def register(type, key, value, socket) do
+  def register(value, socket) do
     :gen_tcp.send(
       socket,
-      "#{:uri_string.quote(type)}=#{:uri_string.quote(key)}=#{:uri_string.quote(value)}" <> "\n"
+      "label=#{container_lang_label()}=elixir&label=#{container_sessionId_label()}=#{value}&label=#{container_version_label()}=#{library_version()}&label=#{container_label()}=true\n"
     )
 
     case :gen_tcp.recv(socket, 0, 1_000) do
@@ -312,9 +309,10 @@ defmodule Testcontainers do
     {:reply,
      Api.create_container(
        container
-       |> Container.with_label(@testcontainers_sessionId_label, session_id)
-       |> Container.with_label(@testcontainers_version_label, @testcontainers_version)
-       |> Container.with_label(@testcontainers_label, "true"),
+       |> Container.with_label(container_sessionId_label(), session_id)
+       |> Container.with_label(container_version_label(), library_version())
+       |> Container.with_label(container_lang_label(), "elixir")
+       |> Container.with_label(container_label(), "true"),
        conn
      ), state}
   end
