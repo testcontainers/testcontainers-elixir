@@ -16,6 +16,7 @@ defmodule Testcontainers do
 
   @testcontainers_sessionId_label "org.testcontainers.sessionId"
   @testcontainers_version_label "org.testcontainers.version"
+  # TODO is there any way we can read this from somewhere?
   @testcontainers_version "1.2.3"
   @testcontainers_label "org.testcontainers"
   @timeout 300_000
