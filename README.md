@@ -84,9 +84,9 @@ There is also another example repo without Phoenix, just a bare mix project, whi
 Here's a simple example of how to use a MySQL container in your tests:
 
 ```elixir
-# test/a_simple_mysql_container_test.exs
+# test/simple_mysql_container_test.exs
 
-defmodule ASimpleMySqlContainerTest do
+defmodule SimpleMySqlContainerTest do
   use ExUnit.Case, async: true
 
   import Testcontainers.ExUnit
@@ -103,30 +103,33 @@ defmodule ASimpleMySqlContainerTest do
 end
 ```
 
-### Global Setup
-
-If you prefer to set up a globally shared database for all tests in the project, you can configure and run a container inside the test/test_helper.exs file:
+You can also define a shared container for all tests in a test module:
 
 ```elixir
-# test/test_helper.exs
+# test/shared_mysql_container_test.exs
 
-import Testcontainers.ExUnit
-alias Testcontainers.Container
-alias Container.PostgresContainer
+defmodule SharedMySqlContainerTest do
+  use ExUnit.Case, async: true
 
-postgres =
-  PostgresContainer.new("postgres:latest")
-  |> Container.with_fixed_port(5432)
-  # or |> Container.with_fixed_port(5432, <OTHER_HOST_PORT>) 
+  import Testcontainers.ExUnit
 
-{:ok, _} = run_container(postgres, on_exit: nil)
+  alias Testcontainers.Container.MySqlContainer
 
-ExUnit.start()
+  container(:mysql, MySqlContainer.new(), shared: true)
+
+  describe "with default configuration" do
+    test "provides a ready-to-use mysql container", %{mysql: mysql} do
+      assert mysql.environment[:MYSQL_MAJOR] == "8.0"
+    end
+
+    test "does something else", %{mysql: mysql} do
+      # ....
+    end
+  end
+end
 ```
 
-The container will be deleted by Ryuk after the test session ends.
-
-NOTE: This will cause the test process to exit prematurely if the port is already used. Use with care!
+In the last example only one container will be created and started.
 
 ### Logging
 
