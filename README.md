@@ -79,9 +79,9 @@ There is also another example repo without Phoenix, just a bare mix project, whi
 
 [https://github.com/jarlah/mix_teststcontainers](https://github.com/jarlah/mix_teststcontainers)
 
-### Simple example
+### In your ExUnit tests
 
-Here's a simple example of how to use a MySQL container in your tests:
+Here's a simple example of how to use a MySQL container in your ExUnit tests:
 
 ```elixir
 # test/simple_mysql_container_test.exs
