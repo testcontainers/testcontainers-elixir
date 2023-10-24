@@ -104,7 +104,9 @@ defmodule Testcontainers do
   - Network issues or invalid image tags can cause failures.
   """
   def pull_image(image) when is_binary(image) do
-    GenServer.call(__MODULE__, {:pull_image, image}, @timeout)
+    with {:ok, task} <- GenServer.call(__MODULE__, {:pull_image, image}, @timeout) do
+      Task.await(Task.async(task), @timeout)
+    end
   end
 
   @doc """
@@ -127,7 +129,9 @@ defmodule Testcontainers do
       {:ok, container_id} = Testcontainers.Connection.create_container(config)
   """
   def create_container(%Container{} = container) do
-    GenServer.call(__MODULE__, {:create_container, container}, @timeout)
+    with {:ok, task} <- GenServer.call(__MODULE__, {:create_container, container}, @timeout) do
+      Task.await(Task.async(task), @timeout)
+    end
   end
 
   @doc """
@@ -149,7 +153,9 @@ defmodule Testcontainers do
       :ok = Testcontainers.Connection.start_container("my_container_id")
   """
   def start_container(container_id) when is_binary(container_id) do
-    GenServer.call(__MODULE__, {:start_container, container_id}, @timeout)
+    with {:ok, task} <- GenServer.call(__MODULE__, {:start_container, container_id}, @timeout) do
+      Task.await(Task.async(task), @timeout)
+    end
   end
 
   @doc """
@@ -171,7 +177,9 @@ defmodule Testcontainers do
       :ok = Testcontainers.Connection.stop_container("my_container_id")
   """
   def stop_container(container_id) when is_binary(container_id) do
-    GenServer.call(__MODULE__, {:stop_container, container_id}, @timeout)
+    with {:ok, task} <- GenServer.call(__MODULE__, {:stop_container, container_id}, @timeout) do
+      Task.await(Task.async(task), @timeout)
+    end
   end
 
   @doc """
@@ -193,7 +201,9 @@ defmodule Testcontainers do
       {:ok, %Testcontainers.Container{}} = Testcontainers.Connection.get_container("my_container_id")
   """
   def get_container(container_id) when is_binary(container_id) do
-    GenServer.call(__MODULE__, {:get_container, container_id}, @timeout)
+    with {:ok, task} <- GenServer.call(__MODULE__, {:get_container, container_id}, @timeout) do
+      Task.await(Task.async(task), @timeout)
+    end
   end
 
   @doc """
@@ -215,7 +225,9 @@ defmodule Testcontainers do
       {:ok, logs} = Testcontainers.Connection.stdout_logs("my_container_id")
   """
   def stdout_logs(container_id) when is_binary(container_id) do
-    GenServer.call(__MODULE__, {:stdout_logs, container_id}, @timeout)
+    with {:ok, task} <- GenServer.call(__MODULE__, {:stdout_logs, container_id}, @timeout) do
+      Task.await(Task.async(task), @timeout)
+    end
   end
 
   @doc """
@@ -238,7 +250,10 @@ defmodule Testcontainers do
       {:ok, exec_id} = Testcontainers.Connection.exec_create("my_container_id", ["ls", "-la"])
   """
   def exec_create(container_id, command) when is_binary(container_id) and is_list(command) do
-    GenServer.call(__MODULE__, {:exec_create, command, container_id}, @timeout)
+    with {:ok, task} <-
+           GenServer.call(__MODULE__, {:exec_create, command, container_id}, @timeout) do
+      Task.await(Task.async(task), @timeout)
+    end
   end
 
   @doc """
@@ -260,7 +275,9 @@ defmodule Testcontainers do
       :ok = Testcontainers.Connection.exec_start("my_exec_id")
   """
   def exec_start(exec_id) when is_binary(exec_id) do
-    GenServer.call(__MODULE__, {:exec_start, exec_id}, @timeout)
+    with {:ok, task} <- GenServer.call(__MODULE__, {:exec_start, exec_id}, @timeout) do
+      Task.await(Task.async(task), @timeout)
+    end
   end
 
   @doc """
@@ -282,22 +299,24 @@ defmodule Testcontainers do
       {:ok, exec_info} = Testcontainers.Connection.exec_inspect("my_exec_id")
   """
   def exec_inspect(exec_id) when is_binary(exec_id) do
-    GenServer.call(__MODULE__, {:exec_inspect, exec_id}, @timeout)
+    with {:ok, task} <- GenServer.call(__MODULE__, {:exec_inspect, exec_id}, @timeout) do
+      Task.await(Task.async(task), @timeout)
+    end
   end
 
   @impl true
   def handle_call({:pull_image, image}, _from, %{conn: conn} = state) do
-    {:reply, Api.pull_image(image, conn), state}
+    {:reply, {:ok, fn -> Api.pull_image(image, conn) end}, state}
   end
 
   @impl true
   def handle_call({:get_container, container_id}, _from, %{conn: conn} = state) do
-    {:reply, Api.get_container(container_id, conn), state}
+    {:reply, {:ok, fn -> Api.get_container(container_id, conn) end}, state}
   end
 
   @impl true
   def handle_call({:start_container, container_id}, _from, %{conn: conn} = state) do
-    {:reply, Api.start_container(container_id, conn), state}
+    {:reply, {:ok, fn -> Api.start_container(container_id, conn) end}, state}
   end
 
   @impl true
@@ -307,38 +326,41 @@ defmodule Testcontainers do
         %{conn: conn, session_id: session_id} = state
       ) do
     {:reply,
-     Api.create_container(
-       container
-       |> Container.with_label(container_sessionId_label(), session_id)
-       |> Container.with_label(container_version_label(), library_version())
-       |> Container.with_label(container_lang_label(), "elixir")
-       |> Container.with_label(container_label(), "true"),
-       conn
-     ), state}
+     {:ok,
+      fn ->
+        Api.create_container(
+          container
+          |> Container.with_label(container_sessionId_label(), session_id)
+          |> Container.with_label(container_version_label(), library_version())
+          |> Container.with_label(container_lang_label(), "elixir")
+          |> Container.with_label(container_label(), "true"),
+          conn
+        )
+      end}, state}
   end
 
   @impl true
   def handle_call({:stop_container, container_id}, _from, %{conn: conn} = state) do
-    {:reply, Api.stop_container(container_id, conn), state}
+    {:reply, {:ok, fn -> Api.stop_container(container_id, conn) end}, state}
   end
 
   @impl true
   def handle_call({:stdout_logs, container_id}, _from, %{conn: conn} = state) do
-    {:reply, Api.stdout_logs(container_id, conn), state}
+    {:reply, {:ok, fn -> Api.stdout_logs(container_id, conn) end}, state}
   end
 
   @impl true
   def handle_call({:exec_create, command, container_id}, _from, %{conn: conn} = state) do
-    {:reply, Api.create_exec(container_id, command, conn), state}
+    {:reply, {:ok, fn -> Api.create_exec(container_id, command, conn) end}, state}
   end
 
   @impl true
   def handle_call({:exec_start, exec_id}, _from, %{conn: conn} = state) do
-    {:reply, Api.start_exec(exec_id, conn), state}
+    {:reply, {:ok, fn -> Api.start_exec(exec_id, conn) end}, state}
   end
 
   @impl true
   def handle_call({:exec_inspect, exec_id}, _from, %{conn: conn} = state) do
-    {:reply, Api.inspect_exec(exec_id, conn), state}
+    {:reply, {:ok, fn -> Api.inspect_exec(exec_id, conn) end}, state}
   end
 end
