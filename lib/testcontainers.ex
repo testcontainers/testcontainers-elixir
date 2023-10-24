@@ -23,6 +23,13 @@ defmodule Testcontainers do
     GenServer.start_link(__MODULE__, options, name: __MODULE__)
   end
 
+  @doc false
+  def wait_for_call(call) do
+    with {:ok, task} <- GenServer.call(__MODULE__, call, @timeout) do
+      Task.await(Task.async(task), @timeout)
+    end
+  end
+
   @impl true
   def init(options \\ []) do
     conn = Connection.get_connection(options)
@@ -104,9 +111,7 @@ defmodule Testcontainers do
   - Network issues or invalid image tags can cause failures.
   """
   def pull_image(image) when is_binary(image) do
-    with {:ok, task} <- GenServer.call(__MODULE__, {:pull_image, image}, @timeout) do
-      Task.await(Task.async(task), @timeout)
-    end
+    wait_for_call({:pull_image, image})
   end
 
   @doc """
@@ -129,9 +134,7 @@ defmodule Testcontainers do
       {:ok, container_id} = Testcontainers.Connection.create_container(config)
   """
   def create_container(%Container{} = container) do
-    with {:ok, task} <- GenServer.call(__MODULE__, {:create_container, container}, @timeout) do
-      Task.await(Task.async(task), @timeout)
-    end
+    wait_for_call({:create_container, container})
   end
 
   @doc """
@@ -153,9 +156,7 @@ defmodule Testcontainers do
       :ok = Testcontainers.Connection.start_container("my_container_id")
   """
   def start_container(container_id) when is_binary(container_id) do
-    with {:ok, task} <- GenServer.call(__MODULE__, {:start_container, container_id}, @timeout) do
-      Task.await(Task.async(task), @timeout)
-    end
+    wait_for_call({:start_container, container_id})
   end
 
   @doc """
@@ -177,9 +178,7 @@ defmodule Testcontainers do
       :ok = Testcontainers.Connection.stop_container("my_container_id")
   """
   def stop_container(container_id) when is_binary(container_id) do
-    with {:ok, task} <- GenServer.call(__MODULE__, {:stop_container, container_id}, @timeout) do
-      Task.await(Task.async(task), @timeout)
-    end
+    wait_for_call({:stop_container, container_id})
   end
 
   @doc """
@@ -201,9 +200,7 @@ defmodule Testcontainers do
       {:ok, %Testcontainers.Container{}} = Testcontainers.Connection.get_container("my_container_id")
   """
   def get_container(container_id) when is_binary(container_id) do
-    with {:ok, task} <- GenServer.call(__MODULE__, {:get_container, container_id}, @timeout) do
-      Task.await(Task.async(task), @timeout)
-    end
+    wait_for_call({:get_container, container_id})
   end
 
   @doc """
@@ -225,9 +222,7 @@ defmodule Testcontainers do
       {:ok, logs} = Testcontainers.Connection.stdout_logs("my_container_id")
   """
   def stdout_logs(container_id) when is_binary(container_id) do
-    with {:ok, task} <- GenServer.call(__MODULE__, {:stdout_logs, container_id}, @timeout) do
-      Task.await(Task.async(task), @timeout)
-    end
+    wait_for_call({:stdout_logs, container_id})
   end
 
   @doc """
@@ -250,10 +245,7 @@ defmodule Testcontainers do
       {:ok, exec_id} = Testcontainers.Connection.exec_create("my_container_id", ["ls", "-la"])
   """
   def exec_create(container_id, command) when is_binary(container_id) and is_list(command) do
-    with {:ok, task} <-
-           GenServer.call(__MODULE__, {:exec_create, command, container_id}, @timeout) do
-      Task.await(Task.async(task), @timeout)
-    end
+    wait_for_call({:exec_create, command, container_id})
   end
 
   @doc """
@@ -275,9 +267,7 @@ defmodule Testcontainers do
       :ok = Testcontainers.Connection.exec_start("my_exec_id")
   """
   def exec_start(exec_id) when is_binary(exec_id) do
-    with {:ok, task} <- GenServer.call(__MODULE__, {:exec_start, exec_id}, @timeout) do
-      Task.await(Task.async(task), @timeout)
-    end
+    wait_for_call({:exec_start, exec_id})
   end
 
   @doc """
@@ -299,9 +289,7 @@ defmodule Testcontainers do
       {:ok, exec_info} = Testcontainers.Connection.exec_inspect("my_exec_id")
   """
   def exec_inspect(exec_id) when is_binary(exec_id) do
-    with {:ok, task} <- GenServer.call(__MODULE__, {:exec_inspect, exec_id}, @timeout) do
-      Task.await(Task.async(task), @timeout)
-    end
+    wait_for_call({:exec_inspect, exec_id})
   end
 
   @impl true
