@@ -37,6 +37,8 @@ jobs:
       run: mix deps.get
     - name: Run tests
       run: mix test --cover
+    - name: Run other tests
+      run: mix test other_tests
     - name: Verify version
       run: |
         mix run -e "if(Testcontainers.Constants.library_version() == Mix.Project.config()[:version], do: IO.puts("OK"), else: System.halt(\"version mismatch\"))"
