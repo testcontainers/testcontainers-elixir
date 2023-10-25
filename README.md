@@ -69,7 +69,7 @@ In simple terms you can add this in application.ex:
   end
 ```
 
-see documentation on Testcontainers.Ecto for more information about the options it can take.
+see documentation on [Testcontainers.Ecto](https://hexdocs.pm/testcontainers/Testcontainers.Ecto.html) for more information about the options it can take.
 
 There is an example repo here with a bare bones phoenix application, where the only changes are the use of the ecto function and removing the test alias that interferes with it:
 

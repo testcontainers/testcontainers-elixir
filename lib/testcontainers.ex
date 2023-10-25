@@ -296,39 +296,35 @@ defmodule Testcontainers do
   end
 
   @impl true
-  def handle_call({:pull_image, image}, from, %{conn: conn} = state) do
-    Task.async(fn -> GenServer.reply(from, Api.pull_image(image, conn)) end)
+  def handle_call({:pull_image, image}, from, state) do
+    Task.async(fn -> GenServer.reply(from, Api.pull_image(image, state.conn)) end)
     {:noreply, state}
   end
 
   @impl true
-  def handle_call({:get_container, container_id}, from, %{conn: conn} = state) do
-    Task.async(fn -> GenServer.reply(from, Api.get_container(container_id, conn)) end)
+  def handle_call({:get_container, container_id}, from, state) do
+    Task.async(fn -> GenServer.reply(from, Api.get_container(container_id, state.conn)) end)
     {:noreply, state}
   end
 
   @impl true
-  def handle_call({:start_container, container_id}, from, %{conn: conn} = state) do
-    Task.async(fn -> GenServer.reply(from, Api.start_container(container_id, conn)) end)
+  def handle_call({:start_container, container_id}, from, state) do
+    Task.async(fn -> GenServer.reply(from, Api.start_container(container_id, state.conn)) end)
     {:noreply, state}
   end
 
   @impl true
-  def handle_call(
-        {:create_container, container},
-        from,
-        %{conn: conn, session_id: session_id} = state
-      ) do
+  def handle_call({:create_container, container}, from, state) do
     Task.async(fn ->
       GenServer.reply(
         from,
         Api.create_container(
           container
-          |> Container.with_label(container_sessionId_label(), session_id)
+          |> Container.with_label(container_sessionId_label(), state.session_id)
           |> Container.with_label(container_version_label(), library_version())
           |> Container.with_label(container_lang_label(), container_lang_value())
           |> Container.with_label(container_label(), "#{true}"),
-          conn
+          state.conn
         )
       )
     end)
@@ -337,32 +333,33 @@ defmodule Testcontainers do
   end
 
   @impl true
-  def handle_call({:stop_container, container_id}, from, %{conn: conn} = state) do
-    Task.async(fn -> GenServer.reply(from, Api.stop_container(container_id, conn)) end)
+  def handle_call({:stop_container, container_id}, from, state) do
+    Task.async(fn -> GenServer.reply(from, Api.stop_container(container_id, state.conn)) end)
     {:noreply, state}
   end
 
   @impl true
-  def handle_call({:stdout_logs, container_id}, from, %{conn: conn} = state) do
-    Task.async(fn -> GenServer.reply(from, Api.stdout_logs(container_id, conn)) end)
+  def handle_call({:stdout_logs, container_id}, from, state) do
+    Task.async(fn -> GenServer.reply(from, Api.stdout_logs(container_id, state.conn)) end)
     {:noreply, state}
   end
 
   @impl true
-  def handle_call({:exec_create, command, container_id}, from, %{conn: conn} = state) do
-    Task.async(fn -> GenServer.reply(from, Api.create_exec(container_id, command, conn)) end)
+  def handle_call({:exec_create, command, container_id}, from, state) do
+    Task.async(fn -> GenServer.reply(from, Api.create_exec(container_id, command, state.conn)) end)
+
     {:noreply, state}
   end
 
   @impl true
-  def handle_call({:exec_start, exec_id}, from, %{conn: conn} = state) do
-    Task.async(fn -> GenServer.reply(from, Api.start_exec(exec_id, conn)) end)
+  def handle_call({:exec_start, exec_id}, from, state) do
+    Task.async(fn -> GenServer.reply(from, Api.start_exec(exec_id, state.conn)) end)
     {:noreply, state}
   end
 
   @impl true
-  def handle_call({:exec_inspect, exec_id}, from, %{conn: conn} = state) do
-    Task.async(fn -> GenServer.reply(from, Api.inspect_exec(exec_id, conn)) end)
+  def handle_call({:exec_inspect, exec_id}, from, state) do
+    Task.async(fn -> GenServer.reply(from, Api.inspect_exec(exec_id, state.conn)) end)
     {:noreply, state}
   end
 end
