@@ -52,7 +52,7 @@ defmodule Testcontainers do
   def register(value, socket) do
     :gen_tcp.send(
       socket,
-      "label=#{container_lang_label()}=elixir&label=#{container_sessionId_label()}=#{value}&label=#{container_version_label()}=#{library_version()}&label=#{container_label()}=true\n"
+      "label=#{container_lang_label()}=#{container_lang_value()}&label=#{container_sessionId_label()}=#{value}&label=#{container_version_label()}=#{library_version()}&label=#{container_label()}=#{true}\n"
     )
 
     case :gen_tcp.recv(socket, 0, 1_000) do
@@ -326,8 +326,8 @@ defmodule Testcontainers do
           container
           |> Container.with_label(container_sessionId_label(), session_id)
           |> Container.with_label(container_version_label(), library_version())
-          |> Container.with_label(container_lang_label(), "elixir")
-          |> Container.with_label(container_label(), "true"),
+          |> Container.with_label(container_lang_label(), container_lang_value())
+          |> Container.with_label(container_label(), "#{true}"),
           conn
         )
       )
