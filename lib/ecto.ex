@@ -247,7 +247,7 @@ defmodule Testcontainers.Ecto do
     exposed_port = container_module.default_port()
     host_port = Keyword.get(options, :port, exposed_port)
 
-    container =
+    config =
       container_module.new()
       |> container_module.with_image(image)
       |> container_module.with_port({exposed_port, host_port})
@@ -255,8 +255,8 @@ defmodule Testcontainers.Ecto do
       |> container_module.with_database(database)
       |> container_module.with_password(password)
 
-    case run_container(container, on_exit: nil) do
-      {:ok, _} ->
+    case run_container(config, on_exit: nil) do
+      {:ok, container} ->
         {:ok, pid} = repo.start_link()
 
         absolute_migrations_path =
@@ -274,6 +274,8 @@ defmodule Testcontainers.Ecto do
         Ecto.Migrator.run(repo, absolute_migrations_path, :up, all: true)
 
         GenServer.stop(pid)
+
+        {:ok, container}
 
       {:error, reason} ->
         {:error, reason}
