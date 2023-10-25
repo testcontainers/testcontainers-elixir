@@ -291,6 +291,11 @@ defmodule Testcontainers do
   end
 
   @impl true
+  def handle_info(_msg, state) do
+    {:noreply, state}
+  end
+
+  @impl true
   def handle_call({:pull_image, image}, from, %{conn: conn} = state) do
     Task.async(fn -> GenServer.reply(from, Api.pull_image(image, conn)) end)
     {:noreply, state}
@@ -305,11 +310,6 @@ defmodule Testcontainers do
   @impl true
   def handle_call({:start_container, container_id}, from, %{conn: conn} = state) do
     Task.async(fn -> GenServer.reply(from, Api.start_container(container_id, conn)) end)
-    {:noreply, state}
-  end
-
-  @impl true
-  def handle_info(_msg, state) do
     {:noreply, state}
   end
 
