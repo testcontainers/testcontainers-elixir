@@ -292,6 +292,9 @@ defmodule Testcontainers do
          :ok <- register(session_id, socket) do
       Logger.log("Testcontainers initialized")
       {:noreply, %{socket: socket, conn: conn, session_id: session_id}}
+    else
+      error ->
+        {:stop, error, state}
     end
   end
 
