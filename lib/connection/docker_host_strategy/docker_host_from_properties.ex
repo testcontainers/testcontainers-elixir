@@ -45,10 +45,10 @@ defmodule Testcontainers.Connection.DockerHostStrategy.DockerHostFromProperties 
       end
     end
 
-    defp handle_docker_host({:ok, docker_host_uri}) when is_binary(docker_host_uri) do
-      case docker_host_uri |> DockerUrl.construct() |> DockerUrl.test_docker_connection() do
+    defp handle_docker_host({:ok, docker_host}) when is_binary(docker_host) do
+      case DockerUrl.test_docker_host(docker_host) do
         :ok ->
-          {:ok, docker_host_uri}
+          {:ok, docker_host}
 
         {:error, reason} ->
           {:error, testcontainer_host_from_properties: reason}

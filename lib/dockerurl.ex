@@ -3,6 +3,8 @@ defmodule Testcontainers.DockerUrl do
 
   @api_version "v1.41"
 
+  @test_client Tesla.client([], Tesla.Adapter.Hackney)
+
   @doc false
   def construct(docker_host) do
     case URI.parse(docker_host) do
@@ -18,10 +20,10 @@ defmodule Testcontainers.DockerUrl do
   end
 
   @doc false
-  def test_docker_connection(docker_host_uri) do
-    url = "#{construct(docker_host_uri)}/_ping"
+  def test_docker_host(docker_host) do
+    url = "#{construct(docker_host)}/_ping"
 
-    case Tesla.get(url) do
+    case Tesla.get(@test_client, url) do
       {:ok, _response} ->
         :ok
 

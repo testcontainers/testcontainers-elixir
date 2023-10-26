@@ -7,17 +7,13 @@ defmodule Testcontainers.Connection.DockerHostStrategy.DockerHostFromEnv do
   defimpl Testcontainers.Connection.DockerHostStrategy do
     def execute(strategy, _input) do
       with {:ok, docker_host} <- get_docker_host(strategy) do
-        test_docker_host(docker_host)
-      end
-    end
+        case docker_host |> DockerUrl.test_docker_host() do
+          :ok ->
+            {:ok, docker_host}
 
-    defp test_docker_host(docker_host) do
-      case docker_host |> DockerUrl.construct() |> DockerUrl.test_docker_connection() do
-        :ok ->
-          {:ok, docker_host}
-
-        {:error, reason} ->
-          {:error, docker_host_from_env: reason}
+          {:error, reason} ->
+            {:error, docker_host_from_env: reason}
+        end
       end
     end
 
