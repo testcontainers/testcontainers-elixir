@@ -5,10 +5,10 @@ defmodule Testcontainers.Connection.DockerHostStrategy.DockerSocketPathTest do
   alias Testcontainers.Connection.DockerHostStrategy.DockerSocketPath
 
   describe "DockerSocketPath" do
-    test "should return ok if docker socket exists" do
+    test "should return :enoent if docker socket exists but is not a real socket" do
       strategy = %DockerSocketPath{socket_paths: ["test/fixtures/docker.sock"]}
 
-      {:ok, "unix://test/fixtures/docker.sock"} =
+      {:error, docker_socket_path: :enoent} =
         DockerHostStrategyEvaluator.run_strategies([strategy], [])
     end
 

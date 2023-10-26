@@ -5,7 +5,7 @@ defmodule Testcontainers.Connection.DockerHostStrategy.DockerHostFromPropertiesT
   alias Testcontainers.Connection.DockerHostStrategy.DockerHostFromProperties
 
   describe "DockerHostFromProperties" do
-    test "should return ok response if property file exist" do
+    test "should return :econnrefused response if property file exist but is not an open url" do
       properties_path = "test/fixtures/.testcontainers.properties"
 
       strategy = %DockerHostFromProperties{
