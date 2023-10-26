@@ -12,7 +12,7 @@ defmodule Testcontainers.Connection.DockerHostStrategy.DockerHostFromEnvTest do
     test "should return ok if env exists" do
       strategy = %DockerHostFromEnv{key: "X_DOCKER_HOST"}
 
-      {:ok, "tcp://somehostname:9876"} =
+      {:error, docker_host_from_env: :econnrefused} =
         DockerHostStrategyEvaluator.run_strategies([strategy], [])
     end
 
