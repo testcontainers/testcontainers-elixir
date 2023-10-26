@@ -13,7 +13,8 @@ defmodule Testcontainers.Connection.DockerHostStrategy.DockerHostFromPropertiesT
         filename: properties_path
       }
 
-      {:ok, "tcp://somehost:9876"} = DockerHostStrategyEvaluator.run_strategies([strategy], [])
+      {:error, testcontainer_host_from_properties: :econnrefused} =
+        DockerHostStrategyEvaluator.run_strategies([strategy], [])
     end
 
     test "should return file not found if property file doesnt exist" do

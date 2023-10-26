@@ -4,6 +4,8 @@ defmodule Testcontainers.Connection.DockerHostStrategy.DockerHostFromProperties 
   defstruct key: nil, filename: "~/.testcontainers.properties"
 
   defimpl Testcontainers.Connection.DockerHostStrategy do
+    alias Testcontainers.DockerUrl
+
     def execute(strategy, _input) do
       with {:ok, properties} <- read_property_file(expand_path(strategy.filename)),
            docker_host <- Map.fetch(properties, strategy.key),
@@ -43,8 +45,15 @@ defmodule Testcontainers.Connection.DockerHostStrategy.DockerHostFromProperties 
       end
     end
 
-    defp handle_docker_host({:ok, docker_host}) when is_binary(docker_host),
-      do: {:ok, docker_host}
+    defp handle_docker_host({:ok, docker_host_uri}) when is_binary(docker_host_uri) do
+      case docker_host_uri |> DockerUrl.construct() |> DockerUrl.test_docker_connection() do
+        :ok ->
+          {:ok, docker_host_uri}
+
+        {:error, reason} ->
+          {:error, testcontainer_host_from_properties: reason}
+      end
+    end
 
     defp handle_docker_host(:error),
       do: {:error, testcontainer_host_from_properties: :property_not_found}
