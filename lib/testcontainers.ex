@@ -30,23 +30,8 @@ defmodule Testcontainers do
 
   @impl true
   def init(options \\ []) do
-    conn = Connection.get_connection(options)
-
-    session_id =
-      :crypto.hash(:sha, "#{inspect(self())}#{DateTime.utc_now() |> DateTime.to_string()}")
-      |> Base.encode16()
-
-    ryuk_config = ContainerBuilder.build(%__MODULE__{}, on_exit: nil)
-
-    with :ok <- Api.pull_image(ryuk_config.image, conn),
-         {:ok, id} <- Api.create_container(ryuk_config, conn),
-         :ok <- Api.start_container(id, conn),
-         {:ok, container} <- Api.get_container(id, conn),
-         {:ok, socket} <- create_ryuk_socket(container),
-         :ok <- register(session_id, socket) do
-      Logger.log("Testcontainers initialized")
-      {:ok, %{socket: socket, conn: conn, session_id: session_id}}
-    end
+    send(self(), :load)
+    {:ok, %{options: options}}
   end
 
   def register(value, socket) do
@@ -288,6 +273,26 @@ defmodule Testcontainers do
   """
   def exec_inspect(exec_id) when is_binary(exec_id) do
     wait_for_call({:exec_inspect, exec_id})
+  end
+
+  def handle_info(:load, state) do
+    conn = Connection.get_connection(state.options)
+
+    session_id =
+      :crypto.hash(:sha, "#{inspect(self())}#{DateTime.utc_now() |> DateTime.to_string()}")
+      |> Base.encode16()
+
+    ryuk_config = ContainerBuilder.build(%__MODULE__{}, on_exit: nil)
+
+    with :ok <- Api.pull_image(ryuk_config.image, conn),
+         {:ok, id} <- Api.create_container(ryuk_config, conn),
+         :ok <- Api.start_container(id, conn),
+         {:ok, container} <- Api.get_container(id, conn),
+         {:ok, socket} <- create_ryuk_socket(container),
+         :ok <- register(session_id, socket) do
+      Logger.log("Testcontainers initialized")
+      {:noreply, %{socket: socket, conn: conn, session_id: session_id}}
+    end
   end
 
   @impl true
