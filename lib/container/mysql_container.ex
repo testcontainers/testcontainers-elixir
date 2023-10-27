@@ -16,7 +16,7 @@ defmodule Testcontainers.Container.MySqlContainer do
   @default_image "mysql"
   @default_tag "8"
   @default_port 3306
-  @wait_timeout 60_000
+  @wait_timeout 120_000
 
   defstruct image: "#{@default_image}:#{@default_tag}",
             wait_timeout: @wait_timeout,
@@ -141,15 +141,13 @@ defmodule Testcontainers.Container.MySqlContainer do
   @doc """
   Returns the connection parameters to connect to the database from the _host machine_.
   """
-  def connection_parameters(%Container{} = container, options \\ []) do
+  def connection_parameters(%Container{} = container) do
     [
       hostname: "localhost",
       port: port(container),
       username: container.environment[:MYSQL_USER],
       password: container.environment[:MYSQL_PASSWORD],
-      database: container.environment[:MYSQL_DATABASE],
-      queue_target: Keyword.get(options, :queue_target, 10_000),
-      queue_interval: Keyword.get(options, :queue_interval, 20_000)
+      database: container.environment[:MYSQL_DATABASE]
     ]
   end
 

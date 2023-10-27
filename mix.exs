@@ -21,9 +21,13 @@ defmodule TestcontainersElixir.MixProject do
         links: %{"GitHub" => @source_url},
         licenses: ["MIT"]
       ],
-      test_coverage: [summary: [threshold: 77]]
+      test_coverage: [summary: [threshold: 77]],
+      elixirc_paths: elixirc_paths(Mix.env())
     ]
   end
+
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 
   # Configuration for the OTP application.
   #

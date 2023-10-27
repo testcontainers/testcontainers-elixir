@@ -5,6 +5,7 @@ defmodule Testcontainers.Container.SharedMySqlContainerTest do
   use ExUnit.Case, async: true
 
   import Testcontainers.ExUnit
+  alias Testcontainers.Support.MysqlTestUtils
   alias Testcontainers.Container.MySqlContainer
 
   @moduletag timeout: 300_000
@@ -12,13 +13,17 @@ defmodule Testcontainers.Container.SharedMySqlContainerTest do
   container(:mysql, MySqlContainer.new(), shared: true)
 
   test "can select 1", %{mysql: mysql} do
-    {:ok, pid} = MyXQL.start_link(MySqlContainer.connection_parameters(mysql))
+    params = MysqlTestUtils.mysql_connection_parameters_for_test(mysql)
+
+    {:ok, pid} = MyXQL.start_link(params)
 
     assert %{num_rows: 1} = MyXQL.query!(pid, "SELECT 1", [])
   end
 
   test "can check version", %{mysql: mysql} do
-    {:ok, pid} = MyXQL.start_link(MySqlContainer.connection_parameters(mysql))
+    params = MysqlTestUtils.mysql_connection_parameters_for_test(mysql)
+
+    {:ok, pid} = MyXQL.start_link(params)
 
     query_result = MyXQL.query!(pid, "SELECT version()", [])
 

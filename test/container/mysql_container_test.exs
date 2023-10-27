@@ -2,9 +2,10 @@
 # Original by: Marco Dallagiacoma @ 2023 in https://github.com/dallagi/excontainers
 # Modified by: Jarl André Hübenthal @ 2023
 defmodule Testcontainers.Container.MySqlContainerTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
   import Testcontainers.ExUnit
+  alias Testcontainers.Support.MysqlTestUtils
   alias Testcontainers.Container.MySqlContainer
 
   @moduletag timeout: 300_000
@@ -15,7 +16,9 @@ defmodule Testcontainers.Container.MySqlContainerTest do
     container(:mysql, @mysql_container)
 
     test "provides a ready-to-use mysql container", %{mysql: mysql} do
-      {:ok, pid} = MyXQL.start_link(MySqlContainer.connection_parameters(mysql))
+      params = MysqlTestUtils.mysql_connection_parameters_for_test(mysql)
+
+      {:ok, pid} = MyXQL.start_link(params)
 
       assert %{num_rows: 1} = MyXQL.query!(pid, "SELECT 1", [])
     end
@@ -33,7 +36,9 @@ defmodule Testcontainers.Container.MySqlContainerTest do
     container(:mysql, @custom_mysql_container)
 
     test "provides a mysql container compliant with specified configuration", %{mysql: mysql} do
-      {:ok, pid} = MyXQL.start_link(MySqlContainer.connection_parameters(mysql))
+      params = MysqlTestUtils.mysql_connection_parameters_for_test(mysql)
+
+      {:ok, pid} = MyXQL.start_link(params)
 
       query_result = MyXQL.query!(pid, "SELECT version()", [])
 
