@@ -260,7 +260,9 @@ defmodule Testcontainers.Ecto do
         {:ok, pid} = repo.start_link()
 
         absolute_migrations_path =
-          Application.app_dir(app, migrations_path)
+          if Path.absname(migrations_path) != migrations_path,
+            do: Application.app_dir(app, migrations_path),
+            else: migrations_path
 
         :ok =
           case File.exists?(absolute_migrations_path) do

@@ -9,7 +9,7 @@ defmodule Testcontainers.EctoMysqlTest do
     {:ok, container} =
       mysql_container(
         app: :testcontainers,
-        migrations_path: "../../../../test/fixtures/test_mysql_migrations",
+        migrations_path: "#{__DIR__}/support/migrations",
         repo: Testcontainers.MysqlRepo,
         port: 3336
       )

@@ -9,7 +9,7 @@ defmodule Testcontainers.EctoPostgresTest do
     {:ok, container} =
       postgres_container(
         app: :testcontainers,
-        migrations_path: "../../../../test/fixtures/test_postgres_migrations",
+        migrations_path: "#{__DIR__}/support/migrations",
         repo: Testcontainers.PostgresRepo,
         port: 5442
       )
