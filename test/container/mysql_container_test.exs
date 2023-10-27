@@ -2,7 +2,7 @@
 # Original by: Marco Dallagiacoma @ 2023 in https://github.com/dallagi/excontainers
 # Modified by: Jarl André Hübenthal @ 2023
 defmodule Testcontainers.Container.MySqlContainerTest do
-  use ExUnit.Case, async: false
+  use ExUnit.Case, async: true
 
   import Testcontainers.ExUnit
   alias Testcontainers.Support.MysqlTestUtils
