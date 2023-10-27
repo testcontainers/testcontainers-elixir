@@ -10,15 +10,19 @@ config :testcontainers, Testcontainers.MysqlRepo,
   password: "test",
   hostname: "localhost",
   database: "testcontainers_test",
-  port: 33060,
+  port: 3336,
   pool: Ecto.Adapters.SQL.Sandbox,
-  pool_size: 10
+  pool_size: 2,
+  queue_target: 30_000,
+  queue_interval: 30_000
 
 config :testcontainers, Testcontainers.PostgresRepo,
   username: "test",
   password: "test",
   hostname: "localhost",
   database: "testcontainers_test",
-  port: 54320,
+  port: 5442,
   pool: Ecto.Adapters.SQL.Sandbox,
-  pool_size: 10
+  pool_size: 2,
+  queue_target: 30_000,
+  queue_interval: 30_000
