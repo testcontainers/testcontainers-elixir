@@ -5,7 +5,7 @@ defmodule Testcontainers.Container.MySqlContainerTest do
   use ExUnit.Case, async: true
 
   import Testcontainers.ExUnit
-  alias Testcontainers.Support.MysqlTestUtils
+
   alias Testcontainers.Container.MySqlContainer
 
   @moduletag timeout: 300_000
@@ -16,7 +16,9 @@ defmodule Testcontainers.Container.MySqlContainerTest do
     container(:mysql, @mysql_container)
 
     test "provides a ready-to-use mysql container", %{mysql: mysql} do
-      params = MysqlTestUtils.mysql_connection_parameters_for_test(mysql)
+      params =
+        MySqlContainer.connection_parameters(mysql)
+        |> Keyword.merge(queue_target: 30_000, queue_interval: 30_000)
 
       {:ok, pid} = MyXQL.start_link(params)
 
@@ -36,7 +38,9 @@ defmodule Testcontainers.Container.MySqlContainerTest do
     container(:mysql, @custom_mysql_container)
 
     test "provides a mysql container compliant with specified configuration", %{mysql: mysql} do
-      params = MysqlTestUtils.mysql_connection_parameters_for_test(mysql)
+      params =
+        MySqlContainer.connection_parameters(mysql)
+        |> Keyword.merge(queue_target: 30_000, queue_interval: 30_000)
 
       {:ok, pid} = MyXQL.start_link(params)
 
