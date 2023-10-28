@@ -360,9 +360,9 @@ defmodule Testcontainers do
     :gen_tcp.send(
       socket,
       "label=#{container_sessionId_label()}=#{value}&" <>
-      "label=#{container_version_label()}=#{library_version()}&" <>
-      "label=#{container_lang_label()}=#{container_lang_value()}&" <>
-      "label=#{container_label()}=#{true}\n"
+        "label=#{container_version_label()}=#{library_version()}&" <>
+        "label=#{container_lang_label()}=#{container_lang_value()}&" <>
+        "label=#{container_label()}=#{true}\n"
     )
 
     case :gen_tcp.recv(socket, 0, 1_000) do

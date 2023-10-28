@@ -7,7 +7,6 @@ defmodule Testcontainers.ExUnit do
   """
   import ExUnit.Callbacks
 
-  alias Testcontainers.ContainerBuilder
   alias Testcontainers.Container
 
   @doc """
@@ -55,11 +54,9 @@ defmodule Testcontainers.ExUnit do
     * In the case of shared containers, be mindful that tests can affect the container's state, potentially leading to interdependencies between tests.
   """
   defmacro container(name, config, options \\ []) do
-    validate_options(options)
-
     run_block =
       quote do
-        {:ok, container} = run_container(unquote(config))
+        {:ok, container} = Container.run(unquote(config), on_exit: &ExUnit.Callbacks.on_exit/1)
 
         {:ok, %{unquote(name) => container}}
       end
@@ -79,66 +76,5 @@ defmodule Testcontainers.ExUnit do
           end
         end
     end
-  end
-
-  @doc """
-  Initiates and manages the lifecycle of a Docker container within the scope of a single ExUnit test.
-
-  This function starts a new container using the provided configuration. It is designed to be used in conjunction with ExUnit's setup callbacks to facilitate the creation of a fresh, isolated environment for each test case. The container is guaranteed to terminate after the test completes, ensuring no carry-over state between tests.
-
-  The function also ensures that necessary prerequisites, such as establishing a connection and starting the reaper process, are handled. This abstraction allows test cases to focus solely on interacting with the container, confident in the knowledge that setup and teardown are managed.
-
-  ## Parameters
-
-    * `config`: A map or keyword list that includes the configuration settings for the container. This includes settings like the image to use, network configuration, bound volumes, exposed ports, and any command or entrypoint overrides.
-
-  ## Examples
-
-  In an ExUnit case, you might use `run_container` in a setup block:
-
-      defmodule MyContainerTest do
-        use ExUnit.Case
-
-        alias Testcontainers.Container
-
-        setup do
-          # Define container configuration
-          config = %Container{image: "my_image", exposed_ports: [80, 443]}
-
-          # Run the container for this test
-          {:ok, container} = run_container(config)
-
-          # Pass the container info to the test
-          {:ok, container: container}
-        end
-
-        test "example test", %{container: container} do
-          # Your test logic here, interacting with the container as needed
-        end
-      end
-
-  ## Notes
-
-    * The container is terminated after the test completes, regardless of the test's outcome, to prevent any state from persisting that might affect subsequent tests.
-    * This function is intended for use within ExUnit test cases and might not be suitable for managing containers outside of this context.
-  """
-  @spec run_container(ContainerBuilder.t(), keyword()) :: {:ok, %Container{}} | {:error, any()}
-  def run_container(config, options \\ []) do
-    default_options = [on_exit: &ExUnit.Callbacks.on_exit/1]
-    options = Keyword.merge(default_options, options)
-    Container.run(config, options)
-  end
-
-  defp validate_options(options) when is_list(options) do
-    Enum.each(options, fn
-      {:shared, value} when is_boolean(value) ->
-        :ok
-
-      {:shared, _} ->
-        raise ArgumentError, "The :shared option must be a boolean"
-
-      {option, _} ->
-        raise ArgumentError, "#{option} is not a recognized option"
-    end)
   end
 end
