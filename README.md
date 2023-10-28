@@ -48,7 +48,7 @@ This section explains how to use the Testcontainers library in your own project.
 
 ### In a Phoenix project:
 
-In simple terms you can add this in application.ex:
+To start a postgres container when running tests, that also enables testing of application initialization with databasse calls at startup, add this in application.ex:
 
 ```elixir
   # In your application.ex file in your Phoenix project:
@@ -69,7 +69,9 @@ In simple terms you can add this in application.ex:
   end
 ```
 
-see documentation on [Testcontainers.Ecto](https://hexdocs.pm/testcontainers/Testcontainers.Ecto.html) for more information about the options it can take.
+This will start a postgres container that will be terminated when the test process ends.
+
+See documentation on [Testcontainers.Ecto](https://hexdocs.pm/testcontainers/Testcontainers.Ecto.html) for more information about the options it can take.
 
 There is an example repo here with a bare bones phoenix application, where the only changes are the use of the ecto function and removing the test alias that interferes with it:
 
