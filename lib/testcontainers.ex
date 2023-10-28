@@ -34,21 +34,6 @@ defmodule Testcontainers do
     {:ok, %{options: options}}
   end
 
-  def register(value, socket) do
-    :gen_tcp.send(
-      socket,
-      "label=#{container_lang_label()}=#{container_lang_value()}&label=#{container_sessionId_label()}=#{value}&label=#{container_version_label()}=#{library_version()}&label=#{container_label()}=#{true}\n"
-    )
-
-    case :gen_tcp.recv(socket, 0, 1_000) do
-      {:ok, "ACK\n"} ->
-        :ok
-
-      {:error, reason} ->
-        {:error, reason}
-    end
-  end
-
   defimpl ContainerBuilder do
     @spec build(%Testcontainers{}, keyword()) :: %Container{}
     @impl true
@@ -289,7 +274,7 @@ defmodule Testcontainers do
          :ok <- Api.start_container(id, conn),
          {:ok, container} <- Api.get_container(id, conn),
          {:ok, socket} <- create_ryuk_socket(container),
-         :ok <- register(session_id, socket) do
+         :ok <- register_ryuk_filter(session_id, socket) do
       Logger.log("Testcontainers initialized")
       {:noreply, %{socket: socket, conn: conn, session_id: session_id}}
     else
@@ -369,5 +354,23 @@ defmodule Testcontainers do
   def handle_call({:exec_inspect, exec_id}, from, state) do
     Task.async(fn -> GenServer.reply(from, Api.inspect_exec(exec_id, state.conn)) end)
     {:noreply, state}
+  end
+
+  defp register_ryuk_filter(value, socket) do
+    :gen_tcp.send(
+      socket,
+      "label=#{container_sessionId_label()}=#{value}&" <>
+      "label=#{container_version_label()}=#{library_version()}&" <>
+      "label=#{container_lang_label()}=#{container_lang_value()}&" <>
+      "label=#{container_label()}=#{true}\n"
+    )
+
+    case :gen_tcp.recv(socket, 0, 1_000) do
+      {:ok, "ACK\n"} ->
+        :ok
+
+      {:error, reason} ->
+        {:error, reason}
+    end
   end
 end
