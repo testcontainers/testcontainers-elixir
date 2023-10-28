@@ -12,18 +12,22 @@ defmodule Testcontainers.Container.SeleniumContainer do
 
   @default_image "selenium/standalone-chrome"
   @default_tag "118.0"
+  @default_image_with_tag "#{@default_image}:#{@default_tag}"
   # TODO find proper names for these two ports
   @default_port1 7900
   @default_port2 4400
-  @wait_timeout 120_000
+  @default_wait_timeout 120_000
 
-  defstruct image: "#{@default_image}:#{@default_tag}",
-            wait_timeout: @wait_timeout,
-            # TODO find proper names for these two ports
-            port1: @default_port1,
-            port2: @default_port2
+  @enforce_keys [:image, :port1, :port2, :wait_timeout]
+  defstruct [:image, :port1, :port2, :wait_timeout]
 
-  def new, do: %__MODULE__{}
+  def new,
+    do: %__MODULE__{
+      image: @default_image_with_tag,
+      wait_timeout: @default_wait_timeout,
+      port1: @default_port1,
+      port2: @default_port2
+    }
 
   def with_image(%__MODULE__{} = config, image) when is_binary(image) do
     %{config | image: image}

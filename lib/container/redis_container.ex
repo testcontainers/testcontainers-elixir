@@ -15,17 +15,22 @@ defmodule Testcontainers.Container.RedisContainer do
 
   @default_image "redis"
   @default_tag "7.2"
+  @default_image_with_tag "#{@default_image}:#{@default_tag}"
   @default_port 6379
-  @wait_timeout 60_000
+  @default_wait_timeout 60_000
 
-  defstruct image: "#{@default_image}:#{@default_tag}",
-            wait_timeout: @wait_timeout,
-            port: @default_port
+  @enforce_keys [:image, :port, :wait_timeout]
+  defstruct [:image, :port, :wait_timeout]
 
   @doc """
   Creates a new `RedisContainer` struct with default configurations.
   """
-  def new, do: %__MODULE__{}
+  def new,
+    do: %__MODULE__{
+      image: @default_image_with_tag,
+      wait_timeout: @default_wait_timeout,
+      port: @default_port
+    }
 
   @doc """
   Overrides the default image used for the Redis container.

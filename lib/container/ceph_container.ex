@@ -15,20 +15,28 @@ defmodule Testcontainers.Container.CephContainer do
 
   @default_image "quay.io/ceph/demo"
   @default_tag "latest-quincy"
+  @default_image_with_tag "#{@default_image}:#{@default_tag}"
+  @default_bucket "test"
+  @default_access_key "test"
+  @default_secret_key "test"
   @default_port 8080
-  @wait_timeout 300_000
+  @default_wait_timeout 300_000
 
-  defstruct image: "#{@default_image}:#{@default_tag}",
-            wait_timeout: @wait_timeout,
-            port: @default_port,
-            access_key: "test",
-            secret_key: "test",
-            bucket: "test"
+  @enforce_keys [:image, :access_key, :secret_key, :bucket, :port, :wait_timeout]
+  defstruct [:image, :access_key, :secret_key, :bucket, :port, :wait_timeout]
 
   @doc """
   Creates a new `CephContainer` struct with default attributes.
   """
-  def new, do: %__MODULE__{}
+  def new,
+    do: %__MODULE__{
+      image: @default_image_with_tag,
+      wait_timeout: @default_wait_timeout,
+      port: @default_port,
+      access_key: @default_access_key,
+      secret_key: @default_secret_key,
+      bucket: @default_bucket
+    }
 
   @doc """
   Sets the `image` of the Ceph container configuration.

@@ -30,3 +30,5 @@ testcontainers_elixir-*.tar
 # IDEA
 .idea
 *.iml
+
+.elixir_ls/

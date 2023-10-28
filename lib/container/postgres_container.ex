@@ -2,6 +2,7 @@
 # Original by: Marco Dallagiacoma @ 2023 in https://github.com/dallagi/excontainers
 # Modified by: Jarl André Hübenthal @ 2023
 defmodule Testcontainers.Container.PostgresContainer do
+  @behaviour Testcontainers.Container.Behaviours.Database
   @moduledoc """
   Provides functionality for creating and managing Postgres container configurations.
 
@@ -15,20 +16,28 @@ defmodule Testcontainers.Container.PostgresContainer do
 
   @default_image "postgres"
   @default_tag "15"
+  @default_image_with_tag "#{@default_image}:#{@default_tag}"
+  @default_user "test"
+  @default_password "test"
+  @default_database "test"
   @default_port 5432
-  @wait_timeout 60_000
+  @default_wait_timeout 60_000
 
-  defstruct image: "#{@default_image}:#{@default_tag}",
-            wait_timeout: @wait_timeout,
-            port: @default_port,
-            user: "test",
-            password: "test",
-            database: "test"
+  @enforce_keys [:image, :user, :password, :database, :port, :wait_timeout]
+  defstruct [:image, :user, :password, :database, :port, :wait_timeout]
 
   @doc """
   Creates a new `PostgresContainer` struct with default configurations.
   """
-  def new, do: %__MODULE__{}
+  def new,
+    do: %__MODULE__{
+      image: @default_image_with_tag,
+      user: @default_user,
+      password: @default_password,
+      database: @default_database,
+      port: @default_port,
+      wait_timeout: @default_wait_timeout
+    }
 
   @doc """
   Overrides the default image used for the Postgres container.
