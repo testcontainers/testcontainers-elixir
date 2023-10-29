@@ -23,7 +23,8 @@ defmodule Testcontainers.WaitStrategy.PortWaitStrategy do
 
     @impl true
     def wait_until_container_is_ready(wait_strategy, container, _conn) do
-      with host_port when not is_nil(host_port) <- Container.mapped_port(container, wait_strategy.port),
+      with host_port when not is_nil(host_port) <-
+             Container.mapped_port(container, wait_strategy.port),
            do: perform_port_check(wait_strategy, host_port)
     end
 
@@ -77,7 +78,9 @@ defmodule Testcontainers.WaitStrategy.PortWaitStrategy do
     end
 
     defp log_retry_message(wait_strategy, host_port) do
-      Logger.log("Port #{wait_strategy.port} (host port #{host_port}) not open on IP #{wait_strategy.ip}, retrying in #{wait_strategy.retry_delay}ms.")
+      Logger.log(
+        "Port #{wait_strategy.port} (host port #{host_port}) not open on IP #{wait_strategy.ip}, retrying in #{wait_strategy.retry_delay}ms."
+      )
     end
   end
 end

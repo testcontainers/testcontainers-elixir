@@ -6,10 +6,9 @@ defmodule TestcontainersTest do
 
   test "will cleanup containers" do
     {:ok, container} = Testcontainers.start_container(MySqlContainer.new())
-    :timer.sleep(1_000)
     GenServer.stop(Testcontainers)
-    :timer.sleep(15_000)
+    TestHelper.wait_for_genserver_state(Testcontainers, :down)
     {:ok, _} = Testcontainers.start_link()
-    {:error, _} = Testcontainers.get_container(container.container_id)
+    :ok = TestHelper.wait_for_lambda(fn -> with {:error, _} <- Testcontainers.get_container(container.container_id), do: :ok end, max_retries: 10, interval: 1000)
   end
 end
