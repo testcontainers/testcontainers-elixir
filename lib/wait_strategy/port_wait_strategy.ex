@@ -77,7 +77,7 @@ defmodule Testcontainers.WaitStrategy.PortWaitStrategy do
     end
 
     defp log_retry_message(wait_strategy, host_port) do
-      Logger.log("Port #{host_port} not open on IP #{wait_strategy.ip}, retrying in #{wait_strategy.retry_delay}ms.")
+      Logger.log("Port #{wait_strategy.port} (host port #{host_port}) not open on IP #{wait_strategy.ip}, retrying in #{wait_strategy.retry_delay}ms.")
     end
   end
 end
