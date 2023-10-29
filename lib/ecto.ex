@@ -257,6 +257,8 @@ defmodule Testcontainers.Ecto do
 
     case Container.run(config) do
       {:ok, container} ->
+        System.at_exit(fn _ -> Testcontainers.stop_container(container.container_id) end)
+
         {:ok, pid} = repo.start_link()
 
         absolute_migrations_path =
