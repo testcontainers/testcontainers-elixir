@@ -64,7 +64,7 @@ defmodule Testcontainers.WaitStrategy.CommandWaitStrategy do
     end
 
     def exec_and_wait(container_id, command, timeout, retry_delay) do
-      {:ok, exec_id} = exec(container_id, command)
+      {:ok, exec_id} = Testcontainers.execute(container_id, command)
 
       started_at = current_time_millis()
 
@@ -74,20 +74,8 @@ defmodule Testcontainers.WaitStrategy.CommandWaitStrategy do
       end
     end
 
-    def exec(container_id, command) do
-      with {:ok, exec_id} <- Testcontainers.exec_create(container_id, command),
-           :ok <- Testcontainers.exec_start(exec_id) do
-        {:ok, exec_id}
-      end
-    end
-
-    defp wait_for_exec_result(
-           exec_id,
-           timeout_ms,
-           started_at,
-           retry_delay
-         ) do
-      case Testcontainers.exec_inspect(exec_id) do
+    defp wait_for_exec_result(exec_id, timeout_ms, started_at, retry_delay) do
+      case Testcontainers.inspect_execution(exec_id) do
         {:ok, %{running: true}} ->
           do_wait_unless_timed_out(exec_id, timeout_ms, started_at, retry_delay)
 

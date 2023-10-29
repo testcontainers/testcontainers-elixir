@@ -90,6 +90,28 @@ defmodule Testcontainers do
   end
 
   @doc """
+  Retrieves information about a specific container.
+
+  This can be used to check the status, inspect the configuration, and gather other runtime information about the container.
+
+  ## Parameters
+
+  - `container_id`: The ID of the container, as a string.
+
+  ## Returns
+
+  - `{:ok, %Testcontainers.Container{}}` with detailed information about the container.
+  - `{:error, reason}` on failure.
+
+  ## Examples
+
+      {:ok, %Testcontainers.Container{}} = Testcontainers.Connection.get_container("my_container_id")
+  """
+  def get_container(container_id) when is_binary(container_id) do
+    wait_for_call({:get_container, container_id})
+  end
+
+  @doc """
   Retrieves the stdout logs from a specified container.
 
   Useful for debugging and monitoring, this function collects the logs that have been written to stdout within the container.
@@ -105,10 +127,10 @@ defmodule Testcontainers do
 
   ## Examples
 
-      {:ok, logs} = Testcontainers.Connection.stdout_logs("my_container_id")
+      {:ok, logs} = Testcontainers.Connection.logs("my_container_id")
   """
-  def stdout_logs(container_id) when is_binary(container_id) do
-    wait_for_call({:stdout_logs, container_id})
+  def logs(container_id) when is_binary(container_id) do
+    wait_for_call({:logs, container_id})
   end
 
   @doc """
@@ -128,32 +150,10 @@ defmodule Testcontainers do
 
   ## Examples
 
-      {:ok, exec_id} = Testcontainers.Connection.exec_create("my_container_id", ["ls", "-la"])
+      {:ok, exec_id} = Testcontainers.Connection.execute("my_container_id", ["ls", "-la"])
   """
-  def exec_create(container_id, command) when is_binary(container_id) and is_list(command) do
-    wait_for_call({:exec_create, command, container_id})
-  end
-
-  @doc """
-  Initiates the execution of a previously created command in a running container.
-
-  This function is used after `exec_create/2` to start the execution of the command within the container context.
-
-  ## Parameters
-
-  - `exec_id`: A string representing the unique identifier of the command to be executed (obtained from `exec_create/2`).
-
-  ## Returns
-
-  - `:ok` if the command execution started successfully.
-  - `{:error, reason}` on failure.
-
-  ## Examples
-
-      :ok = Testcontainers.Connection.exec_start("my_exec_id")
-  """
-  def exec_start(exec_id) when is_binary(exec_id) do
-    wait_for_call({:exec_start, exec_id})
+  def execute(container_id, command) when is_binary(container_id) and is_list(command) do
+    wait_for_call({:execute, command, container_id})
   end
 
   @doc """
@@ -172,10 +172,10 @@ defmodule Testcontainers do
 
   ## Examples
 
-      {:ok, exec_info} = Testcontainers.Connection.exec_inspect("my_exec_id")
+      {:ok, exec_info} = Testcontainers.Connection.inspect_execution("my_exec_id")
   """
-  def exec_inspect(exec_id) when is_binary(exec_id) do
-    wait_for_call({:exec_inspect, exec_id})
+  def inspect_execution(exec_id) when is_binary(exec_id) do
+    wait_for_call({:inspect_execution, exec_id})
   end
 
   def handle_info(:load, state) do
@@ -222,28 +222,31 @@ defmodule Testcontainers do
   end
 
   @impl true
-  def handle_call({:stdout_logs, container_id}, from, state) do
+  def handle_call({:get_container, container_id}, from, state) do
+    Task.async(fn -> GenServer.reply(from, Api.get_container(container_id, state.conn)) end)
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_call({:logs, container_id}, from, state) do
     Task.async(fn -> GenServer.reply(from, Api.stdout_logs(container_id, state.conn)) end)
     {:noreply, state}
   end
 
-  # TODO combine exec_create and exec_start, into one operation
-  # plus, send in Container struct and not container_id
   @impl true
-  def handle_call({:exec_create, command, container_id}, from, state) do
-    Task.async(fn -> GenServer.reply(from, Api.create_exec(container_id, command, state.conn)) end)
+  def handle_call({:execute, command, container_id}, from, state) do
+    Task.async(fn ->
+      with {:ok, exec_id} <- Api.create_exec(container_id, command, state.conn),
+           :ok <- Api.start_exec(exec_id, state.conn) do
+        GenServer.reply(from, {:ok, exec_id})
+      end
+    end)
 
     {:noreply, state}
   end
 
   @impl true
-  def handle_call({:exec_start, exec_id}, from, state) do
-    Task.async(fn -> GenServer.reply(from, Api.start_exec(exec_id, state.conn)) end)
-    {:noreply, state}
-  end
-
-  @impl true
-  def handle_call({:exec_inspect, exec_id}, from, state) do
+  def handle_call({:inspect_execution, exec_id}, from, state) do
     Task.async(fn -> GenServer.reply(from, Api.inspect_exec(exec_id, state.conn)) end)
     {:noreply, state}
   end
