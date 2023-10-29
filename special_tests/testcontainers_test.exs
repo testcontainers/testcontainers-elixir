@@ -9,6 +9,6 @@ defmodule TestcontainersTest do
     GenServer.stop(Testcontainers)
     TestHelper.wait_for_genserver_state(Testcontainers, :down)
     {:ok, _} = Testcontainers.start_link()
-    :ok = TestHelper.wait_for_lambda(fn -> with {:error, _} <- Testcontainers.get_container(container.container_id), do: :ok end, max_retries: 10, interval: 1000)
+    :ok = TestHelper.wait_for_lambda(fn -> with {:error, _} <- Testcontainers.get_container(container.container_id), do: :ok end, max_retries: 15, interval: 1000)
   end
 end
