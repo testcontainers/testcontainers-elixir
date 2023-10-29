@@ -15,17 +15,20 @@ defmodule Testcontainers.WaitStrategy.LogWaitStrategy do
     do: %__MODULE__{log_regex: log_regex, timeout: timeout, retry_delay: retry_delay}
 
   defimpl Testcontainers.WaitStrategy do
+    alias Testcontainers.Docker
     alias Testcontainers.Container
     alias Testcontainers.WaitStrategy.LogWaitStrategy
     alias Testcontainers.Logger
 
     def wait_until_container_is_ready(
           %LogWaitStrategy{} = wait_strategy,
-          %Container{} = container
+          %Container{} = container,
+          conn
         ) do
       case wait_for_log(
              wait_strategy,
              container.container_id,
+             conn,
              current_time_millis()
            ) do
         {:ok, :log_is_ready} ->
@@ -36,13 +39,13 @@ defmodule Testcontainers.WaitStrategy.LogWaitStrategy do
       end
     end
 
-    defp wait_for_log(%LogWaitStrategy{} = wait_strategy, container_id, start_time)
+    defp wait_for_log(%LogWaitStrategy{} = wait_strategy, container_id, conn, start_time)
          when is_binary(container_id) and is_integer(wait_strategy.timeout) and
                 is_integer(start_time) do
       if wait_strategy.timeout + start_time < current_time_millis() do
         {:error, strategy_timed_out(wait_strategy.timeout, start_time)}
       else
-        if log_comparison(container_id, wait_strategy.log_regex) do
+        if log_comparison(container_id, wait_strategy.log_regex, conn) do
           {:ok, :log_is_ready}
         else
           delay = max(0, wait_strategy.retry_delay)
@@ -52,17 +55,17 @@ defmodule Testcontainers.WaitStrategy.LogWaitStrategy do
           )
 
           :timer.sleep(delay)
-          wait_for_log(wait_strategy, container_id, start_time)
+          wait_for_log(wait_strategy, container_id, conn, start_time)
         end
       end
     end
 
-    defp log_comparison(container_id, log_regex) do
-      case Testcontainers.container_logs(container_id) do
-        {:ok, stdout_log} when is_binary(stdout_log) ->
+    defp log_comparison(container_id, log_regex, conn) do
+      case Docker.Api.stdout_logs(container_id, conn) do
+        {:ok, stdout_log} ->
           Regex.match?(log_regex, stdout_log)
 
-        _ ->
+        {:error, _} ->
           false
       end
     end

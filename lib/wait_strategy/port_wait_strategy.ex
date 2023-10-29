@@ -21,7 +21,9 @@ defmodule Testcontainers.WaitStrategy.PortWaitStrategy do
 
     def wait_until_container_is_ready(
           %PortWaitStrategy{} = wait_strategy,
-          %Container{} = container
+          %Container{} = container,
+          # not neeeded
+          _conn
         ) do
       host_port = Container.mapped_port(container, wait_strategy.port)
 

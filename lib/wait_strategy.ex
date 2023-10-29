@@ -7,6 +7,7 @@ defprotocol Testcontainers.WaitStrategy do
   """
   alias Testcontainers.Container
 
-  @spec wait_until_container_is_ready(t(), %Container{}) :: :ok | {:error, atom()}
-  def wait_until_container_is_ready(wait_strategy, container)
+  @spec wait_until_container_is_ready(t(), %Container{}, Tesla.Env.client()) ::
+          :ok | {:error, atom()}
+  def wait_until_container_is_ready(wait_strategy, container, conn)
 end

@@ -111,73 +111,6 @@ defmodule Testcontainers do
     wait_for_call({:get_container, container_id})
   end
 
-  @doc """
-  Retrieves the stdout logs from a specified container.
-
-  Useful for debugging and monitoring, this function collects the logs that have been written to stdout within the container.
-
-  ## Parameters
-
-  - `container_id`: The ID of the container, as a string.
-
-  ## Returns
-
-  - `{:ok, logs}` where `logs` is the content that has been written to stdout in the container.
-  - `{:error, reason}` on failure.
-
-  ## Examples
-
-      {:ok, logs} = Testcontainers.Connection.container_logs("my_container_id")
-  """
-  def container_logs(container_id) when is_binary(container_id) do
-    wait_for_call({:container_logs, container_id})
-  end
-
-  @doc """
-  Creates a new execution context in a running container and runs the specified command.
-
-  This function is used to execute a one-off command within the context of the container.
-
-  ## Parameters
-
-  - `container_id`: The ID of the container, as a string.
-  - `command`: A list of strings representing the command and its arguments to run in the container.
-
-  ## Returns
-
-  - `{:ok, exec_id}` which is an identifier for the executed command, useful for further inspection or interaction.
-  - `{:error, reason}` on failure.
-
-  ## Examples
-
-      {:ok, exec_id} = Testcontainers.Connection.execute("my_container_id", ["ls", "-la"])
-  """
-  def execute(container_id, command) when is_binary(container_id) and is_list(command) do
-    wait_for_call({:execute, command, container_id})
-  end
-
-  @doc """
-  Retrieves detailed information about a specific exec command.
-
-  It's particularly useful for obtaining the exit status and other related data after a command has been executed in a container.
-
-  ## Parameters
-
-  - `exec_id`: A string representing the unique identifier of the executed command (obtained from `exec_create/2`).
-
-  ## Returns
-
-  - `{:ok, %{running: _, exit_code: _}}` with information about running state and exit code.
-  - `{:error, reason}` on failure.
-
-  ## Examples
-
-      {:ok, exec_info} = Testcontainers.Connection.inspect_execution("my_exec_id")
-  """
-  def inspect_execution(exec_id) when is_binary(exec_id) do
-    wait_for_call({:inspect_execution, exec_id})
-  end
-
   def handle_info(:load, state) do
     conn = Connection.get_connection(state.options)
 
@@ -224,33 +157,6 @@ defmodule Testcontainers do
   @impl true
   def handle_call({:get_container, container_id}, from, state) do
     Task.async(fn -> GenServer.reply(from, Api.get_container(container_id, state.conn)) end)
-    {:noreply, state}
-  end
-
-  @impl true
-  def handle_call({:container_logs, container_id}, from, state) do
-    Task.async(fn -> GenServer.reply(from, Api.stdout_logs(container_id, state.conn)) end)
-    {:noreply, state}
-  end
-
-  @impl true
-  def handle_call({:execute, command, container_id}, from, state) do
-    Task.async(fn ->
-      GenServer.reply(
-        from,
-        with {:ok, exec_id} <- Api.create_exec(container_id, command, state.conn),
-             :ok <- Api.start_exec(exec_id, state.conn) do
-          {:ok, exec_id}
-        end
-      )
-    end)
-
-    {:noreply, state}
-  end
-
-  @impl true
-  def handle_call({:inspect_execution, exec_id}, from, state) do
-    Task.async(fn -> GenServer.reply(from, Api.inspect_exec(exec_id, state.conn)) end)
     {:noreply, state}
   end
 
@@ -304,15 +210,15 @@ defmodule Testcontainers do
            ),
          :ok <- Api.start_container(id, state.conn),
          {:ok, container} <- Api.get_container(id, state.conn),
-         :ok <- wait_for_container(container, wait_strategies) do
+         :ok <- wait_for_container(container, wait_strategies, state.conn) do
       {:ok, container}
     end
   end
 
-  defp wait_for_container(container, wait_strategies) do
+  defp wait_for_container(container, wait_strategies, conn) do
     Enum.reduce(wait_strategies, :ok, fn
       wait_strategy, :ok ->
-        WaitStrategy.wait_until_container_is_ready(wait_strategy, container)
+        WaitStrategy.wait_until_container_is_ready(wait_strategy, container, conn)
 
       _, error ->
         error

@@ -17,6 +17,7 @@ defmodule Testcontainers.WaitStrategy.CommandWaitStrategy do
     do: %__MODULE__{command: command, timeout: timeout, retry_delay: retry_delay}
 
   defimpl Testcontainers.WaitStrategy do
+    alias Testcontainers.Docker
     alias Testcontainers.Container
     alias Testcontainers.Logger
     alias Testcontainers.WaitStrategy.CommandWaitStrategy
@@ -24,22 +25,21 @@ defmodule Testcontainers.WaitStrategy.CommandWaitStrategy do
     @impl true
     def wait_until_container_is_ready(
           %CommandWaitStrategy{} = wait_strategy,
-          %Container{} = container
+          %Container{} = container,
+          conn
         ) do
-      # Capture the start time of the process
       started_at = current_time_millis()
-
-      # Call the recursive function
-      recursive_wait(wait_strategy, container.container_id, started_at)
+      recursive_wait(wait_strategy, container.container_id, conn, started_at)
     end
 
     # Recursive function with breaking conditions
-    defp recursive_wait(%CommandWaitStrategy{} = wait_strategy, id_or_name, started_at) do
+    defp recursive_wait(%CommandWaitStrategy{} = wait_strategy, id_or_name, conn, started_at) do
       case exec_and_wait(
              id_or_name,
              wait_strategy.command,
              wait_strategy.timeout,
-             wait_strategy.retry_delay
+             wait_strategy.retry_delay,
+             conn
            ) do
         {:ok, 0} ->
           :ok
@@ -55,7 +55,7 @@ defmodule Testcontainers.WaitStrategy.CommandWaitStrategy do
             )
 
             :timer.sleep(delay)
-            recursive_wait(wait_strategy, id_or_name, started_at)
+            recursive_wait(wait_strategy, id_or_name, conn, started_at)
           end
 
         {:error, reason} ->
@@ -63,34 +63,34 @@ defmodule Testcontainers.WaitStrategy.CommandWaitStrategy do
       end
     end
 
-    def exec_and_wait(container_id, command, timeout, retry_delay) do
-      {:ok, exec_id} = Testcontainers.execute(container_id, command)
+    def exec_and_wait(container_id, command, timeout, retry_delay, conn) do
+      {:ok, exec_id} = Docker.Api.start_exec(container_id, command, conn)
 
       started_at = current_time_millis()
 
-      case wait_for_exec_result(exec_id, timeout, started_at, retry_delay) do
+      case wait_for_exec_result(exec_id, timeout, started_at, retry_delay, conn) do
         {:ok, exec_info} -> {:ok, exec_info.exit_code}
         {:error, error} -> {:error, error}
       end
     end
 
-    defp wait_for_exec_result(exec_id, timeout_ms, started_at, retry_delay) do
-      case Testcontainers.inspect_execution(exec_id) do
+    defp wait_for_exec_result(exec_id, timeout_ms, started_at, retry_delay, conn) do
+      case Docker.Api.inspect_exec(exec_id, conn) do
         {:ok, %{running: true}} ->
-          do_wait_unless_timed_out(exec_id, timeout_ms, started_at, retry_delay)
+          do_wait_unless_timed_out(exec_id, timeout_ms, started_at, retry_delay, conn)
 
         {:ok, finished_exec_status} ->
           {:ok, finished_exec_status}
       end
     end
 
-    defp do_wait_unless_timed_out(exec_id, timeout, started_at, retry_delay) do
+    defp do_wait_unless_timed_out(exec_id, timeout, started_at, retry_delay, conn) do
       if out_of_time(started_at, timeout) do
         {:error, strategy_timed_out(timeout, started_at)}
       else
         delay = max(0, retry_delay)
         :timer.sleep(delay)
-        wait_for_exec_result(exec_id, timeout, started_at, retry_delay)
+        wait_for_exec_result(exec_id, timeout, started_at, retry_delay, conn)
       end
     end
 

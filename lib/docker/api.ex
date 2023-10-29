@@ -63,44 +63,17 @@ defmodule Testcontainers.Docker.Api do
     end
   end
 
-  def create_exec(container_id, command, conn) do
-    data = %{"Cmd" => command}
-
-    case DockerEngineAPI.Api.Exec.container_exec(conn, container_id, data) do
-      {:ok, %DockerEngineAPI.Model.IdResponse{Id: id}} ->
-        {:ok, id}
-
-      {:ok, %Tesla.Env{status: status}} ->
-        {:error, {:http_error, status}}
-
-      {:ok, %DockerEngineAPI.Model.ErrorResponse{message: message}} ->
-        {:error, message}
-
-      {:error, message} ->
-        {:error, message}
-    end
-  end
-
-  def start_exec(exec_id, conn) do
-    case DockerEngineAPI.Api.Exec.exec_start(conn, exec_id, body: %{}) do
-      {:ok, %Tesla.Env{status: 200}} ->
-        :ok
-
-      {:ok, %Tesla.Env{status: status}} ->
-        {:error, {:http_error, status}}
-
-      {:ok, %DockerEngineAPI.Model.ErrorResponse{message: message}} ->
-        {:error, message}
-
-      {:error, message} ->
-        {:error, message}
+  def start_exec(container_id, command, conn) do
+    with {:ok, exec_id} <- create_exec(container_id, command, conn),
+         :ok <- start_exec(exec_id, conn) do
+      {:ok, exec_id}
     end
   end
 
   def stdout_logs(container_id, conn) do
     case DockerEngineAPI.Api.Container.container_logs(conn, container_id, stdout: true) do
       {:ok, %Tesla.Env{body: body}} ->
-        {:ok, body}
+        {:ok, body || ""}
 
       {:ok, %DockerEngineAPI.Model.ErrorResponse{message: message}} ->
         {:error, message}
@@ -199,6 +172,40 @@ defmodule Testcontainers.Docker.Api do
 
       {:ok, response} ->
         {:ok, response}
+    end
+  end
+
+  defp create_exec(container_id, command, conn) do
+    data = %{"Cmd" => command}
+
+    case DockerEngineAPI.Api.Exec.container_exec(conn, container_id, data) do
+      {:ok, %DockerEngineAPI.Model.IdResponse{Id: id}} ->
+        {:ok, id}
+
+      {:ok, %Tesla.Env{status: status}} ->
+        {:error, {:http_error, status}}
+
+      {:ok, %DockerEngineAPI.Model.ErrorResponse{message: message}} ->
+        {:error, message}
+
+      {:error, message} ->
+        {:error, message}
+    end
+  end
+
+  defp start_exec(exec_id, conn) do
+    case DockerEngineAPI.Api.Exec.exec_start(conn, exec_id, body: %{}) do
+      {:ok, %Tesla.Env{status: 200}} ->
+        :ok
+
+      {:ok, %Tesla.Env{status: status}} ->
+        {:error, {:http_error, status}}
+
+      {:ok, %DockerEngineAPI.Model.ErrorResponse{message: message}} ->
+        {:error, message}
+
+      {:error, message} ->
+        {:error, message}
     end
   end
 end
