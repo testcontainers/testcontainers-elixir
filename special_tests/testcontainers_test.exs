@@ -6,6 +6,7 @@ defmodule TestcontainersTest do
 
   test "will cleanup containers" do
     {:ok, container} = Testcontainers.start_container(MySqlContainer.new())
+    :timer.sleep(1_000)
     GenServer.stop(Testcontainers)
     :timer.sleep(15_000)
     {:ok, _} = Testcontainers.start_link()

@@ -89,24 +89,7 @@ defmodule Testcontainers do
     wait_for_call({:stop_container, container_id})
   end
 
-  @doc """
-  Retrieves information about a specific container.
-
-  This can be used to check the status, inspect the configuration, and gather other runtime information about the container.
-
-  ## Parameters
-
-  - `container_id`: The ID of the container, as a string.
-
-  ## Returns
-
-  - `{:ok, %Testcontainers.Container{}}` with detailed information about the container.
-  - `{:error, reason}` on failure.
-
-  ## Examples
-
-      {:ok, %Testcontainers.Container{}} = Testcontainers.Connection.get_container("my_container_id")
-  """
+  @doc false
   def get_container(container_id) when is_binary(container_id) do
     wait_for_call({:get_container, container_id})
   end
