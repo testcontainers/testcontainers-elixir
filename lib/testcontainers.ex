@@ -187,7 +187,7 @@ defmodule Testcontainers do
 
     ryuk_config = ContainerBuilder.build(%__MODULE__{}, on_exit: nil)
 
-    with :ok <- Api.pull_image(ryuk_config.image, conn),
+    with {:ok, _} <- Api.pull_image(ryuk_config.image, conn),
          {:ok, id} <- Api.create_container(ryuk_config, conn),
          :ok <- Api.start_container(id, conn),
          {:ok, container} <- Api.get_container(id, conn),
@@ -208,7 +208,10 @@ defmodule Testcontainers do
 
   @impl true
   def handle_call({:start_container, config_builder, options}, from, state) do
-    Task.async(fn -> GenServer.reply(from, start_and_wait(config_builder, options, state.conn)) end)
+    Task.async(fn ->
+      GenServer.reply(from, start_and_wait(config_builder, options, state))
+    end)
+
     {:noreply, state}
   end
 
@@ -283,25 +286,27 @@ defmodule Testcontainers do
     config = ContainerBuilder.build(config_builder, options)
     wait_strategies = config.wait_strategies || []
 
-    with :ok <- Api.pull_image(config.image, state.conn),
-          {:ok, id} <- Api.create_container(
-            config
-            |> Container.with_label(container_sessionId_label(), state.session_id)
-            |> Container.with_label(container_version_label(), library_version())
-            |> Container.with_label(container_lang_label(), container_lang_value())
-            |> Container.with_label(container_label(), "#{true}"),
-            state.conn
-          ),
-          :ok <- Api.start_container(id, state.conn),
-          :ok <- wait_for_container(id, wait_strategies) do
-      Api.get_container(id, state.conn)
+    with {:ok, _} <- Api.pull_image(config.image, state.conn),
+         {:ok, id} <-
+           Api.create_container(
+             config
+             |> Container.with_label(container_sessionId_label(), state.session_id)
+             |> Container.with_label(container_version_label(), library_version())
+             |> Container.with_label(container_lang_label(), container_lang_value())
+             |> Container.with_label(container_label(), "#{true}"),
+             state.conn
+           ),
+         :ok <- Api.start_container(id, state.conn),
+         {:ok, container} <- Api.get_container(id, state.conn),
+         :ok <- wait_for_container(container, wait_strategies) do
+      {:ok, container}
     end
   end
 
-  defp wait_for_container(id, wait_strategies) when is_binary(id) do
+  defp wait_for_container(container, wait_strategies) do
     Enum.reduce(wait_strategies, :ok, fn
       wait_strategy, :ok ->
-        WaitStrategy.wait_until_container_is_ready(wait_strategy, id)
+        WaitStrategy.wait_until_container_is_ready(wait_strategy, container)
 
       _, error ->
         error

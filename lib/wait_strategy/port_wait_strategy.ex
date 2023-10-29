@@ -19,22 +19,23 @@ defmodule Testcontainers.WaitStrategy.PortWaitStrategy do
     alias Testcontainers.WaitStrategy.PortWaitStrategy
     alias Testcontainers.Logger
 
-    def wait_until_container_is_ready(%PortWaitStrategy{} = wait_strategy, id_or_name) do
-      with {:ok, %Container{} = container} <- Testcontainers.get_container(id_or_name) do
-        host_port = Container.mapped_port(container, wait_strategy.port)
+    def wait_until_container_is_ready(
+          %PortWaitStrategy{} = wait_strategy,
+          %Container{} = container
+        ) do
+      host_port = Container.mapped_port(container, wait_strategy.port)
 
-        if host_port == nil do
-          {:error, {:no_host_port, wait_strategy.port}}
-        else
-          start_time = current_time_millis()
+      if host_port == nil do
+        {:error, {:no_host_port, wait_strategy.port}}
+      else
+        start_time = current_time_millis()
 
-          case wait_for_port(wait_strategy, host_port, start_time) do
-            {:ok, :port_is_open} ->
-              :ok
+        case wait_for_port(wait_strategy, host_port, start_time) do
+          {:ok, :port_is_open} ->
+            :ok
 
-            {:error, reason} ->
-              {:error, reason, wait_strategy}
-          end
+          {:error, reason} ->
+            {:error, reason, wait_strategy}
         end
       end
     end

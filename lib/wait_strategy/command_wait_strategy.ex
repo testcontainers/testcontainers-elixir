@@ -17,16 +17,20 @@ defmodule Testcontainers.WaitStrategy.CommandWaitStrategy do
     do: %__MODULE__{command: command, timeout: timeout, retry_delay: retry_delay}
 
   defimpl Testcontainers.WaitStrategy do
+    alias Testcontainers.Container
     alias Testcontainers.Logger
     alias Testcontainers.WaitStrategy.CommandWaitStrategy
 
     @impl true
-    def wait_until_container_is_ready(%CommandWaitStrategy{} = wait_strategy, id_or_name) do
+    def wait_until_container_is_ready(
+          %CommandWaitStrategy{} = wait_strategy,
+          %Container{} = container
+        ) do
       # Capture the start time of the process
       started_at = current_time_millis()
 
       # Call the recursive function
-      recursive_wait(wait_strategy, id_or_name, started_at)
+      recursive_wait(wait_strategy, container.container_id, started_at)
     end
 
     # Recursive function with breaking conditions

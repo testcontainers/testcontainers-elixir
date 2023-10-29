@@ -6,41 +6,24 @@ defmodule Testcontainers.Docker.Api do
 
   def get_container(container_id, conn)
       when is_binary(container_id) do
-    case Api.Container.container_inspect(conn, container_id) do
-      {:error, %Tesla.Env{status: other}} ->
-        {:error, {:http_error, other}}
-
-      {:ok, %DockerEngineAPI.Model.ErrorResponse{} = error} ->
-        {:error, {:failed_to_get_container, error}}
-
-      {:ok, response} ->
-        {:ok, from(response)}
+    with {:ok, response} <-
+           Api.Container.container_inspect(conn, container_id)
+           |> parse_docker_response() do
+      {:ok, from(response)}
     end
   end
 
   def pull_image(image, conn) when is_binary(image) do
-    case Api.Image.image_create(conn, fromImage: image) do
-      {:ok, %Tesla.Env{status: 200}} ->
-        :ok
-
-      {:error, %Tesla.Env{status: other}} ->
-        {:error, {:http_error, other}}
-
-      {:ok, %DockerEngineAPI.Model.ErrorResponse{} = error} ->
-        {:error, {:failed_to_pull_image, error}}
-    end
+    Api.Image.image_create(conn, fromImage: image)
+    |> parse_docker_response()
   end
 
+  @spec create_container(%Container{}, Tesla.Env.client()) :: {:ok, binary()} | {:error, any()}
   def create_container(%Container{} = container, conn) do
-    case Api.Container.container_create(conn, container_create_request(container)) do
-      {:error, %Tesla.Env{status: other}} ->
-        {:error, {:http_error, other}}
-
-      {:ok, %{Id: id}} ->
-        {:ok, id}
-
-      {:ok, %DockerEngineAPI.Model.ErrorResponse{} = error} ->
-        {:error, {:failed_to_create_container, error}}
+    with {:ok, %{Id: id}} <-
+           Api.Container.container_create(conn, container_create_request(container))
+           |> parse_docker_response() do
+      {:ok, id}
     end
   end
 
@@ -187,26 +170,35 @@ defmodule Testcontainers.Docker.Api do
            NetworkSettings: %{Ports: ports}
          } = res
        ) do
-    ports =
-      Enum.reduce(ports || [], [], fn {key, ports}, acc ->
-        acc ++
-          Enum.map(ports || [], fn %{"HostPort" => host_port} ->
-            {key |> String.replace("/tcp", "") |> String.to_integer(),
-             host_port |> String.to_integer()}
-          end)
-      end)
-
-    environment =
-      Enum.reduce(res."Config"."Env" || [], %{}, fn env, acc ->
-        tokens = String.split(env, "=")
-        Map.merge(acc, %{"#{List.first(tokens)}": List.last(tokens)})
-      end)
-
     %Container{
       container_id: container_id,
       image: image,
-      exposed_ports: ports,
-      environment: environment
+      exposed_ports:
+        Enum.reduce(ports || [], [], fn {key, ports}, acc ->
+          acc ++
+            Enum.map(ports || [], fn %{"HostPort" => host_port} ->
+              {key |> String.replace("/tcp", "") |> String.to_integer(),
+               host_port |> String.to_integer()}
+            end)
+        end),
+      environment:
+        Enum.reduce(res."Config"."Env" || [], %{}, fn env, acc ->
+          tokens = String.split(env, "=")
+          Map.merge(acc, %{"#{List.first(tokens)}": List.last(tokens)})
+        end)
     }
+  end
+
+  defp parse_docker_response(docker_response) do
+    case docker_response do
+      {:error, %Tesla.Env{status: other}} ->
+        {:error, {:http_error, other}}
+
+      {:ok, %DockerEngineAPI.Model.ErrorResponse{} = error} ->
+        {:error, error}
+
+      {:ok, response} ->
+        {:ok, response}
+    end
   end
 end

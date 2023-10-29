@@ -2,7 +2,6 @@
 # Original by: Marco Dallagiacoma @ 2023 in https://github.com/dallagi/excontainers
 # Modified by: Jarl André Hübenthal @ 2023
 defmodule Testcontainers.Container do
-
   @enforce_keys [:image]
   defstruct [
     :image,

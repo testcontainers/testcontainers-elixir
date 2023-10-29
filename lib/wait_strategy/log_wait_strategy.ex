@@ -15,13 +15,17 @@ defmodule Testcontainers.WaitStrategy.LogWaitStrategy do
     do: %__MODULE__{log_regex: log_regex, timeout: timeout, retry_delay: retry_delay}
 
   defimpl Testcontainers.WaitStrategy do
+    alias Testcontainers.Container
     alias Testcontainers.WaitStrategy.LogWaitStrategy
     alias Testcontainers.Logger
 
-    def wait_until_container_is_ready(%LogWaitStrategy{} = wait_strategy, id_or_name) do
+    def wait_until_container_is_ready(
+          %LogWaitStrategy{} = wait_strategy,
+          %Container{} = container
+        ) do
       case wait_for_log(
              wait_strategy,
-             id_or_name,
+             container.container_id,
              current_time_millis()
            ) do
         {:ok, :log_is_ready} ->
