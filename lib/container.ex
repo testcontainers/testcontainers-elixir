@@ -2,12 +2,8 @@
 # Original by: Marco Dallagiacoma @ 2023 in https://github.com/dallagi/excontainers
 # Modified by: Jarl André Hübenthal @ 2023
 defmodule Testcontainers.Container do
-  alias Testcontainers.Container
-  alias Testcontainers.ContainerBuilder
-  alias Testcontainers.WaitStrategy
 
   @enforce_keys [:image]
-
   defstruct [
     :image,
     cmd: nil,
@@ -117,69 +113,6 @@ defmodule Testcontainers.Container do
     |> List.first({})
     |> Tuple.to_list()
     |> List.last()
-  end
-
-  @doc """
-  Starts a new container based on the provided configuration, applying any specified wait strategies.
-
-  This function performs several steps:
-  1. Pulls the necessary Docker image.
-  2. Creates and starts a container with the specified configuration.
-  3. Registers the container with a reaper process for automatic cleanup, ensuring it is stopped and removed when the current process exits or in case of unforeseen failures.
-
-  ## Parameters
-
-  - `config`: A `%Container{}` struct containing the configuration settings for the container, such as the image to use, environment variables, bound ports, and volume bindings.
-  - `options`: Optional keyword list. Supports the following options:
-    - `:on_exit`: A callback function that's invoked when the current process exits. It receives a no-argument callable (often a lambda) that executes cleanup actions, such as stopping the container. This callback enhances the reaper's functionality by providing immediate cleanup actions at the process level, while the reaper ensures that containers are ultimately cleaned up in situations like abrupt process termination. It's especially valuable in test environments, complementing ExUnit's `on_exit` for resource cleanup after tests.
-
-  ## Examples
-
-      iex> config = %Container{
-            image: "mysql:latest",
-            wait_strategies: [CommandWaitStrategy.new(["bash", "sh", "command_that_returns_0_exit_code"])]
-          }
-      iex> {:ok, container} = Container.run(config)
-
-  ## Returns
-
-  - `{:ok, container}` if the container is successfully created, started, and passes all wait strategies.
-  - An error tuple, such as `{:error, reason}`, if there is a failure at any step in the process.
-
-  ## Notes
-
-  - The container is automatically registered with a reaper process, ensuring it is stopped and removed when the current process exits, or in the case of unforeseen failures.
-  - It's important to specify appropriate wait strategies to ensure the container is fully ready for interaction, especially for containers that may take some time to start up services internally.
-
-  """
-  @spec run(ContainerBuilder.t(), keyword()) ::
-          {:ok, %Container{}} | {:error, any()}
-  def run(config_builder, options \\ []) do
-    on_exit = Keyword.get(options, :on_exit, nil)
-    config = ContainerBuilder.build(config_builder, options)
-    wait_strategies = config.wait_strategies || []
-
-    with :ok <- Testcontainers.pull_image(config.image),
-         {:ok, id} <- Testcontainers.create_container(config),
-         :ok <- Testcontainers.start_container(id),
-         :ok <-
-           if(on_exit,
-             do: on_exit.(fn -> Testcontainers.stop_container(id) end),
-             else: :ok
-           ),
-         :ok <- wait_for_container(id, wait_strategies) do
-      Testcontainers.get_container(id)
-    end
-  end
-
-  defp wait_for_container(id, wait_strategies) when is_binary(id) do
-    Enum.reduce(wait_strategies, :ok, fn
-      wait_strategy, :ok ->
-        WaitStrategy.wait_until_container_is_ready(wait_strategy, id)
-
-      _, error ->
-        error
-    end)
   end
 end
 

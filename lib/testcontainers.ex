@@ -9,6 +9,7 @@ defmodule Testcontainers do
 
   defstruct []
 
+  alias Testcontainers.WaitStrategy
   alias Testcontainers.Logger
   alias Testcontainers.Docker.Api
   alias Testcontainers.Connection
@@ -23,108 +24,47 @@ defmodule Testcontainers do
     GenServer.start_link(__MODULE__, options, name: __MODULE__)
   end
 
-  @doc false
-  def wait_for_call(call) do
-    GenServer.call(__MODULE__, call, @timeout)
-  end
-
   @impl true
   def init(options \\ []) do
     send(self(), :load)
     {:ok, %{options: options}}
   end
 
-  defimpl ContainerBuilder do
-    @spec build(%Testcontainers{}, keyword()) :: %Container{}
-    @impl true
-    def build(_, _) do
-      Container.new("testcontainers/ryuk:0.5.1")
-      |> Container.with_exposed_port(8080)
-      |> Container.with_environment("RYUK_PORT", "8080")
-      |> Container.with_bind_mount("/var/run/docker.sock", "/var/run/docker.sock", "rw")
-    end
-  end
-
-  defp create_ryuk_socket(%Container{} = container) do
-    host_port = Container.mapped_port(container, 8080)
-
-    :gen_tcp.connect(~c"localhost", host_port, [
-      :binary,
-      active: false,
-      packet: :line
-    ])
-  end
-
   @doc """
-  Pulls a Docker image.
+  Starts a new container based on the provided configuration, applying any specified wait strategies.
 
-  This function sends a request to the Docker daemon to pull an image from a Docker registry. If the image already exists locally, it will be skipped.
+  This function performs several steps:
+  1. Pulls the necessary Docker image.
+  2. Creates and starts a container with the specified configuration.
+  3. Registers the container with a reaper process for automatic cleanup, ensuring it is stopped and removed when the current process exits or in case of unforeseen failures.
 
   ## Parameters
 
-  - `image`: A string representing the Docker image tag.
+  - `config`: A `%Container{}` struct containing the configuration settings for the container, such as the image to use, environment variables, bound ports, and volume bindings.
+  - `options`: Optional keyword list. Supports the following options:
+    - `:on_exit`: A callback function that's invoked when the current process exits. It receives a no-argument callable (often a lambda) that executes cleanup actions, such as stopping the container. This callback enhances the reaper's functionality by providing immediate cleanup actions at the process level, while the reaper ensures that containers are ultimately cleaned up in situations like abrupt process termination. It's especially valuable in test environments, complementing ExUnit's `on_exit` for resource cleanup after tests.
 
   ## Examples
 
-      :ok = Testcontainers.Connection.pull_image("nginx:latest")
+      iex> config = %Container{
+            image: "mysql:latest",
+            wait_strategies: [CommandWaitStrategy.new(["bash", "sh", "command_that_returns_0_exit_code"])]
+          }
+      iex> {:ok, container} = Container.run(config)
 
   ## Returns
 
-  - `:ok` if the image is successfully pulled.
-  - `{:error, reason}` if there is a failure to pull the image.
+  - `{:ok, container}` if the container is successfully created, started, and passes all wait strategies.
+  - An error tuple, such as `{:error, reason}`, if there is a failure at any step in the process.
 
   ## Notes
 
-  - This function requires that the Docker daemon is running and accessible.
-  - Network issues or invalid image tags can cause failures.
+  - The container is automatically registered with a reaper process, ensuring it is stopped and removed when the current process exits, or in the case of unforeseen failures.
+  - It's important to specify appropriate wait strategies to ensure the container is fully ready for interaction, especially for containers that may take some time to start up services internally.
+
   """
-  def pull_image(image) when is_binary(image) do
-    wait_for_call({:pull_image, image})
-  end
-
-  @doc """
-  Creates a Docker container based on the specified configuration.
-
-  The container is not started automatically. Use `start_container/1` to run it.
-
-  ## Parameters
-
-  - `container`: A `%Container{}` struct containing the configuration for the new Docker container.
-
-  ## Returns
-
-  - `{:ok, container_id}` if the container is successfully created.
-  - `{:error, reason}` on failure.
-
-  ## Examples
-
-      config = %Container{image: "nginx:latest"}
-      {:ok, container_id} = Testcontainers.Connection.create_container(config)
-  """
-  def create_container(%Container{} = container) do
-    wait_for_call({:create_container, container})
-  end
-
-  @doc """
-  Starts a previously created Docker container.
-
-  Requires the container ID of a container that has been created but not yet started.
-
-  ## Parameters
-
-  - `container_id`: The ID of the container to start, as a string.
-
-  ## Returns
-
-  - `:ok` if the container starts successfully.
-  - `{:error, reason}` on failure.
-
-  ## Examples
-
-      :ok = Testcontainers.Connection.start_container("my_container_id")
-  """
-  def start_container(container_id) when is_binary(container_id) do
-    wait_for_call({:start_container, container_id})
+  def start_container(config_builder, options \\ []) do
+    wait_for_call({:start_container, config_builder, options})
   end
 
   @doc """
@@ -147,28 +87,6 @@ defmodule Testcontainers do
   """
   def stop_container(container_id) when is_binary(container_id) do
     wait_for_call({:stop_container, container_id})
-  end
-
-  @doc """
-  Retrieves information about a specific container.
-
-  This can be used to check the status, inspect the configuration, and gather other runtime information about the container.
-
-  ## Parameters
-
-  - `container_id`: The ID of the container, as a string.
-
-  ## Returns
-
-  - `{:ok, %Testcontainers.Container{}}` with detailed information about the container.
-  - `{:error, reason}` on failure.
-
-  ## Examples
-
-      {:ok, %Testcontainers.Container{}} = Testcontainers.Connection.get_container("my_container_id")
-  """
-  def get_container(container_id) when is_binary(container_id) do
-    wait_for_call({:get_container, container_id})
   end
 
   @doc """
@@ -289,39 +207,8 @@ defmodule Testcontainers do
   end
 
   @impl true
-  def handle_call({:pull_image, image}, from, state) do
-    Task.async(fn -> GenServer.reply(from, Api.pull_image(image, state.conn)) end)
-    {:noreply, state}
-  end
-
-  @impl true
-  def handle_call({:get_container, container_id}, from, state) do
-    Task.async(fn -> GenServer.reply(from, Api.get_container(container_id, state.conn)) end)
-    {:noreply, state}
-  end
-
-  @impl true
-  def handle_call({:start_container, container_id}, from, state) do
-    Task.async(fn -> GenServer.reply(from, Api.start_container(container_id, state.conn)) end)
-    {:noreply, state}
-  end
-
-  @impl true
-  def handle_call({:create_container, container}, from, state) do
-    Task.async(fn ->
-      GenServer.reply(
-        from,
-        Api.create_container(
-          container
-          |> Container.with_label(container_sessionId_label(), state.session_id)
-          |> Container.with_label(container_version_label(), library_version())
-          |> Container.with_label(container_lang_label(), container_lang_value())
-          |> Container.with_label(container_label(), "#{true}"),
-          state.conn
-        )
-      )
-    end)
-
+  def handle_call({:start_container, config_builder, options}, from, state) do
+    Task.async(fn -> GenServer.reply(from, start_and_wait(config_builder, options, state.conn)) end)
     {:noreply, state}
   end
 
@@ -337,6 +224,8 @@ defmodule Testcontainers do
     {:noreply, state}
   end
 
+  # TODO combine exec_create and exec_start, into one operation
+  # plus, send in Container struct and not container_id
   @impl true
   def handle_call({:exec_create, command, container_id}, from, state) do
     Task.async(fn -> GenServer.reply(from, Api.create_exec(container_id, command, state.conn)) end)
@@ -356,6 +245,22 @@ defmodule Testcontainers do
     {:noreply, state}
   end
 
+  # private functions
+
+  defp wait_for_call(call) do
+    GenServer.call(__MODULE__, call, @timeout)
+  end
+
+  defp create_ryuk_socket(%Container{} = container) do
+    host_port = Container.mapped_port(container, 8080)
+
+    :gen_tcp.connect(~c"localhost", host_port, [
+      :binary,
+      active: false,
+      packet: :line
+    ])
+  end
+
   defp register_ryuk_filter(value, socket) do
     :gen_tcp.send(
       socket,
@@ -371,6 +276,46 @@ defmodule Testcontainers do
 
       {:error, reason} ->
         {:error, reason}
+    end
+  end
+
+  defp start_and_wait(config_builder, options, state) do
+    config = ContainerBuilder.build(config_builder, options)
+    wait_strategies = config.wait_strategies || []
+
+    with :ok <- Api.pull_image(config.image, state.conn),
+          {:ok, id} <- Api.create_container(
+            config
+            |> Container.with_label(container_sessionId_label(), state.session_id)
+            |> Container.with_label(container_version_label(), library_version())
+            |> Container.with_label(container_lang_label(), container_lang_value())
+            |> Container.with_label(container_label(), "#{true}"),
+            state.conn
+          ),
+          :ok <- Api.start_container(id, state.conn),
+          :ok <- wait_for_container(id, wait_strategies) do
+      Api.get_container(id, state.conn)
+    end
+  end
+
+  defp wait_for_container(id, wait_strategies) when is_binary(id) do
+    Enum.reduce(wait_strategies, :ok, fn
+      wait_strategy, :ok ->
+        WaitStrategy.wait_until_container_is_ready(wait_strategy, id)
+
+      _, error ->
+        error
+    end)
+  end
+
+  defimpl ContainerBuilder do
+    @spec build(%Testcontainers{}, keyword()) :: %Container{}
+    @impl true
+    def build(_, _) do
+      Container.new("testcontainers/ryuk:0.5.1")
+      |> Container.with_exposed_port(8080)
+      |> Container.with_environment("RYUK_PORT", "8080")
+      |> Container.with_bind_mount("/var/run/docker.sock", "/var/run/docker.sock", "rw")
     end
   end
 end

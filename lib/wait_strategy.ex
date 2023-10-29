@@ -6,6 +6,9 @@ defprotocol Testcontainers.WaitStrategy do
   Defines the protocol/interface for the wait strategies in `Testcontainers`
   """
 
+  # TODO send inn the Container struct instead of id_or_name
+  # TODO also in Testcontainers, dont send in id for stdout_logs, exec_create etc,
+  # but send the Container struct, because we should already have a container
   @spec wait_until_container_is_ready(t(), String.t()) :: :ok | {:error, atom()}
   def wait_until_container_is_ready(wait_strategy, id_or_name)
 end

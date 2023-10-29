@@ -7,8 +7,6 @@ defmodule Testcontainers.ExUnit do
   """
   import ExUnit.Callbacks
 
-  alias Testcontainers.Container
-
   @doc """
   Creates and manages the lifecycle of a container within ExUnit tests.
 
@@ -56,8 +54,8 @@ defmodule Testcontainers.ExUnit do
   defmacro container(name, config, options \\ []) do
     run_block =
       quote do
-        {:ok, container} = Container.run(unquote(config), on_exit: &ExUnit.Callbacks.on_exit/1)
-
+        {:ok, container} = Testcontainers.start_container(unquote(config))
+        ExUnit.Callbacks.on_exit(fn -> Testcontainers.stop_container(container.container_id) end)
         {:ok, %{unquote(name) => container}}
       end
 
