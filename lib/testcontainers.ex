@@ -127,10 +127,10 @@ defmodule Testcontainers do
 
   ## Examples
 
-      {:ok, logs} = Testcontainers.Connection.logs("my_container_id")
+      {:ok, logs} = Testcontainers.Connection.container_logs("my_container_id")
   """
-  def logs(container_id) when is_binary(container_id) do
-    wait_for_call({:logs, container_id})
+  def container_logs(container_id) when is_binary(container_id) do
+    wait_for_call({:container_logs, container_id})
   end
 
   @doc """
@@ -228,7 +228,7 @@ defmodule Testcontainers do
   end
 
   @impl true
-  def handle_call({:logs, container_id}, from, state) do
+  def handle_call({:container_logs, container_id}, from, state) do
     Task.async(fn -> GenServer.reply(from, Api.stdout_logs(container_id, state.conn)) end)
     {:noreply, state}
   end

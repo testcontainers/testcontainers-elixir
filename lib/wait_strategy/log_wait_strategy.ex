@@ -58,7 +58,7 @@ defmodule Testcontainers.WaitStrategy.LogWaitStrategy do
     end
 
     defp log_comparison(container_id, log_regex) do
-      case Testcontainers.logs(container_id) do
+      case Testcontainers.container_logs(container_id) do
         {:ok, stdout_log} when is_binary(stdout_log) ->
           Regex.match?(log_regex, stdout_log)
 
