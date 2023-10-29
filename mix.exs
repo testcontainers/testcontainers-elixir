@@ -21,7 +21,10 @@ defmodule TestcontainersElixir.MixProject do
         links: %{"GitHub" => @source_url},
         licenses: ["MIT"]
       ],
-      test_coverage: [summary: [threshold: 77], ignore_modules: [TestHelper, Inspect.Testcontainers.TestUser]],
+      test_coverage: [
+        summary: [threshold: 77],
+        ignore_modules: [TestHelper, Inspect.Testcontainers.TestUser]
+      ],
       elixirc_paths: elixirc_paths(Mix.env())
     ]
   end
