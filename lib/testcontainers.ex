@@ -236,10 +236,13 @@ defmodule Testcontainers do
   @impl true
   def handle_call({:execute, command, container_id}, from, state) do
     Task.async(fn ->
-      with {:ok, exec_id} <- Api.create_exec(container_id, command, state.conn),
-           :ok <- Api.start_exec(exec_id, state.conn) do
-        GenServer.reply(from, {:ok, exec_id})
-      end
+      GenServer.reply(
+        from,
+        with {:ok, exec_id} <- Api.create_exec(container_id, command, state.conn),
+             :ok <- Api.start_exec(exec_id, state.conn) do
+          {:ok, exec_id}
+        end
+      )
     end)
 
     {:noreply, state}
