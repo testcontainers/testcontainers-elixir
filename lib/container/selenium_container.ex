@@ -13,7 +13,6 @@ defmodule Testcontainers.Container.SeleniumContainer do
   @default_image "selenium/standalone-chrome"
   @default_tag "118.0"
   @default_image_with_tag "#{@default_image}:#{@default_tag}"
-  # TODO find proper names for these two ports
   @default_port1 7900
   @default_port2 4400
   @default_wait_timeout 120_000
@@ -33,12 +32,10 @@ defmodule Testcontainers.Container.SeleniumContainer do
     %{config | image: image}
   end
 
-  # TODO find proper name for this port
   def with_port1(%__MODULE__{} = config, port1) when is_integer(port1) do
     %{config | port1: port1}
   end
 
-  # TODO find proper name for this port
   def with_port2(%__MODULE__{} = config, port2) when is_integer(port2) do
     %{config | port2: port2}
   end
