@@ -153,14 +153,12 @@ defmodule Testcontainers.Docker.Api do
     end)
   end
 
-  defp from(
-         %DockerEngineAPI.Model.ContainerInspectResponse{
-           Id: container_id,
-           Image: image,
-           NetworkSettings: %{Ports: ports},
-           Config: %{ Env: env }
-         }
-       ) do
+  defp from(%DockerEngineAPI.Model.ContainerInspectResponse{
+         Id: container_id,
+         Image: image,
+         NetworkSettings: %{Ports: ports},
+         Config: %{Env: env}
+       }) do
     %Container{
       container_id: container_id,
       image: image,

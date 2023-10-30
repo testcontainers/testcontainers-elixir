@@ -89,11 +89,7 @@ defmodule Testcontainers do
     wait_for_call({:stop_container, container_id})
   end
 
-  @doc false
-  def get_container(container_id) when is_binary(container_id) do
-    wait_for_call({:get_container, container_id})
-  end
-
+  @impl true
   def handle_info(:load, state) do
     conn = Connection.get_connection(state.options)
 
@@ -134,12 +130,6 @@ defmodule Testcontainers do
   @impl true
   def handle_call({:stop_container, container_id}, from, state) do
     Task.async(fn -> GenServer.reply(from, Api.stop_container(container_id, state.conn)) end)
-    {:noreply, state}
-  end
-
-  @impl true
-  def handle_call({:get_container, container_id}, from, state) do
-    Task.async(fn -> GenServer.reply(from, Api.get_container(container_id, state.conn)) end)
     {:noreply, state}
   end
 
