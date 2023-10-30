@@ -116,6 +116,6 @@ defmodule Testcontainers.Container do
 end
 
 defprotocol Testcontainers.ContainerBuilder do
-  @spec build(t(), keyword()) :: %Testcontainers.Container{}
-  def build(builder, options)
+  @spec build(t()) :: %Testcontainers.Container{}
+  def build(builder)
 end

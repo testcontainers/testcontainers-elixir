@@ -125,9 +125,9 @@ defmodule Testcontainers.Container.RedisContainer do
 
     - Raises `ArgumentError` if the provided image is not compatible with the default Redis image.
     """
-    @spec build(%RedisContainer{}, keyword()) :: %Container{}
+    @spec build(%RedisContainer{}) :: %Container{}
     @impl true
-    def build(%RedisContainer{} = config, _options) do
+    def build(%RedisContainer{} = config) do
       if not String.starts_with?(config.image, RedisContainer.default_image()) do
         raise ArgumentError,
           message:

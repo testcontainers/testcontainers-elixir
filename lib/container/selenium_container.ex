@@ -51,9 +51,9 @@ defmodule Testcontainers.Container.SeleniumContainer do
 
     @log_regex ~r/.*(RemoteWebDriver instances should connect to|Selenium Server is up and running|Started Selenium Standalone).*\n/
 
-    @spec build(%SeleniumContainer{}, keyword()) :: %Container{}
+    @spec build(%SeleniumContainer{}) :: %Container{}
     @impl true
-    def build(%SeleniumContainer{} = config, _options) do
+    def build(%SeleniumContainer{} = config) do
       if not String.starts_with?(config.image, SeleniumContainer.default_image()) do
         raise ArgumentError,
           message:

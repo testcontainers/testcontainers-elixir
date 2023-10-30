@@ -41,16 +41,10 @@ defmodule Testcontainers do
   ## Parameters
 
   - `config`: A `%Container{}` struct containing the configuration settings for the container, such as the image to use, environment variables, bound ports, and volume bindings.
-  - `options`: Optional keyword list. Supports the following options:
-    - `:on_exit`: A callback function that's invoked when the current process exits. It receives a no-argument callable (often a lambda) that executes cleanup actions, such as stopping the container. This callback enhances the reaper's functionality by providing immediate cleanup actions at the process level, while the reaper ensures that containers are ultimately cleaned up in situations like abrupt process termination. It's especially valuable in test environments, complementing ExUnit's `on_exit` for resource cleanup after tests.
-
   ## Examples
 
-      iex> config = %Container{
-            image: "mysql:latest",
-            wait_strategies: [CommandWaitStrategy.new(["bash", "sh", "command_that_returns_0_exit_code"])]
-          }
-      iex> {:ok, container} = Container.run(config)
+      iex> config = Testcontainers.MySqlContainer.new()
+      iex> {:ok, container} = Testcontainers.start_container(config)
 
   ## Returns
 
@@ -63,8 +57,8 @@ defmodule Testcontainers do
   - It's important to specify appropriate wait strategies to ensure the container is fully ready for interaction, especially for containers that may take some time to start up services internally.
 
   """
-  def start_container(config_builder, options \\ []) do
-    wait_for_call({:start_container, config_builder, options})
+  def start_container(config_builder) do
+    wait_for_call({:start_container, config_builder})
   end
 
   @doc """
@@ -97,7 +91,7 @@ defmodule Testcontainers do
       :crypto.hash(:sha, "#{inspect(self())}#{DateTime.utc_now() |> DateTime.to_string()}")
       |> Base.encode16()
 
-    ryuk_config = ContainerBuilder.build(%__MODULE__{}, on_exit: nil)
+    ryuk_config = ContainerBuilder.build(%__MODULE__{})
 
     with {:ok, _} <- Api.pull_image(ryuk_config.image, conn),
          {:ok, id} <- Api.create_container(ryuk_config, conn),
@@ -119,9 +113,9 @@ defmodule Testcontainers do
   end
 
   @impl true
-  def handle_call({:start_container, config_builder, options}, from, state) do
+  def handle_call({:start_container, config_builder}, from, state) do
     Task.async(fn ->
-      GenServer.reply(from, start_and_wait(config_builder, options, state))
+      GenServer.reply(from, start_and_wait(config_builder, state))
     end)
 
     {:noreply, state}
@@ -167,8 +161,8 @@ defmodule Testcontainers do
     end
   end
 
-  defp start_and_wait(config_builder, options, state) do
-    config = ContainerBuilder.build(config_builder, options)
+  defp start_and_wait(config_builder, state) do
+    config = ContainerBuilder.build(config_builder)
     wait_strategies = config.wait_strategies || []
 
     with {:ok, _} <- Api.pull_image(config.image, state.conn),
@@ -199,9 +193,9 @@ defmodule Testcontainers do
   end
 
   defimpl ContainerBuilder do
-    @spec build(%Testcontainers{}, keyword()) :: %Container{}
+    @spec build(%Testcontainers{}) :: %Container{}
     @impl true
-    def build(_, _) do
+    def build(_) do
       Container.new("testcontainers/ryuk:0.5.1")
       |> Container.with_exposed_port(8080)
       |> Container.with_environment("RYUK_PORT", "8080")
