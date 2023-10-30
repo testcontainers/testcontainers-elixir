@@ -18,7 +18,7 @@ defmodule Testcontainers.Container.CephContainer do
   @default_image_with_tag "#{@default_image}:#{@default_tag}"
   @default_bucket "test"
   @default_access_key "test"
-  @default_secret_key "test"
+  @default_secret_key UUID.uuid4()
   @default_port 8080
   @default_wait_timeout 300_000
 
