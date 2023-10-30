@@ -181,9 +181,9 @@ defmodule Testcontainers.Container.MySqlContainer do
 
     - Raises `ArgumentError` if the provided image is not compatible with the default MySql image.
     """
-    @spec build(%MySqlContainer{}, keyword()) :: %Container{}
+    @spec build(%MySqlContainer{}) :: %Container{}
     @impl true
-    def build(%MySqlContainer{} = config, _options) do
+    def build(%MySqlContainer{} = config) do
       if not String.starts_with?(config.image, MySqlContainer.default_image()) do
         raise ArgumentError,
           message:

@@ -5,7 +5,6 @@ defmodule Testcontainers.Ecto do
   This module simplifies the process of launching a real Postgres or MySql database instance within a Docker container for testing purposes. It leverages the `Testcontainers` library to instantiate a Postgres or MySql container with the desired configuration, providing an isolated database environment for each test session.
   """
 
-  alias Testcontainers.Container
   alias Testcontainers.Logger
   alias Testcontainers.Container.PostgresContainer
   alias Testcontainers.Container.MySqlContainer
@@ -255,7 +254,7 @@ defmodule Testcontainers.Ecto do
       |> container_module.with_database(database)
       |> container_module.with_password(password)
 
-    case Container.run(config) do
+    case Testcontainers.start_container(config) do
       {:ok, container} ->
         System.at_exit(fn _ -> Testcontainers.stop_container(container.container_id) end)
 

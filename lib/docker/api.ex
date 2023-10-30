@@ -21,7 +21,7 @@ defmodule Testcontainers.Docker.Api do
   def pull_image(image, conn) when is_binary(image) do
     case Api.Image.image_create(conn, fromImage: image) do
       {:ok, %Tesla.Env{status: 200}} ->
-        :ok
+        {:ok, nil}
 
       {:error, %Tesla.Env{status: other}} ->
         {:error, {:http_error, other}}
@@ -80,37 +80,10 @@ defmodule Testcontainers.Docker.Api do
     end
   end
 
-  def create_exec(container_id, command, conn) do
-    data = %{"Cmd" => command}
-
-    case DockerEngineAPI.Api.Exec.container_exec(conn, container_id, data) do
-      {:ok, %DockerEngineAPI.Model.IdResponse{Id: id}} ->
-        {:ok, id}
-
-      {:ok, %Tesla.Env{status: status}} ->
-        {:error, {:http_error, status}}
-
-      {:ok, %DockerEngineAPI.Model.ErrorResponse{message: message}} ->
-        {:error, message}
-
-      {:error, message} ->
-        {:error, message}
-    end
-  end
-
-  def start_exec(exec_id, conn) do
-    case DockerEngineAPI.Api.Exec.exec_start(conn, exec_id, body: %{}) do
-      {:ok, %Tesla.Env{status: 200}} ->
-        :ok
-
-      {:ok, %Tesla.Env{status: status}} ->
-        {:error, {:http_error, status}}
-
-      {:ok, %DockerEngineAPI.Model.ErrorResponse{message: message}} ->
-        {:error, message}
-
-      {:error, message} ->
-        {:error, message}
+  def start_exec(container_id, command, conn) do
+    with {:ok, exec_id} <- create_exec(container_id, command, conn),
+         :ok <- start_exec(exec_id, conn) do
+      {:ok, exec_id}
     end
   end
 
@@ -180,33 +153,62 @@ defmodule Testcontainers.Docker.Api do
     end)
   end
 
-  defp from(
-         %DockerEngineAPI.Model.ContainerInspectResponse{
-           Id: container_id,
-           Image: image,
-           NetworkSettings: %{Ports: ports}
-         } = res
-       ) do
-    ports =
-      Enum.reduce(ports || [], [], fn {key, ports}, acc ->
-        acc ++
-          Enum.map(ports || [], fn %{"HostPort" => host_port} ->
-            {key |> String.replace("/tcp", "") |> String.to_integer(),
-             host_port |> String.to_integer()}
-          end)
-      end)
-
-    environment =
-      Enum.reduce(res."Config"."Env" || [], %{}, fn env, acc ->
-        tokens = String.split(env, "=")
-        Map.merge(acc, %{"#{List.first(tokens)}": List.last(tokens)})
-      end)
-
+  defp from(%DockerEngineAPI.Model.ContainerInspectResponse{
+         Id: container_id,
+         Image: image,
+         NetworkSettings: %{Ports: ports},
+         Config: %{Env: env}
+       }) do
     %Container{
       container_id: container_id,
       image: image,
-      exposed_ports: ports,
-      environment: environment
+      exposed_ports:
+        Enum.reduce(ports || [], [], fn {key, ports}, acc ->
+          acc ++
+            Enum.map(ports || [], fn %{"HostPort" => host_port} ->
+              {key |> String.replace("/tcp", "") |> String.to_integer(),
+               host_port |> String.to_integer()}
+            end)
+        end),
+      environment:
+        Enum.reduce(env || [], %{}, fn env, acc ->
+          tokens = String.split(env, "=")
+          Map.merge(acc, %{"#{List.first(tokens)}": List.last(tokens)})
+        end)
     }
+  end
+
+  defp create_exec(container_id, command, conn) do
+    data = %{"Cmd" => command}
+
+    case DockerEngineAPI.Api.Exec.container_exec(conn, container_id, data) do
+      {:ok, %DockerEngineAPI.Model.IdResponse{Id: id}} ->
+        {:ok, id}
+
+      {:ok, %Tesla.Env{status: status}} ->
+        {:error, {:http_error, status}}
+
+      {:ok, %DockerEngineAPI.Model.ErrorResponse{message: message}} ->
+        {:error, message}
+
+      {:error, message} ->
+        {:error, message}
+    end
+  end
+
+  defp start_exec(exec_id, conn) do
+    case DockerEngineAPI.Api.Exec.exec_start(conn, exec_id, body: %{}) do
+      {:ok, %Tesla.Env{status: 200}} ->
+        :ok
+
+      {:ok, %Tesla.Env{status: status}} ->
+        {:error, {:http_error, status}}
+
+      {:ok, %DockerEngineAPI.Model.ErrorResponse{message: message}} ->
+        {:error, message}
+
+      {:error, message} ->
+        {:error, message}
+    end
   end
 end

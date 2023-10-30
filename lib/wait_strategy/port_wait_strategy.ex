@@ -5,78 +5,82 @@ defmodule Testcontainers.WaitStrategy.PortWaitStrategy do
   """
 
   @retry_delay 200
-
   defstruct [:ip, :port, :timeout, retry_delay: @retry_delay]
+
+  # Public interface
 
   @doc """
   Creates a new PortWaitStrategy to wait until a specified port is open and accepting connections.
   """
-  def new(ip, port, timeout \\ 5000, retry_delay \\ @retry_delay),
-    do: %__MODULE__{ip: ip, port: port, timeout: timeout, retry_delay: retry_delay}
+  def new(ip, port, timeout \\ 5000, retry_delay \\ @retry_delay) do
+    %__MODULE__{ip: ip, port: port, timeout: timeout, retry_delay: retry_delay}
+  end
+
+  # Private functions and implementations
 
   defimpl Testcontainers.WaitStrategy do
-    alias Testcontainers.Container
-    alias Testcontainers.WaitStrategy.PortWaitStrategy
-    alias Testcontainers.Logger
+    alias Testcontainers.{Container, Logger}
 
-    def wait_until_container_is_ready(%PortWaitStrategy{} = wait_strategy, id_or_name) do
-      with {:ok, %Container{} = container} <- Testcontainers.get_container(id_or_name) do
-        host_port = Container.mapped_port(container, wait_strategy.port)
+    @impl true
+    def wait_until_container_is_ready(wait_strategy, container, _conn) do
+      with host_port when not is_nil(host_port) <-
+             Container.mapped_port(container, wait_strategy.port),
+           do: perform_port_check(wait_strategy, host_port)
+    end
 
-        if host_port == nil do
-          {:error, {:no_host_port, wait_strategy.port}}
-        else
-          start_time = current_time_millis()
+    defp perform_port_check(wait_strategy, host_port) do
+      started_at = current_time_millis()
 
-          case wait_for_port(wait_strategy, host_port, start_time) do
-            {:ok, :port_is_open} ->
-              :ok
+      case wait_for_open_port(wait_strategy, host_port, started_at) do
+        :port_is_open ->
+          :ok
 
-            {:error, reason} ->
-              {:error, reason, wait_strategy}
-          end
-        end
+        {:error, reason} ->
+          {:error, reason, wait_strategy}
       end
     end
 
-    defp wait_for_port(%PortWaitStrategy{} = wait_strategy, host_port, start_time)
-         when is_integer(host_port) and is_integer(start_time) do
-      if wait_strategy.timeout + start_time < current_time_millis() do
+    defp wait_for_open_port(wait_strategy, host_port, start_time) do
+      if reached_timeout?(wait_strategy.timeout, start_time) do
         {:error, strategy_timed_out(wait_strategy.timeout, start_time)}
       else
-        if port_open?(wait_strategy.ip, host_port) do
-          {:ok, :port_is_open}
-        else
-          delay = max(0, wait_strategy.retry_delay)
-
-          Logger.log(
-            "Port #{wait_strategy.port} not open on IP #{wait_strategy.ip}, retrying in #{delay}ms."
-          )
-
-          :timer.sleep(delay)
-          wait_for_port(wait_strategy, host_port, start_time)
-        end
+        check_port_status(wait_strategy, host_port, start_time)
       end
     end
 
-    defp port_open?(ip, port, timeout \\ 1000)
-         when is_binary(ip) and is_integer(port) and is_integer(timeout) do
-      case :gen_tcp.connect(~c"#{ip}", port, [:binary, active: false], timeout) do
+    defp check_port_status(wait_strategy, host_port, start_time) do
+      if port_open?(wait_strategy.ip, host_port) do
+        :port_is_open
+      else
+        log_retry_message(wait_strategy, host_port)
+        :timer.sleep(wait_strategy.retry_delay)
+        wait_for_open_port(wait_strategy, host_port, start_time)
+      end
+    end
+
+    defp port_open?(ip, port, timeout \\ 1000) do
+      case :gen_tcp.connect(to_charlist(ip), port, [:binary, active: false], timeout) do
         {:ok, socket} ->
           :gen_tcp.close(socket)
           true
 
-        {:error, _reason} ->
+        {:error, _} ->
           false
       end
     end
 
-    defp current_time_millis, do: System.monotonic_time(:millisecond)
+    defp current_time_millis(), do: System.monotonic_time(:millisecond)
 
-    defp strategy_timed_out(timeout, started_at)
-         when is_number(timeout) and is_number(started_at),
-         do:
-           {:port_wait_strategy, :timeout, timeout,
-            elapsed_time: current_time_millis() - started_at}
+    defp reached_timeout?(timeout, start_time), do: current_time_millis() - start_time > timeout
+
+    defp strategy_timed_out(timeout, start_time) do
+      {:port_wait_strategy, :timeout, timeout, elapsed_time: current_time_millis() - start_time}
+    end
+
+    defp log_retry_message(wait_strategy, host_port) do
+      Logger.log(
+        "Port #{wait_strategy.port} (host port #{host_port}) not open on IP #{wait_strategy.ip}, retrying in #{wait_strategy.retry_delay}ms."
+      )
+    end
   end
 end

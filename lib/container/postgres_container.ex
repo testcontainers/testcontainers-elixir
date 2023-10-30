@@ -181,9 +181,9 @@ defmodule Testcontainers.Container.PostgresContainer do
 
     - Raises `ArgumentError` if the provided image is not compatible with the default Postgres image.
     """
-    @spec build(%PostgresContainer{}, keyword()) :: %Container{}
+    @spec build(%PostgresContainer{}) :: %Container{}
     @impl true
-    def build(%PostgresContainer{} = config, _options) do
+    def build(%PostgresContainer{} = config) do
       if not String.starts_with?(config.image, PostgresContainer.default_image()) do
         raise ArgumentError,
           message:

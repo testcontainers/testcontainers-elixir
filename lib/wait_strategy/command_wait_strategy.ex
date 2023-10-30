@@ -3,113 +3,102 @@
 # Modified by: Jarl André Hübenthal @ 2023
 defmodule Testcontainers.WaitStrategy.CommandWaitStrategy do
   @moduledoc """
-  Considers container as ready as soon as a command runs successfully inside the container.
+  Considers a container ready as soon as a command runs successfully inside it.
   """
 
   @retry_delay 200
-
   defstruct [:command, :timeout, retry_delay: @retry_delay]
 
+  # Public interface
+
   @doc """
-  Creates a new CommandWaitStrategy to wait until the given command executes successfully inside the container.
+  Creates a new CommandWaitStrategy.
+  This strategy waits until the given command executes successfully inside the container.
   """
-  def new(command, timeout \\ 5000, retry_delay \\ @retry_delay),
-    do: %__MODULE__{command: command, timeout: timeout, retry_delay: retry_delay}
+  def new(command, timeout \\ 5000, retry_delay \\ @retry_delay) do
+    %__MODULE__{command: command, timeout: timeout, retry_delay: retry_delay}
+  end
+
+  # Private functions and implementations
 
   defimpl Testcontainers.WaitStrategy do
-    alias Testcontainers.Logger
-    alias Testcontainers.WaitStrategy.CommandWaitStrategy
+    alias Testcontainers.{Docker, Logger}
 
     @impl true
-    def wait_until_container_is_ready(%CommandWaitStrategy{} = wait_strategy, id_or_name) do
-      # Capture the start time of the process
-      started_at = current_time_millis()
-
-      # Call the recursive function
-      recursive_wait(wait_strategy, id_or_name, started_at)
+    def wait_until_container_is_ready(wait_strategy, container, conn) do
+      started_at = get_current_time_millis()
+      perform_recursive_wait(wait_strategy, container.container_id, conn, started_at)
     end
 
-    # Recursive function with breaking conditions
-    defp recursive_wait(%CommandWaitStrategy{} = wait_strategy, id_or_name, started_at) do
-      case exec_and_wait(
-             id_or_name,
-             wait_strategy.command,
-             wait_strategy.timeout,
-             wait_strategy.retry_delay
-           ) do
-        {:ok, 0} ->
-          :ok
+    # Main loop for waiting strategy
+    defp perform_recursive_wait(wait_strategy, container_id, conn, started_at) do
+      with {:ok, 0} <- execute_command_and_wait(wait_strategy, container_id, conn) do
+        :ok
+      else
+        {:ok, exit_code} ->
+          handle_non_zero_exit(wait_strategy, container_id, exit_code, conn, started_at)
 
-        {:ok, other_exit_code} ->
-          if out_of_time(started_at, wait_strategy.timeout) do
-            {:error, strategy_timed_out(wait_strategy.timeout, started_at), wait_strategy}
-          else
-            delay = max(0, wait_strategy.retry_delay)
-
-            Logger.log(
-              "Command execution in container #{id_or_name} failed with exit_code #{other_exit_code}, retrying in #{delay}ms."
-            )
-
-            :timer.sleep(delay)
-            recursive_wait(wait_strategy, id_or_name, started_at)
-          end
-
-        {:error, reason} ->
-          {:error, reason, wait_strategy}
+        error ->
+          handle_execution_error(error, wait_strategy)
       end
     end
 
-    def exec_and_wait(container_id, command, timeout, retry_delay) do
-      {:ok, exec_id} = exec(container_id, command)
-
-      started_at = current_time_millis()
-
-      case wait_for_exec_result(exec_id, timeout, started_at, retry_delay) do
-        {:ok, exec_info} -> {:ok, exec_info.exit_code}
-        {:error, error} -> {:error, error}
-      end
-    end
-
-    def exec(container_id, command) do
-      with {:ok, exec_id} <- Testcontainers.exec_create(container_id, command),
-           :ok <- Testcontainers.exec_start(exec_id) do
-        {:ok, exec_id}
-      end
-    end
-
-    defp wait_for_exec_result(
-           exec_id,
-           timeout_ms,
-           started_at,
-           retry_delay
+    defp execute_command_and_wait(
+           %{command: command, timeout: timeout, retry_delay: retry_delay},
+           container_id,
+           conn
          ) do
-      case Testcontainers.exec_inspect(exec_id) do
-        {:ok, %{running: true}} ->
-          do_wait_unless_timed_out(exec_id, timeout_ms, started_at, retry_delay)
+      {:ok, exec_id} = Docker.Api.start_exec(container_id, command, conn)
 
-        {:ok, finished_exec_status} ->
-          {:ok, finished_exec_status}
+      started_at = get_current_time_millis()
+      wait_for_command_completion(exec_id, timeout, started_at, retry_delay, conn)
+    end
+
+    defp handle_non_zero_exit(wait_strategy, container_id, exit_code, conn, started_at) do
+      if timed_out?(started_at, wait_strategy.timeout) do
+        {:error, strategy_timed_out(wait_strategy.timeout, started_at), wait_strategy}
+      else
+        log_retry_message(container_id, exit_code, wait_strategy.retry_delay)
+        :timer.sleep(wait_strategy.retry_delay)
+        perform_recursive_wait(wait_strategy, container_id, conn, started_at)
       end
     end
 
-    defp do_wait_unless_timed_out(exec_id, timeout, started_at, retry_delay) do
-      if out_of_time(started_at, timeout) do
+    defp handle_execution_error({:error, reason}, wait_strategy),
+      do: {:error, reason, wait_strategy}
+
+    defp wait_for_command_completion(exec_id, timeout, started_at, retry_delay, conn) do
+      case Docker.Api.inspect_exec(exec_id, conn) do
+        {:ok, %{running: true}} ->
+          wait_unless_timeout(exec_id, timeout, started_at, retry_delay, conn)
+
+        {:ok, exec_status} ->
+          {:ok, exec_status.exit_code}
+      end
+    end
+
+    defp wait_unless_timeout(exec_id, timeout, started_at, retry_delay, conn) do
+      if timed_out?(started_at, timeout) do
         {:error, strategy_timed_out(timeout, started_at)}
       else
-        delay = max(0, retry_delay)
-        :timer.sleep(delay)
-        wait_for_exec_result(exec_id, timeout, started_at, retry_delay)
+        :timer.sleep(retry_delay)
+        wait_for_command_completion(exec_id, timeout, started_at, retry_delay, conn)
       end
     end
 
-    defp current_time_millis, do: System.monotonic_time(:millisecond)
+    defp get_current_time_millis(), do: System.monotonic_time(:millisecond)
 
-    defp out_of_time(started_at, timeout_ms), do: current_time_millis() - started_at > timeout_ms
+    defp timed_out?(started_at, timeout), do: get_current_time_millis() - started_at > timeout
 
-    defp strategy_timed_out(timeout, started_at)
-         when is_number(timeout) and is_number(started_at),
-         do:
-           {:command_wait_strategy, :timeout, timeout,
-            elapsed_time: current_time_millis() - started_at}
+    defp strategy_timed_out(timeout, started_at) do
+      {:command_wait_strategy, :timeout, timeout,
+       elapsed_time: get_current_time_millis() - started_at}
+    end
+
+    defp log_retry_message(container_id, exit_code, delay) do
+      Logger.log(
+        "Command execution in container #{container_id} failed with exit_code #{exit_code}, retrying in #{delay}ms."
+      )
+    end
   end
 end

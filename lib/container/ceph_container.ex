@@ -195,9 +195,9 @@ defmodule Testcontainers.Container.CephContainer do
 
     - Raises `ArgumentError` if the provided image is not compatible with the default Ceph image.
     """
-    @spec build(%CephContainer{}, keyword()) :: %Container{}
+    @spec build(%CephContainer{}) :: %Container{}
     @impl true
-    def build(%CephContainer{} = config, _options) do
+    def build(%CephContainer{} = config) do
       if not String.starts_with?(config.image, CephContainer.default_image()) do
         raise ArgumentError,
           message: "Image #{config.image} is not compatible with #{CephContainer.default_image()}"

@@ -1,15 +1,18 @@
 defmodule TestcontainersTest do
+  alias Testcontainers.Connection
+  alias Testcontainers.Docker
   alias Testcontainers.Container.MySqlContainer
-  alias Testcontainers.Container
   use ExUnit.Case, async: true
 
   @moduletag timeout: 300_000
 
   test "will cleanup containers" do
-    {:ok, container} = Container.run(MySqlContainer.new())
+    {:ok, container} = Testcontainers.start_container(MySqlContainer.new())
     GenServer.stop(Testcontainers)
-    :timer.sleep(15_000)
+    TestHelper.wait_for_genserver_state(Testcontainers, :down)
     {:ok, _} = Testcontainers.start_link()
-    {:error, _} = Testcontainers.get_container(container.container_id)
+    :ok = TestHelper.wait_for_lambda(fn -> with {:error, _} <-
+      Docker.Api.get_container(container.container_id, Connection.get_connection()), do: :ok
+    end, max_retries: 15, interval: 1000)
   end
 end
