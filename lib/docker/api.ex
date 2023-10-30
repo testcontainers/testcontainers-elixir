@@ -6,24 +6,41 @@ defmodule Testcontainers.Docker.Api do
 
   def get_container(container_id, conn)
       when is_binary(container_id) do
-    with {:ok, response} <-
-           Api.Container.container_inspect(conn, container_id)
-           |> parse_docker_response() do
-      {:ok, from(response)}
+    case Api.Container.container_inspect(conn, container_id) do
+      {:error, %Tesla.Env{status: other}} ->
+        {:error, {:http_error, other}}
+
+      {:ok, %DockerEngineAPI.Model.ErrorResponse{} = error} ->
+        {:error, {:failed_to_get_container, error}}
+
+      {:ok, response} ->
+        {:ok, from(response)}
     end
   end
 
   def pull_image(image, conn) when is_binary(image) do
-    Api.Image.image_create(conn, fromImage: image)
-    |> parse_docker_response()
+    case Api.Image.image_create(conn, fromImage: image) do
+      {:ok, %Tesla.Env{status: 200}} ->
+        {:ok, nil}
+
+      {:error, %Tesla.Env{status: other}} ->
+        {:error, {:http_error, other}}
+
+      {:ok, %DockerEngineAPI.Model.ErrorResponse{} = error} ->
+        {:error, {:failed_to_pull_image, error}}
+    end
   end
 
-  @spec create_container(%Container{}, Tesla.Env.client()) :: {:ok, binary()} | {:error, any()}
   def create_container(%Container{} = container, conn) do
-    with {:ok, %{Id: id}} <-
-           Api.Container.container_create(conn, container_create_request(container))
-           |> parse_docker_response() do
-      {:ok, id}
+    case Api.Container.container_create(conn, container_create_request(container)) do
+      {:error, %Tesla.Env{status: other}} ->
+        {:error, {:http_error, other}}
+
+      {:ok, %{Id: id}} ->
+        {:ok, id}
+
+      {:ok, %DockerEngineAPI.Model.ErrorResponse{} = error} ->
+        {:error, {:failed_to_create_container, error}}
     end
   end
 
@@ -73,7 +90,7 @@ defmodule Testcontainers.Docker.Api do
   def stdout_logs(container_id, conn) do
     case DockerEngineAPI.Api.Container.container_logs(conn, container_id, stdout: true) do
       {:ok, %Tesla.Env{body: body}} ->
-        {:ok, body || ""}
+        {:ok, body}
 
       {:ok, %DockerEngineAPI.Model.ErrorResponse{message: message}} ->
         {:error, message}
@@ -140,8 +157,9 @@ defmodule Testcontainers.Docker.Api do
          %DockerEngineAPI.Model.ContainerInspectResponse{
            Id: container_id,
            Image: image,
-           NetworkSettings: %{Ports: ports}
-         } = res
+           NetworkSettings: %{Ports: ports},
+           Config: %{ Env: env }
+         }
        ) do
     %Container{
       container_id: container_id,
@@ -155,24 +173,11 @@ defmodule Testcontainers.Docker.Api do
             end)
         end),
       environment:
-        Enum.reduce(res."Config"."Env" || [], %{}, fn env, acc ->
+        Enum.reduce(env || [], %{}, fn env, acc ->
           tokens = String.split(env, "=")
           Map.merge(acc, %{"#{List.first(tokens)}": List.last(tokens)})
         end)
     }
-  end
-
-  defp parse_docker_response(docker_response) do
-    case docker_response do
-      {:error, %Tesla.Env{status: other}} ->
-        {:error, {:http_error, other}}
-
-      {:ok, %DockerEngineAPI.Model.ErrorResponse{} = error} ->
-        {:error, error}
-
-      {:ok, response} ->
-        {:ok, response}
-    end
   end
 
   defp create_exec(container_id, command, conn) do
