@@ -88,7 +88,12 @@ defmodule Testcontainers.Docker.Api do
   end
 
   def stdout_logs(container_id, conn) do
-    case DockerEngineAPI.Api.Container.container_logs(conn, container_id, stdout: true) do
+    case DockerEngineAPI.Api.Container.container_logs(
+           conn,
+           container_id,
+           stdout: true,
+           stderr: true
+         ) do
       {:ok, %Tesla.Env{body: body}} ->
         {:ok, body}
 

@@ -12,7 +12,7 @@ defmodule Testcontainers.Container.MySqlContainer do
   alias Testcontainers.Container
   alias Testcontainers.ContainerBuilder
   alias Testcontainers.Container.MySqlContainer
-  alias Testcontainers.WaitStrategy.CommandWaitStrategy
+  alias Testcontainers.WaitStrategy.LogWaitStrategy
 
   @default_image "mysql"
   @default_tag "8"
@@ -206,14 +206,7 @@ defmodule Testcontainers.Container.MySqlContainer do
       |> with_environment(:MYSQL_DATABASE, config.database)
       |> with_environment(:MYSQL_RANDOM_ROOT_PASSWORD, "yes")
       |> with_waiting_strategy(
-        CommandWaitStrategy.new(
-          [
-            "sh",
-            "-c",
-            "mysqladmin ping --user='#{config.user}' --password='#{config.password}' -h localhost | grep 'mysqld is alive'"
-          ],
-          config.wait_timeout
-        )
+        LogWaitStrategy.new(~r/.*port: 3306  MySQL Community Server.*/, config.wait_timeout)
       )
     end
   end
