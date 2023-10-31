@@ -21,7 +21,7 @@ defmodule Testcontainers.Container.MySqlContainer do
   @default_password "test"
   @default_database "test"
   @default_port 3306
-  @default_wait_timeout 120_000
+  @default_wait_timeout 180_000
 
   @enforce_keys [:image, :user, :password, :database, :port, :wait_timeout]
   defstruct [:image, :user, :password, :database, :port, :wait_timeout]
