@@ -17,7 +17,7 @@
 
 Before you begin, ensure you have met the following requirements:
 - You have installed the latest version of [Elixir](https://elixir-lang.org/install.html)
-- You have a [Docker](https://www.docker.com/products/docker-desktop) installed and running
+- You have a Docker runtime installed
 - You are familiar with Elixir and Docker basics
 
 ## Installation
