@@ -46,6 +46,33 @@ Testcontainers.start_link()
 
 This section explains how to use the Testcontainers library in your own project.
 
+### Basic usage
+
+```elixir
+{:ok, _} = Testcontainers.start_link()
+config = Testcontainers.Container.RedisContainer.new()
+{:ok, container} = Testcontainers.start_container(config)
+```
+
+### ExUnit tests
+
+Given you have added Testcontainers.start_link() to test_helper.exs:
+
+```elixir
+setup 
+  config = Testcontainers.Container.RedisContainer.new()
+  {:ok, container} = Testcontainers.start_container(config)
+  ExUnit.Callbacks.on_exit(fn -> Testcontainers.stop_container(container.container_id) end)
+  {:ok, %{redis: container}}
+end
+```
+
+there is a macro that can simplify this down to a oneliner:
+
+```elixir
+container(:redis, Testcontainers.Container.RedisContainer.new())
+```
+
 ### In a Phoenix project:
 
 To start a postgres container when running tests, that also enables testing of application initialization with databasse calls at startup, add this in application.ex:
@@ -80,58 +107,6 @@ There is an example repo here with a bare bones phoenix application, where the o
 There is also another example repo without Phoenix, just a bare mix project, which show cases that the ecto dependencies are in fact optional:
 
 [https://github.com/jarlah/mix_teststcontainers](https://github.com/jarlah/mix_teststcontainers)
-
-### In your ExUnit tests
-
-Here's a simple example of how to use a MySQL container in your ExUnit tests:
-
-```elixir
-# test/simple_mysql_container_test.exs
-
-defmodule SimpleMySqlContainerTest do
-  use ExUnit.Case, async: true
-
-  import Testcontainers.ExUnit
-
-  alias Testcontainers.Container.MySqlContainer
-
-  describe "with default configuration" do
-    container(:mysql, MySqlContainer.new())
-
-    test "provides a ready-to-use mysql container", %{mysql: mysql} do
-      assert mysql.environment[:MYSQL_MAJOR] == "8.0"
-    end
-  end
-end
-```
-
-You can also define a shared container for all tests in a test module:
-
-```elixir
-# test/shared_mysql_container_test.exs
-
-defmodule SharedMySqlContainerTest do
-  use ExUnit.Case, async: true
-
-  import Testcontainers.ExUnit
-
-  alias Testcontainers.Container.MySqlContainer
-
-  container(:mysql, MySqlContainer.new(), shared: true)
-
-  describe "with default configuration" do
-    test "provides a ready-to-use mysql container", %{mysql: mysql} do
-      assert mysql.environment[:MYSQL_MAJOR] == "8.0"
-    end
-
-    test "does something else", %{mysql: mysql} do
-      # ....
-    end
-  end
-end
-```
-
-In the last example only one container will be created and started.
 
 ### Logging
 
