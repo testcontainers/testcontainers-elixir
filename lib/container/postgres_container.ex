@@ -15,7 +15,7 @@ defmodule Testcontainers.Container.PostgresContainer do
   alias Testcontainers.ContainerBuilder
 
   @default_image "postgres"
-  @default_tag "15"
+  @default_tag "15-alpine"
   @default_image_with_tag "#{@default_image}:#{@default_tag}"
   @default_user "test"
   @default_password "test"

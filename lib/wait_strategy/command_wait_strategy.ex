@@ -48,10 +48,10 @@ defmodule Testcontainers.WaitStrategy.CommandWaitStrategy do
            container_id,
            conn
          ) do
-      {:ok, exec_id} = Docker.Api.start_exec(container_id, command, conn)
-
-      started_at = get_current_time_millis()
-      wait_for_command_completion(exec_id, timeout, started_at, retry_delay, conn)
+      with {:ok, exec_id} <- Docker.Api.start_exec(container_id, command, conn) do
+        started_at = get_current_time_millis()
+        wait_for_command_completion(exec_id, timeout, started_at, retry_delay, conn)
+      end
     end
 
     defp handle_non_zero_exit(wait_strategy, container_id, exit_code, conn, started_at) do

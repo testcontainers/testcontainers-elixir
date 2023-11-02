@@ -14,7 +14,7 @@ defmodule Testcontainers.Container.RedisContainer do
   alias Testcontainers.Container.RedisContainer
 
   @default_image "redis"
-  @default_tag "7.2"
+  @default_tag "7.2-alpine"
   @default_image_with_tag "#{@default_image}:#{@default_tag}"
   @default_port 6379
   @default_wait_timeout 60_000
