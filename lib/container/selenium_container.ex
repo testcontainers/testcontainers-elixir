@@ -4,7 +4,7 @@ defmodule Testcontainers.Container.SeleniumContainer do
   Work in progress. Not stable for use yet. Not yet documented for this very reason.
   Can use https://github.com/stuart/elixir-webdriver for client in tests
   """
-  alias Testcontainers.ContainerBuilder
+  alias Testcontainers.Container.Protocols.Builder
   alias Testcontainers.Container
   alias Testcontainers.Container.SeleniumContainer
   alias Testcontainers.WaitStrategy.PortWaitStrategy
@@ -46,7 +46,7 @@ defmodule Testcontainers.Container.SeleniumContainer do
 
   def default_image, do: @default_image
 
-  defimpl ContainerBuilder do
+  defimpl Builder do
     import Container
 
     @log_regex ~r/.*(RemoteWebDriver instances should connect to|Selenium Server is up and running|Started Selenium Standalone).*\n/

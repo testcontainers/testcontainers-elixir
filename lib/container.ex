@@ -113,9 +113,11 @@ defmodule Testcontainers.Container do
     |> Tuple.to_list()
     |> List.last()
   end
-end
 
-defprotocol Testcontainers.ContainerBuilder do
-  @spec build(t()) :: %Testcontainers.Container{}
-  def build(builder)
+  defimpl Testcontainers.Container.Protocols.Builder do
+    @impl true
+    def build(%Testcontainers.Container{} = config) do
+      config
+    end
+  end
 end

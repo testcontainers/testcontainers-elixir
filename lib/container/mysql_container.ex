@@ -10,7 +10,7 @@ defmodule Testcontainers.Container.MySqlContainer do
   """
 
   alias Testcontainers.Container
-  alias Testcontainers.ContainerBuilder
+  alias Testcontainers.Container.Protocols.Builder
   alias Testcontainers.Container.MySqlContainer
   alias Testcontainers.WaitStrategy.LogWaitStrategy
 
@@ -160,7 +160,7 @@ defmodule Testcontainers.Container.MySqlContainer do
     ]
   end
 
-  defimpl ContainerBuilder do
+  defimpl Builder do
     import Container
 
     @doc """

@@ -12,7 +12,7 @@ defmodule Testcontainers.Container.PostgresContainer do
   alias Testcontainers.WaitStrategy.CommandWaitStrategy
   alias Testcontainers.Container.PostgresContainer
   alias Testcontainers.Container
-  alias Testcontainers.ContainerBuilder
+  alias Testcontainers.Container.Protocols.Builder
 
   @default_image "postgres"
   @default_tag "15-alpine"
@@ -160,7 +160,7 @@ defmodule Testcontainers.Container.PostgresContainer do
     ]
   end
 
-  defimpl ContainerBuilder do
+  defimpl Builder do
     import Container
 
     @doc """

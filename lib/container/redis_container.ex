@@ -8,7 +8,7 @@ defmodule Testcontainers.Container.RedisContainer do
   This module includes helper methods for setting up a Redis container with specific parameters such as image and more.
   """
 
-  alias Testcontainers.ContainerBuilder
+  alias Testcontainers.Container.Protocols.Builder
   alias Testcontainers.Container
   alias Testcontainers.WaitStrategy.CommandWaitStrategy
   alias Testcontainers.Container.RedisContainer
@@ -104,7 +104,7 @@ defmodule Testcontainers.Container.RedisContainer do
   """
   def connection_url(%Container{} = container), do: "redis://localhost:#{port(container)}/"
 
-  defimpl ContainerBuilder do
+  defimpl Builder do
     import Container
 
     @doc """

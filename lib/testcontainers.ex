@@ -7,14 +7,12 @@ defmodule Testcontainers do
   This is a GenServer that needs to be started before anything can happen.
   """
 
-  defstruct []
-
   alias Testcontainers.WaitStrategy
   alias Testcontainers.Logger
   alias Testcontainers.Docker.Api
   alias Testcontainers.Connection
   alias Testcontainers.Container
-  alias Testcontainers.ContainerBuilder
+  alias Testcontainers.Container.Protocols.Builder
 
   import Testcontainers.Constants
 
@@ -91,7 +89,11 @@ defmodule Testcontainers do
       :crypto.hash(:sha, "#{inspect(self())}#{DateTime.utc_now() |> DateTime.to_string()}")
       |> Base.encode16()
 
-    ryuk_config = ContainerBuilder.build(%__MODULE__{})
+    ryuk_config =
+      Container.new("testcontainers/ryuk:0.5.1")
+      |> Container.with_exposed_port(8080)
+      |> Container.with_environment("RYUK_PORT", "8080")
+      |> Container.with_bind_mount("/var/run/docker.sock", "/var/run/docker.sock", "rw")
 
     with {:ok, _} <- Api.pull_image(ryuk_config.image, conn),
          {:ok, id} <- Api.create_container(ryuk_config, conn),
@@ -162,7 +164,7 @@ defmodule Testcontainers do
   end
 
   defp start_and_wait(config_builder, state) do
-    config = ContainerBuilder.build(config_builder)
+    config = Builder.build(config_builder)
     wait_strategies = config.wait_strategies || []
 
     with {:ok, _} <- Api.pull_image(config.image, state.conn),
@@ -190,16 +192,5 @@ defmodule Testcontainers do
       _, error ->
         error
     end)
-  end
-
-  defimpl ContainerBuilder do
-    @spec build(%Testcontainers{}) :: %Container{}
-    @impl true
-    def build(_) do
-      Container.new("testcontainers/ryuk:0.5.1")
-      |> Container.with_exposed_port(8080)
-      |> Container.with_environment("RYUK_PORT", "8080")
-      |> Container.with_bind_mount("/var/run/docker.sock", "/var/run/docker.sock", "rw")
-    end
   end
 end
