@@ -48,6 +48,16 @@ This section explains how to use the Testcontainers library in your own project.
 
 ### Basic usage
 
+You use generic container api, where you have to define everything yourself:
+
+```elixir
+{:ok, _} = Testcontainers.start_link()
+config = %Testcontainers.Container{image: "redis:latest"}
+{:ok, container} = Testcontainers.start_container(config)
+```
+
+Or you can use one of many predefined containers like `RedisContainer`, that has waiting strategies among other things defined up front with good defaults:
+
 ```elixir
 {:ok, _} = Testcontainers.start_link()
 config = Testcontainers.Container.RedisContainer.new()
