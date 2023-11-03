@@ -1,7 +1,7 @@
 defmodule TestcontainersTest do
   alias Testcontainers.Connection
   alias Testcontainers.Docker
-  alias Testcontainers.Container.MySqlContainer
+  alias Testcontainers.MySqlContainer
   use ExUnit.Case, async: true
 
   @moduletag timeout: 300_000

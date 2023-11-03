@@ -112,11 +112,11 @@ See documentation on [Testcontainers.Ecto](https://hexdocs.pm/testcontainers/Tes
 
 There is an example repo here with a bare bones phoenix application, where the only changes are the use of the ecto function and removing the test alias that interferes with it:
 
-[https://github.com/jarlah/hello_testcontainers](https://github.com/jarlah/hello_testcontainers)
+[Phoenix example](./examples/phoenix_project)
 
 There is also another example repo without Phoenix, just a bare mix project, which show cases that the ecto dependencies are in fact optional:
 
-[https://github.com/jarlah/mix_teststcontainers](https://github.com/jarlah/mix_teststcontainers)
+[Mix project](./examples/mix_project)
 
 ### Logging
 
