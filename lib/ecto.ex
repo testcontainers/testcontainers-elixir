@@ -6,8 +6,8 @@ defmodule Testcontainers.Ecto do
   """
 
   alias Testcontainers.Logger
-  alias Testcontainers.Container.PostgresContainer
-  alias Testcontainers.Container.MySqlContainer
+  alias Testcontainers.PostgresContainer
+  alias Testcontainers.MySqlContainer
 
   @doc """
   Initiates a new Postgres instance, executes migrations, and prepares a suitable database environment, specifically tailored for testing scenarios.

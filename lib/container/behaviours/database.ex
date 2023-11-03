@@ -1,4 +1,4 @@
-defmodule Testcontainers.Container.Behaviours.Database do
+defmodule Testcontainers.DatabaseBehaviour do
   @callback new() :: t()
   @callback with_image(t(), String.t()) :: t()
   @callback with_user(t(), String.t()) :: t()

@@ -5,7 +5,7 @@ defmodule Testcontainers.Container.RedisContainerTest do
   use ExUnit.Case, async: true
   import Testcontainers.ExUnit
 
-  alias Testcontainers.Container.RedisContainer
+  alias Testcontainers.RedisContainer
 
   @moduletag timeout: 120_000
 

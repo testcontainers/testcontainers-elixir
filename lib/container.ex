@@ -114,7 +114,7 @@ defmodule Testcontainers.Container do
     |> List.last()
   end
 
-  defimpl Testcontainers.Container.Protocols.Builder do
+  defimpl Testcontainers.ContainerBuilder do
     @impl true
     def build(%Testcontainers.Container{} = config) do
       config

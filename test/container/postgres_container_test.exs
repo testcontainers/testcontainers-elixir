@@ -5,7 +5,7 @@ defmodule Testcontainers.Container.PostgresContainerTest do
   use ExUnit.Case, async: true
   import Testcontainers.ExUnit
 
-  alias Testcontainers.Container.PostgresContainer
+  alias Testcontainers.PostgresContainer
 
   @moduletag timeout: 300_000
 

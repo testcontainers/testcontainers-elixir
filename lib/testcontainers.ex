@@ -12,7 +12,7 @@ defmodule Testcontainers do
   alias Testcontainers.Docker.Api
   alias Testcontainers.Connection
   alias Testcontainers.Container
-  alias Testcontainers.Container.Protocols.Builder
+  alias Testcontainers.ContainerBuilder
 
   import Testcontainers.Constants
 
@@ -164,7 +164,7 @@ defmodule Testcontainers do
   end
 
   defp start_and_wait(config_builder, state) do
-    config = Builder.build(config_builder)
+    config = ContainerBuilder.build(config_builder)
     wait_strategies = config.wait_strategies || []
 
     with {:ok, _} <- Api.pull_image(config.image, state.conn),

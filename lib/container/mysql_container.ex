@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: MIT
 # Original by: Marco Dallagiacoma @ 2023 in https://github.com/dallagi/excontainers
 # Modified by: Jarl André Hübenthal @ 2023
-defmodule Testcontainers.Container.MySqlContainer do
-  @behaviour Testcontainers.Container.Behaviours.Database
+defmodule Testcontainers.MySqlContainer do
+  @behaviour Testcontainers.DatabaseBehaviour
   @moduledoc """
   Provides functionality for creating and managing MySQL container configurations.
 
@@ -10,8 +10,8 @@ defmodule Testcontainers.Container.MySqlContainer do
   """
 
   alias Testcontainers.Container
-  alias Testcontainers.Container.Protocols.Builder
-  alias Testcontainers.Container.MySqlContainer
+  alias Testcontainers.ContainerBuilder
+  alias Testcontainers.MySqlContainer
   alias Testcontainers.WaitStrategy.LogWaitStrategy
 
   @default_image "mysql"
@@ -160,7 +160,7 @@ defmodule Testcontainers.Container.MySqlContainer do
     ]
   end
 
-  defimpl Builder do
+  defimpl ContainerBuilder do
     import Container
 
     @doc """
@@ -210,4 +210,26 @@ defmodule Testcontainers.Container.MySqlContainer do
       )
     end
   end
+end
+
+defmodule Testcontainers.Container.MySqlContainer do
+  @moduledoc """
+  Deprecated. Use `Testcontainers.MySqlContainer` instead.
+
+  This module is kept for backward compatibility and will be removed in future releases.
+  """
+
+  @deprecated "Use Testcontainers.MySqlContainer instead"
+
+  defdelegate new, to: Testcontainers.MySqlContainer
+  defdelegate with_image(self, image), to: Testcontainers.MySqlContainer
+  defdelegate with_user(self, user), to: Testcontainers.MySqlContainer
+  defdelegate with_password(self, password), to: Testcontainers.MySqlContainer
+  defdelegate with_database(self, database), to: Testcontainers.MySqlContainer
+  defdelegate with_port(self, port), to: Testcontainers.MySqlContainer
+  defdelegate with_wait_timeout(self, wait_timeout), to: Testcontainers.MySqlContainer
+  defdelegate port(self), to: Testcontainers.MySqlContainer
+  defdelegate connection_parameters(self), to: Testcontainers.MySqlContainer
+  defdelegate default_image_with_tag, to: Testcontainers.MySqlContainer
+  defdelegate default_port, to: Testcontainers.PostgresContainer
 end

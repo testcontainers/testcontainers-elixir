@@ -1,17 +1,17 @@
 # SPDX-License-Identifier: MIT
 # Original by: Marco Dallagiacoma @ 2023 in https://github.com/dallagi/excontainers
 # Modified by: Jarl André Hübenthal @ 2023
-defmodule Testcontainers.Container.RedisContainer do
+defmodule Testcontainers.RedisContainer do
   @moduledoc """
   Provides functionality for creating and managing Redis container configurations.
 
   This module includes helper methods for setting up a Redis container with specific parameters such as image and more.
   """
 
-  alias Testcontainers.Container.Protocols.Builder
+  alias Testcontainers.ContainerBuilder
   alias Testcontainers.Container
   alias Testcontainers.WaitStrategy.CommandWaitStrategy
-  alias Testcontainers.Container.RedisContainer
+  alias Testcontainers.RedisContainer
 
   @default_image "redis"
   @default_tag "7.2-alpine"
@@ -104,7 +104,7 @@ defmodule Testcontainers.Container.RedisContainer do
   """
   def connection_url(%Container{} = container), do: "redis://localhost:#{port(container)}/"
 
-  defimpl Builder do
+  defimpl ContainerBuilder do
     import Container
 
     @doc """
@@ -141,4 +141,21 @@ defmodule Testcontainers.Container.RedisContainer do
       )
     end
   end
+end
+
+defmodule Testcontainers.Container.RedisContainer do
+  @moduledoc """
+  Deprecated. Use `Testcontainers.RedisContainer` instead.
+
+  This module is kept for backward compatibility and will be removed in future releases.
+  """
+
+  @deprecated "Use Testcontainers.RedisContainer instead"
+
+  defdelegate new, to: Testcontainers.RedisContainer
+  defdelegate with_image(self, image), to: Testcontainers.RedisContainer
+  defdelegate with_port(self, port), to: Testcontainers.RedisContainer
+  defdelegate with_wait_timeout(self, wait_timeout), to: Testcontainers.RedisContainer
+  defdelegate port(self), to: Testcontainers.RedisContainer
+  defdelegate connection_url(self), to: Testcontainers.RedisContainer
 end

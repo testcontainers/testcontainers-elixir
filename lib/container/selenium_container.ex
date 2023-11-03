@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: MIT
-defmodule Testcontainers.Container.SeleniumContainer do
+defmodule Testcontainers.SeleniumContainer do
   @moduledoc """
   Work in progress. Not stable for use yet. Not yet documented for this very reason.
   Can use https://github.com/stuart/elixir-webdriver for client in tests
   """
-  alias Testcontainers.Container.Protocols.Builder
+  alias Testcontainers.ContainerBuilder
   alias Testcontainers.Container
-  alias Testcontainers.Container.SeleniumContainer
+  alias Testcontainers.SeleniumContainer
   alias Testcontainers.WaitStrategy.PortWaitStrategy
   alias Testcontainers.WaitStrategy.LogWaitStrategy
 
@@ -46,7 +46,7 @@ defmodule Testcontainers.Container.SeleniumContainer do
 
   def default_image, do: @default_image
 
-  defimpl Builder do
+  defimpl ContainerBuilder do
     import Container
 
     @log_regex ~r/.*(RemoteWebDriver instances should connect to|Selenium Server is up and running|Started Selenium Standalone).*\n/
@@ -69,4 +69,20 @@ defmodule Testcontainers.Container.SeleniumContainer do
       ])
     end
   end
+end
+
+defmodule Testcontainers.Container.SeleniumContainer do
+  @moduledoc """
+  Deprecated. Use `Testcontainers.SeleniumContainer` instead.
+
+  This module is kept for backward compatibility and will be removed in future releases.
+  """
+
+  @deprecated "Use Testcontainers.SeleniumContainer instead"
+
+  defdelegate new, to: Testcontainers.SeleniumContainer
+  defdelegate with_image(self, image), to: Testcontainers.SeleniumContainer
+  defdelegate with_port1(self, port), to: Testcontainers.SeleniumContainer
+  defdelegate with_port2(self, port), to: Testcontainers.SeleniumContainer
+  defdelegate with_wait_timeout(self, wait_timeout), to: Testcontainers.SeleniumContainer
 end

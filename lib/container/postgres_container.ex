@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: MIT
 # Original by: Marco Dallagiacoma @ 2023 in https://github.com/dallagi/excontainers
 # Modified by: Jarl André Hübenthal @ 2023
-defmodule Testcontainers.Container.PostgresContainer do
-  @behaviour Testcontainers.Container.Behaviours.Database
+defmodule Testcontainers.PostgresContainer do
+  @behaviour Testcontainers.DatabaseBehaviour
   @moduledoc """
   Provides functionality for creating and managing Postgres container configurations.
 
@@ -10,9 +10,9 @@ defmodule Testcontainers.Container.PostgresContainer do
   """
 
   alias Testcontainers.WaitStrategy.CommandWaitStrategy
-  alias Testcontainers.Container.PostgresContainer
+  alias Testcontainers.PostgresContainer
   alias Testcontainers.Container
-  alias Testcontainers.Container.Protocols.Builder
+  alias Testcontainers.ContainerBuilder
 
   @default_image "postgres"
   @default_tag "15-alpine"
@@ -160,7 +160,7 @@ defmodule Testcontainers.Container.PostgresContainer do
     ]
   end
 
-  defimpl Builder do
+  defimpl ContainerBuilder do
     import Container
 
     @doc """
@@ -216,4 +216,26 @@ defmodule Testcontainers.Container.PostgresContainer do
       )
     end
   end
+end
+
+defmodule Testcontainers.Container.PostgresContainer do
+  @moduledoc """
+  Deprecated. Use `Testcontainers.PostgresContainer` instead.
+
+  This module is kept for backward compatibility and will be removed in future releases.
+  """
+
+  @deprecated "Use Testcontainers.PostgresContainer instead"
+
+  defdelegate new, to: Testcontainers.PostgresContainer
+  defdelegate with_image(self, image), to: Testcontainers.PostgresContainer
+  defdelegate with_user(self, user), to: Testcontainers.PostgresContainer
+  defdelegate with_password(self, password), to: Testcontainers.PostgresContainer
+  defdelegate with_database(self, database), to: Testcontainers.PostgresContainer
+  defdelegate with_port(self, port), to: Testcontainers.PostgresContainer
+  defdelegate with_wait_timeout(self, wait_timeout), to: Testcontainers.PostgresContainer
+  defdelegate port(self), to: Testcontainers.PostgresContainer
+  defdelegate connection_parameters(self), to: Testcontainers.PostgresContainer
+  defdelegate default_image_with_tag, to: Testcontainers.PostgresContainer
+  defdelegate default_port, to: Testcontainers.PostgresContainer
 end

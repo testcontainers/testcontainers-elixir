@@ -4,7 +4,7 @@ defmodule Testcontainers.Container.SeleniumContainerTest do
   import Testcontainers.ExUnit
 
   alias Testcontainers.Container
-  alias Testcontainers.Container.SeleniumContainer
+  alias Testcontainers.SeleniumContainer
 
   @moduletag timeout: 300_000
 

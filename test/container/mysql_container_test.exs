@@ -6,7 +6,7 @@ defmodule Testcontainers.Container.MySqlContainerTest do
 
   import Testcontainers.ExUnit
 
-  alias Testcontainers.Container.MySqlContainer
+  alias Testcontainers.MySqlContainer
 
   @moduletag timeout: 300_000
 
