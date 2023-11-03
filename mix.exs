@@ -23,7 +23,18 @@ defmodule TestcontainersElixir.MixProject do
       ],
       test_coverage: [
         summary: [threshold: 77],
-        ignore_modules: [TestHelper, Inspect.Testcontainers.TestUser]
+        ignore_modules: [
+          TestHelper,
+          Inspect.Testcontainers.TestUser,
+          # deprecated
+          Testcontainers.Container.MySqlContainer,
+          # deprecated
+          Testcontainers.Container.PostgresContainer,
+          # deprecated
+          Testcontainers.Container.RedisContainer,
+          # deprecated
+          Testcontainers.Container.SeleniumContainer
+        ]
       ],
       elixirc_paths: elixirc_paths(Mix.env())
     ]
