@@ -60,7 +60,7 @@ Or you can use one of many predefined containers like `RedisContainer`, that has
 
 ```elixir
 {:ok, _} = Testcontainers.start_link()
-config = Testcontainers.Container.RedisContainer.new()
+config = Testcontainers.RedisContainer.new()
 {:ok, container} = Testcontainers.start_container(config)
 ```
 
@@ -70,7 +70,7 @@ Given you have added Testcontainers.start_link() to test_helper.exs:
 
 ```elixir
 setup 
-  config = Testcontainers.Container.RedisContainer.new()
+  config = Testcontainers.RedisContainer.new()
   {:ok, container} = Testcontainers.start_container(config)
   ExUnit.Callbacks.on_exit(fn -> Testcontainers.stop_container(container.container_id) end)
   {:ok, %{redis: container}}
@@ -80,7 +80,7 @@ end
 there is a macro that can simplify this down to a oneliner:
 
 ```elixir
-container(:redis, Testcontainers.Container.RedisContainer.new())
+container(:redis, Testcontainers.RedisContainer.new())
 ```
 
 ### In a Phoenix project:
