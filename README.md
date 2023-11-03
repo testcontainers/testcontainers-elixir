@@ -48,7 +48,7 @@ This section explains how to use the Testcontainers library in your own project.
 
 ### Basic usage
 
-You use generic container api, where you have to define everything yourself:
+You can use generic container api, where you have to define everything yourself:
 
 ```elixir
 {:ok, _} = Testcontainers.start_link()
