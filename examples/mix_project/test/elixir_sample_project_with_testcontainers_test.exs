@@ -4,7 +4,7 @@ defmodule ElixirSampleProjectWithTestcontainersTest do
   import Testcontainers.ExUnit
 
   alias Testcontainers.Container
-  alias Testcontainers.Container.MySqlContainer
+  alias Testcontainers.MySqlContainer
 
   container(:mysql, MySqlContainer.new(), shared: true)
 
