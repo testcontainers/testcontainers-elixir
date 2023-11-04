@@ -1,12 +1,13 @@
 # SPDX-License-Identifier: MIT
 defmodule Testcontainers.Connection do
+  @moduledoc false
+
   alias Testcontainers.DockerUrl
   alias Testcontainers.Logger
-  alias Testcontainers.Connection.DockerHostStrategyEvaluator
-  alias Testcontainers.Connection.DockerHostStrategy.DockerSocketPath
-  alias Testcontainers.Connection.DockerHostStrategy.DockerHostFromProperties
-  alias Testcontainers.Connection.DockerHostStrategy.DockerHostFromEnv
-  alias Testcontainers.Connection.DockerHostStrategy.DockerHostFromProperties
+  alias Testcontainers.DockerHostStrategyEvaluator
+  alias Testcontainers.DockerSocketPathStrategy
+  alias Testcontainers.DockerHostFromPropertiesStrategy
+  alias Testcontainers.DockerHostFromEnvStrategy
   alias DockerEngineAPI.Connection
 
   @timeout 300_000
@@ -23,11 +24,11 @@ defmodule Testcontainers.Connection do
 
   defp docker_base_url do
     strategies = [
-      %DockerHostFromProperties{key: "tc.host"},
-      %DockerHostFromEnv{},
-      %DockerSocketPath{socket_paths: ["/var/run/docker.sock"]},
-      %DockerHostFromProperties{key: "docker.host"},
-      %DockerSocketPath{}
+      %DockerHostFromPropertiesStrategy{key: "tc.host"},
+      %DockerHostFromEnvStrategy{},
+      %DockerSocketPathStrategy{socket_paths: ["/var/run/docker.sock"]},
+      %DockerHostFromPropertiesStrategy{key: "docker.host"},
+      %DockerSocketPathStrategy{}
     ]
 
     case DockerHostStrategyEvaluator.run_strategies(strategies, []) do

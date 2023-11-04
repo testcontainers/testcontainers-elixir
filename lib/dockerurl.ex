@@ -5,7 +5,6 @@ defmodule Testcontainers.DockerUrl do
 
   @test_client Tesla.client([], Tesla.Adapter.Hackney)
 
-  @doc false
   def construct(docker_host) do
     case URI.parse(docker_host) do
       %URI{scheme: "unix", path: path} ->
@@ -19,7 +18,6 @@ defmodule Testcontainers.DockerUrl do
     end
   end
 
-  @doc false
   def test_docker_host(docker_host) do
     url = "#{construct(docker_host)}/_ping"
 

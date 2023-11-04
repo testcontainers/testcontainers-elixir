@@ -10,7 +10,7 @@ defmodule Testcontainers.RedisContainer do
 
   alias Testcontainers.ContainerBuilder
   alias Testcontainers.Container
-  alias Testcontainers.WaitStrategy.CommandWaitStrategy
+  alias Testcontainers.CommandWaitStrategy
   alias Testcontainers.RedisContainer
 
   @default_image "redis"

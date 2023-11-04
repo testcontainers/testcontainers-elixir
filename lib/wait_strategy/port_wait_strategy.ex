@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-defmodule Testcontainers.WaitStrategy.PortWaitStrategy do
+defmodule Testcontainers.PortWaitStrategy do
   @moduledoc """
   Considers the container as ready when it successfully accepts connections on the specified port.
   """

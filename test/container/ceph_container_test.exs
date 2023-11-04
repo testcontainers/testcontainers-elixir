@@ -2,7 +2,7 @@ defmodule Testcontainers.Container.CephContainerTest do
   use ExUnit.Case, async: true
 
   import Testcontainers.ExUnit
-  alias Testcontainers.Container.CephContainer
+  alias Testcontainers.CephContainer
 
   @moduletag timeout: 300_000
 

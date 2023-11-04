@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Original by: Marco Dallagiacoma @ 2023 in https://github.com/dallagi/excontainers
 # Modified by: Jarl André Hübenthal @ 2023
-defmodule Testcontainers.WaitStrategy.CommandWaitStrategy do
+defmodule Testcontainers.CommandWaitStrategy do
   @moduledoc """
   Considers a container ready as soon as a command runs successfully inside it.
   """

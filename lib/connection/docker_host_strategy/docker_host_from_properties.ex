@@ -1,9 +1,11 @@
 # SPDX-License-Identifier: MIT
-defmodule Testcontainers.Connection.DockerHostStrategy.DockerHostFromProperties do
+defmodule Testcontainers.DockerHostFromPropertiesStrategy do
+  @moduledoc false
+
   @enforce_keys [:key]
   defstruct key: nil, filename: "~/.testcontainers.properties"
 
-  defimpl Testcontainers.Connection.DockerHostStrategy do
+  defimpl Testcontainers.DockerHostStrategy do
     alias Testcontainers.DockerUrl
 
     def execute(strategy, _input) do

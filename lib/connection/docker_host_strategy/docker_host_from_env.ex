@@ -1,10 +1,12 @@
 # SPDX-License-Identifier: MIT
-defmodule Testcontainers.Connection.DockerHostStrategy.DockerHostFromEnv do
+defmodule Testcontainers.DockerHostFromEnvStrategy do
+  @moduledoc false
+
   defstruct key: "DOCKER_HOST"
 
   alias Testcontainers.DockerUrl
 
-  defimpl Testcontainers.Connection.DockerHostStrategy do
+  defimpl Testcontainers.DockerHostStrategy do
     def execute(strategy, _input) do
       with {:ok, docker_host} <- get_docker_host(strategy) do
         case docker_host |> DockerUrl.test_docker_host() do

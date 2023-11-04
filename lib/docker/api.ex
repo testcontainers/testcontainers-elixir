@@ -1,5 +1,9 @@
 # SPDX-License-Identifier: MIT
 defmodule Testcontainers.Docker.Api do
+  @moduledoc """
+  Internal docker api. Only for direct use by `Testcontainers`
+  """
+
   alias DockerEngineAPI.Model.ContainerCreateRequest
   alias DockerEngineAPI.Api
   alias Testcontainers.Container

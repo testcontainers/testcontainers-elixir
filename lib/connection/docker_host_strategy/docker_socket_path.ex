@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: MIT
-defmodule Testcontainers.Connection.DockerHostStrategy.DockerSocketPath do
+defmodule Testcontainers.DockerSocketPathStrategy do
+  @moduledoc false
+
   @rootless_docker_socket_paths [
     System.get_env("XDG_RUNTIME_DIR"),
     Path.expand("~/.docker/run/docker.sock"),
@@ -9,9 +11,7 @@ defmodule Testcontainers.Connection.DockerHostStrategy.DockerSocketPath do
 
   defstruct socket_paths: @rootless_docker_socket_paths
 
-  alias Testcontainers.Connection.DockerHostStrategy
-
-  defimpl DockerHostStrategy do
+  defimpl Testcontainers.DockerHostStrategy do
     alias Testcontainers.DockerUrl
 
     def execute(strategy, _input) do

@@ -1,4 +1,6 @@
 defmodule Testcontainers.Constants do
+  @moduledoc false
+
   def library_name, do: :testcontainers
   def library_version, do: "1.2.10"
   def container_label, do: "org.testcontainers"

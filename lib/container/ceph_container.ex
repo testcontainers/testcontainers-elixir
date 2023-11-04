@@ -1,15 +1,15 @@
 # SPDX-License-Identifier: MIT
-defmodule Testcontainers.Container.CephContainer do
+defmodule Testcontainers.CephContainer do
   @moduledoc """
-  Module for building Ceph container configurations.
+  Provides functionality for creating and managing Ceph container configurations.
 
   This module provides functions for creating and manipulating configurations for Ceph containers.
   It allows the setting of specific parameters like image, access keys, secret keys,
   and other parameters related to the Ceph container.
   """
 
-  alias Testcontainers.WaitStrategy.LogWaitStrategy
-  alias Testcontainers.Container.CephContainer
+  alias Testcontainers.LogWaitStrategy
+  alias Testcontainers.CephContainer
   alias Testcontainers.ContainerBuilder
   alias Testcontainers.Container
 
@@ -221,4 +221,24 @@ defmodule Testcontainers.Container.CephContainer do
       )
     end
   end
+end
+
+defmodule Testcontainers.Container.CephContainer do
+  @moduledoc """
+  Deprecated. Use `Testcontainers.CephContainer` instead.
+
+  This module is kept for backward compatibility and will be removed in future releases.
+  """
+
+  @deprecated "Use Testcontainers.CephContainer instead"
+
+  defdelegate new, to: Testcontainers.CephContainer
+  defdelegate with_image(self, image), to: Testcontainers.CephContainer
+  defdelegate with_access_key(self, user), to: Testcontainers.CephContainer
+  defdelegate with_secret_key(self, password), to: Testcontainers.CephContainer
+  defdelegate with_bucket(self, database), to: Testcontainers.CephContainer
+  defdelegate with_port(self, port), to: Testcontainers.CephContainer
+  defdelegate with_wait_timeout(self, wait_timeout), to: Testcontainers.CephContainer
+  defdelegate port(self), to: Testcontainers.CephContainer
+  defdelegate connection_url(self), to: Testcontainers.CephContainer
 end

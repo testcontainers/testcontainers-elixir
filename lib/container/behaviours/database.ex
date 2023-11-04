@@ -1,4 +1,8 @@
 defmodule Testcontainers.DatabaseBehaviour do
+  @moduledoc """
+  A behaviour implemented by database containers used by `Testcontainers.Ecto`
+  """
+
   @callback new() :: t()
   @callback with_image(t(), String.t()) :: t()
   @callback with_user(t(), String.t()) :: t()

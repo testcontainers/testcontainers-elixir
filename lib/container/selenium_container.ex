@@ -7,8 +7,8 @@ defmodule Testcontainers.SeleniumContainer do
   alias Testcontainers.ContainerBuilder
   alias Testcontainers.Container
   alias Testcontainers.SeleniumContainer
-  alias Testcontainers.WaitStrategy.PortWaitStrategy
-  alias Testcontainers.WaitStrategy.LogWaitStrategy
+  alias Testcontainers.PortWaitStrategy
+  alias Testcontainers.LogWaitStrategy
 
   @default_image "selenium/standalone-chrome"
   @default_tag "118.0"

@@ -12,7 +12,7 @@ defmodule Testcontainers.MySqlContainer do
   alias Testcontainers.Container
   alias Testcontainers.ContainerBuilder
   alias Testcontainers.MySqlContainer
-  alias Testcontainers.WaitStrategy.LogWaitStrategy
+  alias Testcontainers.LogWaitStrategy
 
   @default_image "mysql"
   @default_tag "8"

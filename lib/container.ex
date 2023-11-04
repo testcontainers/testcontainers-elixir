@@ -2,6 +2,10 @@
 # Original by: Marco Dallagiacoma @ 2023 in https://github.com/dallagi/excontainers
 # Modified by: Jarl André Hübenthal @ 2023
 defmodule Testcontainers.Container do
+  @moduledoc """
+  A struct with builder functions for creating a definition of a container.
+  """
+
   @enforce_keys [:image]
   defstruct [
     :image,

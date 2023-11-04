@@ -9,7 +9,7 @@ defmodule Testcontainers.PostgresContainer do
   This module includes helper methods for setting up a Postgres container with specific parameters such as image, user, password, database, and more.
   """
 
-  alias Testcontainers.WaitStrategy.CommandWaitStrategy
+  alias Testcontainers.CommandWaitStrategy
   alias Testcontainers.PostgresContainer
   alias Testcontainers.Container
   alias Testcontainers.ContainerBuilder

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-defmodule Testcontainers.WaitStrategy.LogWaitStrategy do
+defmodule Testcontainers.LogWaitStrategy do
   @moduledoc """
   Considers the container as ready as soon as a specific log message is detected in the container's log stream.
   """
