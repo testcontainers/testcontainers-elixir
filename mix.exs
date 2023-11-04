@@ -33,7 +33,9 @@ defmodule TestcontainersElixir.MixProject do
           # deprecated
           Testcontainers.Container.RedisContainer,
           # deprecated
-          Testcontainers.Container.SeleniumContainer
+          Testcontainers.Container.SeleniumContainer,
+          # deprecated
+          Testcontainers.Container.CephContainer
         ]
       ],
       elixirc_paths: elixirc_paths(Mix.env())
