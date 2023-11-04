@@ -164,22 +164,18 @@ defmodule Testcontainers do
   end
 
   defp start_and_wait(config_builder, state) do
-    config = ContainerBuilder.build(config_builder)
-    wait_strategies = config.wait_strategies || []
+    config =
+      ContainerBuilder.build(config_builder)
+      |> Container.with_label(container_sessionId_label(), state.session_id)
+      |> Container.with_label(container_version_label(), library_version())
+      |> Container.with_label(container_lang_label(), container_lang_value())
+      |> Container.with_label(container_label(), "#{true}")
 
     with {:ok, _} <- Api.pull_image(config.image, state.conn),
-         {:ok, id} <-
-           Api.create_container(
-             config
-             |> Container.with_label(container_sessionId_label(), state.session_id)
-             |> Container.with_label(container_version_label(), library_version())
-             |> Container.with_label(container_lang_label(), container_lang_value())
-             |> Container.with_label(container_label(), "#{true}"),
-             state.conn
-           ),
+         {:ok, id} <- Api.create_container(config, state.conn),
          :ok <- Api.start_container(id, state.conn),
          {:ok, container} <- Api.get_container(id, state.conn),
-         :ok <- wait_for_container(container, wait_strategies, state.conn) do
+         :ok <- wait_for_container(container, config.wait_strategies || [], state.conn) do
       {:ok, container}
     end
   end

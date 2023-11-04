@@ -162,11 +162,12 @@ defmodule Testcontainers.Docker.Api do
          Id: container_id,
          Image: image,
          NetworkSettings: %{Ports: ports},
-         Config: %{Env: env}
+         Config: %{Env: env, Labels: labels}
        }) do
     %Container{
       container_id: container_id,
       image: image,
+      labels: labels,
       exposed_ports:
         Enum.reduce(ports || [], [], fn {key, ports}, acc ->
           acc ++
