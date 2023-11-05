@@ -94,13 +94,14 @@ To start a postgres container when running tests, that also enables testing of a
 
   @impl true
   def start(_type, _args) do
-    if Mix.env() == :test,
-      do:
+    if Mix.env() == :test do
+      {:ok, _container} =
         postgres_container(
           app: :my_app,
           user: "postgres",
           password: "postgres"
         )
+    end
 
     # .. other setup code
   end
