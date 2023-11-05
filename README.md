@@ -99,7 +99,10 @@ To start a postgres container when running tests, that also enables testing of a
         postgres_container(
           app: :my_app,
           user: "postgres",
-          password: "postgres"
+          password: "postgres",
+          # to avoid port collision set the same port in config/test.exs
+          # or comment this out
+          port: 5433 
         )
     end
 
