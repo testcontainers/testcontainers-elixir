@@ -18,7 +18,7 @@ defmodule Testcontainers.Ecto do
     - `:app` - The current application's atom, necessary for building paths and other application-specific logic. This is a required parameter.
     - `:repo` (optional) - The Ecto repository module for database interaction. If not provided, it is inferred from the `:app` option using the default naming convention (e.g., `MyApp.Repo`).
     - `:image` (optional) - Specifies the Docker image for the Postgres container. This must be a legitimate Postgres image, with the image name beginning with "postgres". If omitted, the default is "postgres:15".
-    - `:port` (optional) - Designates the host port for the Postgres service (defaults to 5432).
+    - `:port` (optional) - Specifies the exposed port for the Postgres container (defaults to 5432). Does not translate to host port, which is dynamically assigned.
     - `:user` (optional) - Sets the username for the Postgres instance (defaults to "postgres").
     - `:password` (optional) - Determines the password for the Postgres user (defaults to "postgres").
     - `:database` (optional) - Specifies the name of the database to be created within the Postgres instance. If not provided, the default behavior is to create a database with the name derived from the application's atom, appended with "_test".
@@ -114,7 +114,7 @@ defmodule Testcontainers.Ecto do
     - `:app` - The current application's atom, necessary for building paths and other application-specific logic. This is a required parameter.
     - `:repo` (optional) - The Ecto repository module for database interaction. If not provided, it is inferred from the `:app` option using the default naming convention (e.g., `MyApp.Repo`).
     - `:image` (optional) - Specifies the Docker image for the Mysql container. This must be a legitimate Mysql image, with the image name beginning with "mysql". If omitted, the default is "mysql:8".
-    - `:port` (optional) - Designates the host port for the Mysql service (defaults to 3306).
+    - `:port` (optional) - Specifies the exposed port for the Mysql container (defaults to 3306). Does not translate to host port, which is dynamically assigned.
     - `:user` (optional) - Sets the username for the Mysql instance (defaults to "test").
     - `:password` (optional) - Determines the password for the Mysql user (defaults to "test").
     - `:database` (optional) - Specifies the name of the database to be created within the Mysql instance. If not provided, the default behavior is to create a database with the name derived from the application's atom, appended with "_test".
