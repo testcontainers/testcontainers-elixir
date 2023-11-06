@@ -80,6 +80,8 @@ end
 there is a macro that can simplify this down to a oneliner:
 
 ```elixir
+import Testcontainers.ExUnit
+
 container(:redis, Testcontainers.RedisContainer.new())
 ```
 
