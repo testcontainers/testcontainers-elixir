@@ -5,6 +5,8 @@ defmodule Testcontainers.EctoMysqlTest do
 
   @moduletag timeout: 300_000
 
+  require Testcontainers.MysqlRepo
+
   test "can use ecto function" do
     {:ok, container} =
       mysql_container(

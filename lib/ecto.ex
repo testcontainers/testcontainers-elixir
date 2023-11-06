@@ -18,7 +18,6 @@ defmodule Testcontainers.Ecto do
     - `:app` - The current application's atom, necessary for building paths and other application-specific logic. This is a required parameter.
     - `:repo` (optional) - The Ecto repository module for database interaction. If not provided, it is inferred from the `:app` option using the default naming convention (e.g., `MyApp.Repo`).
     - `:image` (optional) - Specifies the Docker image for the Postgres container. This must be a legitimate Postgres image, with the image name beginning with "postgres". If omitted, the default is "postgres:15".
-    - `:port` (optional) - Specifies the exposed port for the Postgres container (defaults to 5432). Does not translate to host port, which is dynamically assigned.
     - `:user` (optional) - Sets the username for the Postgres instance (defaults to "postgres").
     - `:password` (optional) - Determines the password for the Postgres user (defaults to "postgres").
     - `:database` (optional) - Specifies the name of the database to be created within the Postgres instance. If not provided, the default behavior is to create a database with the name derived from the application's atom, appended with "_test".
@@ -114,7 +113,6 @@ defmodule Testcontainers.Ecto do
     - `:app` - The current application's atom, necessary for building paths and other application-specific logic. This is a required parameter.
     - `:repo` (optional) - The Ecto repository module for database interaction. If not provided, it is inferred from the `:app` option using the default naming convention (e.g., `MyApp.Repo`).
     - `:image` (optional) - Specifies the Docker image for the Mysql container. This must be a legitimate Mysql image, with the image name beginning with "mysql". If omitted, the default is "mysql:8".
-    - `:port` (optional) - Specifies the exposed port for the Mysql container (defaults to 3306). Does not translate to host port, which is dynamically assigned.
     - `:user` (optional) - Sets the username for the Mysql instance (defaults to "test").
     - `:password` (optional) - Determines the password for the Mysql user (defaults to "test").
     - `:database` (optional) - Specifies the name of the database to be created within the Mysql instance. If not provided, the default behavior is to create a database with the name derived from the application's atom, appended with "_test".
@@ -231,10 +229,6 @@ defmodule Testcontainers.Ecto do
           repo
       end
 
-    if not :erlang.function_exported(repo, :__info__, 1) do
-      raise ArgumentError, "Repo is invalid: repo=#{inspect(repo)}"
-    end
-
     user = Keyword.get(options, :user, "test")
     password = Keyword.get(options, :password, "test")
     database = Keyword.get(options, :database, "#{Atom.to_string(app)}_test")
@@ -247,12 +241,11 @@ defmodule Testcontainers.Ecto do
       end
 
     image = Keyword.get(options, :image, container_module.default_image_with_tag())
-    container_port = Keyword.get(options, :port, container_module.default_port())
 
     config =
       container_module.new()
       |> container_module.with_image(image)
-      |> container_module.with_port(container_port)
+      |> container_module.with_port(container_module.default_port())
       |> container_module.with_user(user)
       |> container_module.with_database(database)
       |> container_module.with_password(password)

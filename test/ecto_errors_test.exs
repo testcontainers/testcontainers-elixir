@@ -1,10 +1,10 @@
-defmodule Testcontainers.EctoMysqlTest do
+defmodule Testcontainers.EctoErrorsTest do
   use ExUnit.Case, async: true
 
   import Testcontainers.Ecto
 
   test "repo cannot be nil" do
-    assert_raise ArgumentError, "Repo is invalid: repo=Testcontainers.Repo", fn ->
+    assert_raise FunctionClauseError, "no function clause matching in Keyword.merge/2", fn ->
       mysql_container(
         app: :testcontainers,
         repo: nil

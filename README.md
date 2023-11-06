@@ -95,15 +95,7 @@ To start a postgres container when running tests, that also enables testing of a
   @impl true
   def start(_type, _args) do
     if Mix.env() == :test do
-      {:ok, _container} =
-        Testcontainers.Ecto.postgres_container(
-          app: :my_app,
-          user: "postgres",
-          password: "postgres",
-          # to avoid port collision set the same port in config/test.exs
-          # or comment this out
-          port: 5433 
-        )
+      {:ok, _container} = Testcontainers.Ecto.postgres_container(app: :my_app)
     end
 
     # .. other setup code
@@ -111,6 +103,8 @@ To start a postgres container when running tests, that also enables testing of a
 ```
 
 This will start a postgres container that will be terminated when the test process ends.
+
+The database config in config/test.exs will be temporaly updated in-memory with the random host port on the container, and other properties like username, password and database. In most cases these will default to "test" unless overridden.
 
 See documentation on [Testcontainers.Ecto](https://hexdocs.pm/testcontainers/Testcontainers.Ecto.html) for more information about the options it can take.
 

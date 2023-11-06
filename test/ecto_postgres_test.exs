@@ -5,6 +5,8 @@ defmodule Testcontainers.EctoPostgresTest do
 
   @moduletag timeout: 300_000
 
+  require Testcontainers.PostgresRepo
+
   test "can use ecto function" do
     {:ok, container} =
       postgres_container(
