@@ -243,13 +243,12 @@ defmodule Testcontainers.Ecto do
       end
 
     image = Keyword.get(options, :image, container_module.default_image_with_tag())
-    exposed_port = container_module.default_port()
-    host_port = Keyword.get(options, :port, exposed_port)
+    container_port = Keyword.get(options, :port, container_module.default_port())
 
     config =
       container_module.new()
       |> container_module.with_image(image)
-      |> container_module.with_port({exposed_port, host_port})
+      |> container_module.with_port(container_port)
       |> container_module.with_user(user)
       |> container_module.with_database(database)
       |> container_module.with_password(password)
@@ -257,6 +256,19 @@ defmodule Testcontainers.Ecto do
     case Testcontainers.start_container(config) do
       {:ok, container} ->
         System.at_exit(fn _ -> Testcontainers.stop_container(container.container_id) end)
+
+        :ok =
+          Application.put_env(
+            app,
+            repo,
+            Application.get_env(app, repo)
+            |> Keyword.merge(
+              username: user,
+              password: password,
+              database: database,
+              port: container_module.port(container)
+            )
+          )
 
         {:ok, pid} = repo.start_link()
 

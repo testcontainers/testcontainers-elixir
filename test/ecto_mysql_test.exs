@@ -10,8 +10,7 @@ defmodule Testcontainers.EctoMysqlTest do
       mysql_container(
         app: :testcontainers,
         migrations_path: "#{__DIR__}/support/migrations",
-        repo: Testcontainers.MysqlRepo,
-        port: 3336
+        repo: Testcontainers.MysqlRepo
       )
 
     {:ok, _pid} = Testcontainers.MysqlRepo.start_link()

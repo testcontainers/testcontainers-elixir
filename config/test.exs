@@ -14,10 +14,6 @@ test_db_opts = [
   queue_interval: 30_000
 ]
 
-config :testcontainers,
-       Testcontainers.MysqlRepo,
-       Keyword.merge(test_db_opts, port: 3336)
+config :testcontainers, Testcontainers.MysqlRepo, test_db_opts
 
-config :testcontainers,
-       Testcontainers.PostgresRepo,
-       Keyword.merge(test_db_opts, port: 5442)
+config :testcontainers, Testcontainers.PostgresRepo, test_db_opts

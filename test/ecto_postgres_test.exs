@@ -10,8 +10,7 @@ defmodule Testcontainers.EctoPostgresTest do
       postgres_container(
         app: :testcontainers,
         migrations_path: "#{__DIR__}/support/migrations",
-        repo: Testcontainers.PostgresRepo,
-        port: 5442
+        repo: Testcontainers.PostgresRepo
       )
 
     {:ok, _pid} = Testcontainers.PostgresRepo.start_link()
