@@ -231,6 +231,10 @@ defmodule Testcontainers.Ecto do
           repo
       end
 
+    if not :erlang.function_exported(repo, :__info__, 1) do
+      raise ArgumentError, "Repo is invalid: repo=#{inspect(repo)}"
+    end
+
     user = Keyword.get(options, :user, "test")
     password = Keyword.get(options, :password, "test")
     database = Keyword.get(options, :database, "#{Atom.to_string(app)}_test")
