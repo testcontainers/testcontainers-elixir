@@ -5,18 +5,17 @@ defmodule Hello.Application do
 
   use Application
 
-  import Testcontainers.Ecto
-
   @impl true
   def start(_type, _args) do
-    if Mix.env() == :test,
-      do:
-        postgres_container(
+    if Mix.env() == :test do
+      {:ok, _container} =
+        Testcontainers.Ecto.postgres_container(
           app: :hello,
           user: "postgres",
           password: "postgres",
           database: "hello_test#{System.get_env("MIX_TEST_PARTITION")}"
         )
+    end
 
     # to use mysql, change
     # `adapter: Ecto.Adapters.Postgres`

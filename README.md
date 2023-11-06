@@ -92,13 +92,11 @@ To start a postgres container when running tests, that also enables testing of a
 ```elixir
   # In your application.ex file in your Phoenix project:
 
-  import Testcontainers.Ecto
-
   @impl true
   def start(_type, _args) do
     if Mix.env() == :test do
       {:ok, _container} =
-        postgres_container(
+        Testcontainers.Ecto.postgres_container(
           app: :my_app,
           user: "postgres",
           password: "postgres",

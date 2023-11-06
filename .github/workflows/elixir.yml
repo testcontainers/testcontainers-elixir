@@ -42,6 +42,7 @@ jobs:
        cd examples/phoenix_project
        mix deps.get
        mix test
+       MIX_ENV=prod mix release
     - name: Run example mix project tests
       run: |
         cd examples/mix_project
