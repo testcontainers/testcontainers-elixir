@@ -9,14 +9,14 @@ defmodule Hello.Application do
   def start(_type, _args) do
     if Mix.env() == :test do
       {:ok, _container} = Testcontainers.Ecto.postgres_container(app: :hello)
+
+      # to use mysql, change
+      # `adapter: Ecto.Adapters.Postgres`
+      # in lib/hello/repo.ex, to
+      # `adapter: Ecto.Adapters.MyXQL`
+
+      # {:ok, _container} = Testcontainers.Ecto.mysql_container(app: :hello)
     end
-
-    # to use mysql, change
-    # `adapter: Ecto.Adapters.Postgres`
-    # in lib/hello/repo.ex, to
-    # `adapter: Ecto.Adapters.MyXQL`
-
-    # mysql_container(app: :hello, database: "hello_test#{System.get_env("MIX_TEST_PARTITION")}")
 
     children = [
       HelloWeb.Telemetry,

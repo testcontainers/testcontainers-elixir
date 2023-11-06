@@ -23,9 +23,7 @@ defmodule Testcontainers.EctoErrorsTest do
 
   test "app must be atom" do
     assert_raise ArgumentError, "Missing or not an atom: app=\"hello\"", fn ->
-      mysql_container(
-        app: "hello"
-      )
+      mysql_container(app: "hello")
     end
   end
 end
