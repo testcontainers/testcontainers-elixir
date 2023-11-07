@@ -4,7 +4,7 @@ defmodule Testcontainers.EctoErrorsTest do
   import Testcontainers.Ecto
 
   test "repo cannot be nil" do
-    assert_raise FunctionClauseError, "no function clause matching in Keyword.merge/2", fn ->
+    assert_raise ArgumentError, "Cant get repo config: repo=Testcontainers.Repo", fn ->
       mysql_container(
         app: :testcontainers,
         repo: nil

@@ -255,17 +255,23 @@ defmodule Testcontainers.Ecto do
         System.at_exit(fn _ -> Testcontainers.stop_container(container.container_id) end)
 
         :ok =
-          Application.put_env(
-            app,
-            repo,
-            Application.get_env(app, repo)
-            |> Keyword.merge(
-              username: user,
-              password: password,
-              database: database,
-              port: container_module.port(container)
-            )
-          )
+          case Application.get_env(app, repo) do
+            nil ->
+              raise ArgumentError, "Cant get repo config: repo=#{inspect(repo)}"
+
+            repo_config ->
+              Application.put_env(
+                app,
+                repo,
+                repo_config
+                |> Keyword.merge(
+                  username: user,
+                  password: password,
+                  database: database,
+                  port: container_module.port(container)
+                )
+              )
+          end
 
         {:ok, pid} = repo.start_link()
 
