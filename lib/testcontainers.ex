@@ -140,10 +140,10 @@ defmodule Testcontainers do
 
   defp get_docker_host(docker_host_url, conn) do
     case URI.parse(docker_host_url) do
-      uri when uri.scheme == "http" or uri.scheme == "https" or uri.scheme == "tcp" ->
+      uri when uri.scheme == "http" or uri.scheme == "https" ->
         {:ok, uri.host}
 
-      uri when uri.scheme == "unix" ->
+      uri when uri.scheme == "http+unix" ->
         if File.exists?("/.dockerenv") do
           with {:ok, gateway} <- Api.get_bridge_gateway(conn) do
             {:ok, gateway}
