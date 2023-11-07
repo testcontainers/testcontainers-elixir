@@ -145,6 +145,8 @@ defmodule Testcontainers do
 
       uri when uri.scheme == "http+unix" ->
         if File.exists?("/.dockerenv") do
+          Logger.log("Running in docker environment, trying to get bridge network gateway")
+
           with {:ok, gateway} <- Api.get_bridge_gateway(conn) do
             {:ok, gateway}
           else
@@ -153,6 +155,7 @@ defmodule Testcontainers do
               {:ok, "localhost"}
           end
         else
+          Logger.log("Not running in docker environment, using localhost")
           {:ok, "localhost"}
         end
     end
