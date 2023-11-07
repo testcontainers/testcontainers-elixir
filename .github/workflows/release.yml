@@ -19,16 +19,6 @@ jobs:
       run: mix deps.get
     - name: Run tests
       run: mix test test --cover
-    - name: Run example phoenix project tests
-      run: |
-       cd examples/phoenix_project
-       mix deps.get
-       mix test
-    - name: Run example mix project tests
-      run: |
-        cd examples/mix_project
-        mix deps.get
-        mix test
     - name: Verify version
       run: |
         mix run -e "if(Testcontainers.Constants.library_version() == Mix.Project.config()[:version], do: IO.puts("OK"), else: System.halt(\"version mismatch\"))"

@@ -37,6 +37,22 @@ jobs:
       run: mix deps.get
     - name: Run tests
       run: mix test test --cover
+    - name: Verify version
+      run: |
+        mix run -e "if(Testcontainers.Constants.library_version() == Mix.Project.config()[:version], do: IO.puts("OK"), else: System.halt(\"version mismatch\"))"
+
+  test_examples:
+
+    name: Test example projects
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Elixir
+      uses: erlef/setup-beam@61e01a43a562a89bfc54c7f9a378ff67b03e4a21 # v1.16.0
+      with:
+        elixir-version: '1.15.2' # [Required] Define the Elixir version
+        otp-version: '26.0'      # [Required] Define the Erlang/OTP version
     - name: Run example phoenix project tests
       run: |
        cd examples/phoenix_project
@@ -48,6 +64,3 @@ jobs:
         cd examples/mix_project
         mix deps.get
         mix test
-    - name: Verify version
-      run: |
-        mix run -e "if(Testcontainers.Constants.library_version() == Mix.Project.config()[:version], do: IO.puts("OK"), else: System.halt(\"version mismatch\"))"
