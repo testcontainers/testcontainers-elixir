@@ -19,7 +19,7 @@ defmodule Testcontainers.Connection do
 
     options = Keyword.merge(options, base_url: docker_host_url, recv_timeout: @timeout)
 
-    Connection.new(options)
+    {Connection.new(options), docker_host_url}
   end
 
   defp docker_base_url do

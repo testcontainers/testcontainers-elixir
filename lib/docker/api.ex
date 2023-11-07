@@ -109,6 +109,25 @@ defmodule Testcontainers.Docker.Api do
     end
   end
 
+  def get_bridge_gateway(conn) do
+    case DockerEngineAPI.Api.Network.network_inspect(conn, "bridge") do
+      {:ok, %DockerEngineAPI.Model.Network{IPAM: %DockerEngineAPI.Model.Ipam{Config: config}}} ->
+        with_gateway =
+          config
+          |> Enum.filter(fn cfg -> Map.get(cfg, :Gateway, nil) != nil end)
+
+        if length(with_gateway) > 0 do
+          gateway = with_gateway |> Kernel.hd() |> Map.get(:Gateway)
+          {:ok, gateway}
+        else
+          {:error, :no_gateway}
+        end
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
   defp parse_inspect_result(%DockerEngineAPI.Model.ExecInspectResponse{} = json) do
     %{running: json."Running", exit_code: json."ExitCode"}
   end

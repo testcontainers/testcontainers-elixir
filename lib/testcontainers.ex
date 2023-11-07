@@ -83,7 +83,7 @@ defmodule Testcontainers do
 
   @impl true
   def handle_info(:load, state) do
-    conn = Connection.get_connection(state.options)
+    {conn, docker_host_url} = Connection.get_connection(state.options)
 
     session_id =
       :crypto.hash(:sha, "#{inspect(self())}#{DateTime.utc_now() |> DateTime.to_string()}")
@@ -96,13 +96,20 @@ defmodule Testcontainers do
       |> Container.with_bind_mount("/var/run/docker.sock", "/var/run/docker.sock", "rw")
 
     with {:ok, _} <- Api.pull_image(ryuk_config.image, conn),
-         {:ok, id} <- Api.create_container(ryuk_config, conn),
-         :ok <- Api.start_container(id, conn),
-         {:ok, container} <- Api.get_container(id, conn),
+         {:ok, ryuk_container_id} <- Api.create_container(ryuk_config, conn),
+         :ok <- Api.start_container(ryuk_container_id, conn),
+         {:ok, container} <- Api.get_container(ryuk_container_id, conn),
          {:ok, socket} <- create_ryuk_socket(container),
          :ok <- register_ryuk_filter(session_id, socket) do
       Logger.log("Testcontainers initialized")
-      {:noreply, %{socket: socket, conn: conn, session_id: session_id}}
+
+      {:noreply,
+       %{
+         socket: socket,
+         conn: conn,
+         docker_host: get_docker_host(docker_host_url, conn),
+         session_id: session_id
+       }}
     else
       error ->
         {:stop, error, state}
@@ -130,6 +137,26 @@ defmodule Testcontainers do
   end
 
   # private functions
+
+  defp get_docker_host(docker_host_url, conn) do
+    case URI.parse(docker_host_url) do
+      uri when uri.scheme == "http" or uri.scheme == "https" or uri.scheme == "tcp" ->
+        {:ok, uri.host}
+
+      uri when uri.scheme == "unix" ->
+        if File.exists?("/.dockerenv") do
+          with {:ok, gateway} <- Api.get_bridge_gateway(conn) do
+            {:ok, gateway}
+          else
+            {:error, reason} ->
+              Logger.log("Failed to get bridge gateway: #{inspect(reason)}. Using localhost")
+              {:ok, "localhost"}
+          end
+        else
+          {:ok, "localhost"}
+        end
+    end
+  end
 
   defp wait_for_call(call) do
     GenServer.call(__MODULE__, call, @timeout)
