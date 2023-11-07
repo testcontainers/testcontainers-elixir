@@ -4,7 +4,7 @@ defmodule Testcontainers.EctoErrorsTest do
   import Testcontainers.Ecto
 
   test "repo cannot be nil" do
-    assert_raise ArgumentError, "Cant get repo config: repo=Testcontainers.Repo", fn ->
+    assert_raise UndefinedFunctionError, "function Testcontainers.Repo.start_link/0 is undefined (module Testcontainers.Repo is not available)", fn ->
       mysql_container(
         app: :testcontainers,
         repo: nil
