@@ -152,7 +152,7 @@ defmodule Testcontainers.MySqlContainer do
   """
   def connection_parameters(%Container{} = container) do
     [
-      hostname: "localhost",
+      hostname: Testcontainers.get_host(),
       port: port(container),
       username: container.environment[:MYSQL_USER],
       password: container.environment[:MYSQL_PASSWORD],

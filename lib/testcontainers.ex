@@ -29,6 +29,13 @@ defmodule Testcontainers do
   end
 
   @doc """
+  Get the docker host for the current environment.
+
+  This doesnt need to be localhost or 127.0.0.1. It can also be bridge gateway ip.
+  """
+  def get_host, do: wait_for_call(:get_host)
+
+  @doc """
   Starts a new container based on the provided configuration, applying any specified wait strategies.
 
   This function performs several steps:
@@ -100,14 +107,15 @@ defmodule Testcontainers do
          :ok <- Api.start_container(ryuk_container_id, conn),
          {:ok, container} <- Api.get_container(ryuk_container_id, conn),
          {:ok, socket} <- create_ryuk_socket(container),
-         :ok <- register_ryuk_filter(session_id, socket) do
+         :ok <- register_ryuk_filter(session_id, socket),
+         {:ok, docker_host} <- get_docker_host(docker_host_url, conn) do
       Logger.log("Testcontainers initialized")
 
       {:noreply,
        %{
          socket: socket,
          conn: conn,
-         docker_host: get_docker_host(docker_host_url, conn),
+         docker_host: docker_host,
          session_id: session_id
        }}
     else
@@ -134,6 +142,11 @@ defmodule Testcontainers do
   def handle_call({:stop_container, container_id}, from, state) do
     Task.async(fn -> GenServer.reply(from, Api.stop_container(container_id, state.conn)) end)
     {:noreply, state}
+  end
+
+  @impl true
+  def handle_call(:get_host, _from, state) do
+    {:reply, state.docker_host, state}
   end
 
   # private functions

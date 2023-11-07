@@ -152,7 +152,7 @@ defmodule Testcontainers.PostgresContainer do
   """
   def connection_parameters(%Container{} = container) do
     [
-      hostname: "localhost",
+      hostname: Testcontainers.get_host(),
       port: port(container),
       username: container.environment[:POSTGRES_USER],
       password: container.environment[:POSTGRES_PASSWORD],
