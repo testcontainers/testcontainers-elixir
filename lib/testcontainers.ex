@@ -28,11 +28,7 @@ defmodule Testcontainers do
     {:ok, %{options: options}}
   end
 
-  @doc """
-  Get the docker host for the current environment.
-
-  This doesnt need to be localhost or 127.0.0.1. It can also be bridge gateway ip.
-  """
+  @doc false
   def get_host(name \\ __MODULE__), do: wait_for_call(:get_host, name)
 
   @doc """
