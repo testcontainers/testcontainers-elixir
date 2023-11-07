@@ -19,7 +19,7 @@ defmodule Testcontainers do
   @timeout 300_000
 
   def start_link(options \\ []) do
-    GenServer.start_link(__MODULE__, options, name: __MODULE__)
+    GenServer.start_link(__MODULE__, options, name: Keyword.get(options, :name, __MODULE__))
   end
 
   @impl true
@@ -33,7 +33,7 @@ defmodule Testcontainers do
 
   This doesnt need to be localhost or 127.0.0.1. It can also be bridge gateway ip.
   """
-  def get_host, do: wait_for_call(:get_host)
+  def get_host(name \\ __MODULE__), do: wait_for_call(:get_host, name)
 
   @doc """
   Starts a new container based on the provided configuration, applying any specified wait strategies.
@@ -62,8 +62,8 @@ defmodule Testcontainers do
   - It's important to specify appropriate wait strategies to ensure the container is fully ready for interaction, especially for containers that may take some time to start up services internally.
 
   """
-  def start_container(config_builder) do
-    wait_for_call({:start_container, config_builder})
+  def start_container(config_builder, name \\ __MODULE__) do
+    wait_for_call({:start_container, config_builder}, name)
   end
 
   @doc """
@@ -84,8 +84,8 @@ defmodule Testcontainers do
 
       :ok = Testcontainers.Connection.stop_container("my_container_id")
   """
-  def stop_container(container_id) when is_binary(container_id) do
-    wait_for_call({:stop_container, container_id})
+  def stop_container(container_id, name \\ __MODULE__) when is_binary(container_id) do
+    wait_for_call({:stop_container, container_id}, name)
   end
 
   @impl true
@@ -174,8 +174,8 @@ defmodule Testcontainers do
     end
   end
 
-  defp wait_for_call(call) do
-    GenServer.call(__MODULE__, call, @timeout)
+  defp wait_for_call(call, name) do
+    GenServer.call(name, call, @timeout)
   end
 
   defp create_ryuk_socket(%Container{} = container) do

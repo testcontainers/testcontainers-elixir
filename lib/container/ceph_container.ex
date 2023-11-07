@@ -171,7 +171,7 @@ defmodule Testcontainers.CephContainer do
       "http://localhost:32768" # This value will be different depending on the mapped port.
   """
   def connection_url(%Container{} = container) do
-    "http://localhost:#{port(container)}"
+    "http://#{Testcontainers.get_host()}:#{port(container)}"
   end
 
   defimpl ContainerBuilder do

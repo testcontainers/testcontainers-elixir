@@ -102,7 +102,8 @@ defmodule Testcontainers.RedisContainer do
       iex> RedisContainer.connection_url(container)
       "http://localhost:32768" # This value will be different depending on the mapped port.
   """
-  def connection_url(%Container{} = container), do: "redis://localhost:#{port(container)}/"
+  def connection_url(%Container{} = container),
+    do: "redis://#{Testcontainers.get_host()}:#{port(container)}/"
 
   defimpl ContainerBuilder do
     import Container

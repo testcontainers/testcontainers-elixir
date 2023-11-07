@@ -7,10 +7,10 @@ defmodule TestcontainersTest do
   @moduletag timeout: 300_000
 
   test "will cleanup containers" do
-    {:ok, container} = Testcontainers.start_container(MySqlContainer.new())
-    GenServer.stop(Testcontainers)
-    TestHelper.wait_for_genserver_state(Testcontainers, :down)
-    {:ok, _} = Testcontainers.start_link()
+    {:ok, pid} = Testcontainers.start_link(name: :cleanup_test1)
+    {:ok, container} = Testcontainers.start_container(MySqlContainer.new(), pid)
+    GenServer.stop(pid)
+    TestHelper.wait_for_genserver_state(:cleanup_test1, :down)
 
     :ok =
       TestHelper.wait_for_lambda(
