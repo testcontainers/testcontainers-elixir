@@ -12,7 +12,8 @@ defmodule Testcontainers.EctoMysqlTest do
       mysql_container(
         app: :testcontainers,
         migrations_path: "#{__DIR__}/support/migrations",
-        repo: Testcontainers.MysqlRepo
+        repo: Testcontainers.MysqlRepo,
+        persistent_volume_name: "testcontainers_ecto_mysql_test"
       )
 
     {:ok, _pid} = Testcontainers.MysqlRepo.start_link()

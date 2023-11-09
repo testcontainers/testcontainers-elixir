@@ -9,6 +9,7 @@ defmodule Testcontainers.DatabaseBehaviour do
   @callback with_password(t(), String.t()) :: t()
   @callback with_database(t(), String.t()) :: t()
   @callback with_port(t(), integer() | {integer(), integer()}) :: t()
+  @callback with_persistent_volume(t(), binary()) :: t()
 
   @type t :: %{
           :image => String.t(),

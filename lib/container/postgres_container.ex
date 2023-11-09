@@ -23,8 +23,8 @@ defmodule Testcontainers.PostgresContainer do
   @default_port 5432
   @default_wait_timeout 60_000
 
-  @enforce_keys [:image, :user, :password, :database, :port, :wait_timeout]
-  defstruct [:image, :user, :password, :database, :port, :wait_timeout]
+  @enforce_keys [:image, :user, :password, :database, :port, :wait_timeout, :persistent_volume]
+  defstruct [:image, :user, :password, :database, :port, :wait_timeout, :persistent_volume]
 
   @doc """
   Creates a new `PostgresContainer` struct with default configurations.
@@ -36,7 +36,8 @@ defmodule Testcontainers.PostgresContainer do
       password: @default_password,
       database: @default_database,
       port: @default_port,
-      wait_timeout: @default_wait_timeout
+      wait_timeout: @default_wait_timeout,
+      persistent_volume: nil
     }
 
   @doc """
@@ -109,6 +110,11 @@ defmodule Testcontainers.PostgresContainer do
   """
   def with_port(%__MODULE__{} = config, port) when is_integer(port) or is_tuple(port) do
     %{config | port: port}
+  end
+
+  def with_persistent_volume(%__MODULE__{} = config, persistent_volume)
+      when is_binary(persistent_volume) do
+    %{config | persistent_volume: persistent_volume}
   end
 
   @doc """
@@ -199,11 +205,21 @@ defmodule Testcontainers.PostgresContainer do
             fn container -> with_exposed_port(container, port) end
         end
 
+      maybe_persisntent_volume_fn =
+        case config.persistent_volume do
+          nil ->
+            fn container -> container end
+
+          volume ->
+            fn container -> container |> with_bind_volume(volume, "/var/lib/postgresql/data") end
+        end
+
       new(config.image)
       |> Kernel.then(port_fn)
       |> with_environment(:POSTGRES_USER, config.user)
       |> with_environment(:POSTGRES_PASSWORD, config.password)
       |> with_environment(:POSTGRES_DB, config.database)
+      |> Kernel.then(maybe_persisntent_volume_fn)
       |> with_waiting_strategy(
         CommandWaitStrategy.new(
           [

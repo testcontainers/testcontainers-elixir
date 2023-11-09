@@ -15,6 +15,7 @@ defmodule Testcontainers.Container do
     wait_strategies: [],
     privileged: false,
     bind_mounts: [],
+    bind_volumes: [],
     labels: %{},
     auto_remove: true,
     container_id: nil
@@ -95,6 +96,19 @@ defmodule Testcontainers.Container do
       when is_binary(host_src) and is_binary(container_dest) do
     new_bind_mount = %{host_src: host_src, container_dest: container_dest, options: options}
     %__MODULE__{config | bind_mounts: [new_bind_mount | config.bind_mounts]}
+  end
+
+  @doc """
+  Sets a volume to be mounted into a container on target path
+  """
+  def with_bind_volume(%__MODULE__{} = config, volume, container_dest, read_only \\ false) do
+    new_bind_volume = %{
+      volume: volume,
+      container_dest: container_dest,
+      read_only: read_only
+    }
+
+    %__MODULE__{config | bind_volumes: [new_bind_volume | config.bind_volumes]}
   end
 
   @doc """

@@ -143,7 +143,8 @@ defmodule Testcontainers.Docker.Api do
         AutoRemove: container_config.auto_remove,
         PortBindings: map_port_bindings(container_config),
         Privileged: container_config.privileged,
-        Binds: map_binds(container_config)
+        Binds: map_binds(container_config),
+        Mounts: map_volumes(container_config)
       }
     }
   end
@@ -178,6 +179,18 @@ defmodule Testcontainers.Docker.Api do
     container_config.bind_mounts
     |> Enum.map(fn volume_binding ->
       "#{volume_binding.host_src}:#{volume_binding.container_dest}:#{volume_binding.options}"
+    end)
+  end
+
+  defp map_volumes(%Container{} = container_config) do
+    container_config.bind_volumes
+    |> Enum.map(fn volume_to_dest ->
+      %{
+        Target: volume_to_dest.container_dest,
+        Source: volume_to_dest.volume,
+        Type: "volume",
+        ReadOnly: volume_to_dest.read_only
+      }
     end)
   end
 

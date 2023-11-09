@@ -233,6 +233,7 @@ defmodule Testcontainers.Ecto do
     password = Keyword.get(options, :password, "test")
     database = Keyword.get(options, :database, "#{Atom.to_string(app)}_test")
     migrations_path = Keyword.get(options, :migrations_path, "priv/repo/migrations")
+    persistent_volume_name = Keyword.get(options, :persistent_volume_name, nil)
 
     container_module =
       case type do
@@ -242,6 +243,12 @@ defmodule Testcontainers.Ecto do
 
     image = Keyword.get(options, :image, container_module.default_image_with_tag())
 
+    maybe_persistent_volume_name_fn =
+      case persistent_volume_name do
+        nil -> fn config -> config end
+        name -> fn config -> config |> container_module.with_persistent_volume(name) end
+      end
+
     config =
       container_module.new()
       |> container_module.with_image(image)
@@ -249,6 +256,7 @@ defmodule Testcontainers.Ecto do
       |> container_module.with_user(user)
       |> container_module.with_database(database)
       |> container_module.with_password(password)
+      |> Kernel.then(maybe_persistent_volume_name_fn)
 
     case Testcontainers.start_container(config) do
       {:ok, container} ->
