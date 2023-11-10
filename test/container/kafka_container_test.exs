@@ -1,5 +1,6 @@
 defmodule Testcontainers.Container.KafkaContainerTest do
   use ExUnit.Case, async: true
+  import Testcontainers.ExUnit
 
   alias Testcontainers.Container.KafkaContainer
 
@@ -93,6 +94,31 @@ defmodule Testcontainers.Container.KafkaContainerTest do
       assert_raise FunctionClauseError, fn ->
         KafkaContainer.with_wait_timeout(config, "60_001")
       end
+    end
+  end
+
+  describe "integration testing" do
+    container(:redis, KafkaContainer.new())
+
+    test "provides a ready-to-use kafka container", %{kafka: kafka} do
+      uris = [{"localhost", 9092}]
+
+      {:ok, pid} = KafkaEx.create_worker(:worker, uris: uris, consumer_group: "kafka_ex")
+      on_exit(pid, fn -> KafkaEx.stop_worker(:worker) end)
+
+      request = %KafkaEx.Protocol.CreateTopics.TopicRequest{
+        topic: "test_topic",
+        num_partitions: 1,
+        replication_factor: 1,
+        replica_assignment: []
+      }
+
+      _ = KafkaEx.create_topics([request], worker_name: :worker)
+      {:ok, _} = KafkaEx.produce("test_topic", 0, "hey", worker_name: :worker, required_acks: 1)
+      stream = KafkaEx.stream("test_topic", 0, worker_name: :worker)
+      [response] = Enum.take(stream, 1)
+
+      assert response.value == "hey"
     end
   end
 end
