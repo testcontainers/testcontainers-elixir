@@ -2,13 +2,14 @@ defmodule Testcontainers.Container.KafkaContainerTest do
   use ExUnit.Case, async: true
   import Testcontainers.ExUnit
 
+  alias Testcontainers.Container
   alias Testcontainers.Container.KafkaContainer
 
   describe "new/0" do
     test "creates a new KafkaContainer struct with default configurations" do
       config = KafkaContainer.new()
 
-      assert config.image == "confluentinc/cp-kafka:6.1.9"
+      assert config.image == "confluentinc/cp-kafka:7.4.3"
       assert config.kafka_port == 9092
       assert config.broker_port == 9093
       assert config.zookeeper_port == 2181
@@ -98,10 +99,10 @@ defmodule Testcontainers.Container.KafkaContainerTest do
   end
 
   describe "integration testing" do
-    container(:redis, KafkaContainer.new())
+    container(:kafka, KafkaContainer.new())
 
     test "provides a ready-to-use kafka container", %{kafka: kafka} do
-      uris = [{"localhost", 9092}]
+      uris = [{"localhost", Container.mapped_port(kafka, 9092) || 9092}]
 
       {:ok, pid} = KafkaEx.create_worker(:worker, uris: uris, consumer_group: "kafka_ex")
       on_exit(pid, fn -> KafkaEx.stop_worker(:worker) end)

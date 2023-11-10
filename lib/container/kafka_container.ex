@@ -4,7 +4,7 @@ defmodule Testcontainers.Container.KafkaContainer do
   """
 
   @default_image "confluentinc/cp-kafka"
-  @default_image_with_tag "confluentinc/cp-kafka:6.1.9"
+  @default_image_with_tag "confluentinc/cp-kafka:7.4.3"
   @default_kafka_port 9092
   @default_broker_port 9093
   @default_zookeeper_port 2181
@@ -62,5 +62,18 @@ defmodule Testcontainers.Container.KafkaContainer do
   """
   def with_wait_timeout(%__MODULE__{} = config, wait_timeout) when is_integer(wait_timeout) do
     %{config | wait_timeout: wait_timeout}
+  end
+
+  defimpl Testcontainers.ContainerBuilder do
+    alias Testcontainers.Container
+    alias Testcontainers.Container.KafkaContainer
+    import Container
+
+    @spec build(%KafkaContainer{}) :: %Container{}
+    @impl true
+    def build(%KafkaContainer{} = config) do
+      # TODO set env vars
+      new(config.image)
+    end
   end
 end
