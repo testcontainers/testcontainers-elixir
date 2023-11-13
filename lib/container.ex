@@ -9,7 +9,7 @@ defmodule Testcontainers.Container do
   @enforce_keys [:image]
   defstruct [
     :image,
-    cmd: nil,
+    cmd: [],
     environment: %{},
     exposed_ports: [],
     wait_strategies: [],
@@ -28,7 +28,7 @@ defmodule Testcontainers.Container do
     %__MODULE__{
       image: image,
       bind_mounts: opts[:bind_mounts] || [],
-      cmd: opts[:cmd],
+      cmd: opts[:cmd] || [],
       environment: opts[:environment] || %{},
       exposed_ports: Keyword.get(opts, :exposed_ports, []),
       privileged: opts[:privileged] || false,
@@ -116,6 +116,10 @@ defmodule Testcontainers.Container do
   """
   def with_label(%__MODULE__{} = config, key, value) when is_binary(key) and is_binary(value) do
     %__MODULE__{config | labels: Map.put(config.labels, key, value)}
+  end
+
+  def with_cmd(%__MODULE__{} = config, cmd) when is_list(cmd) do
+    %__MODULE__{config | cmd: cmd}
   end
 
   @doc """
