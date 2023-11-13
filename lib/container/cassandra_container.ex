@@ -45,26 +45,8 @@ defmodule Testcontainers.CassandraContainer do
   defimpl ContainerBuilder do
     import Container
 
-    @doc """
-    Implementation of the `ContainerBuilder` protocol for `CephContainer`.
-
-    This implementation provides the logic for building a container configuration specific to Ceph. It ensures the provided image is compatible, sets up necessary environment variables, configures network settings, and applies a waiting strategy to ensure the container is fully operational before it's used.
-
-    The build process raises an `ArgumentError` if the specified container image is not compatible with the expected Ceph image.
-
-    ## Examples
-
-        # Assuming `ContainerBuilder.build/2` is called from somewhere in the application with a `CephContainer` configuration:
-        iex> config = CephContainer.new()
-        iex> built_container = ContainerBuilder.build(config, [])
-        # `built_container` is now a ready-to-use `%Container{}` configured specifically for Ceph.
-
-    ## Errors
-
-    - Raises `ArgumentError` if the provided image is not compatible with the default Ceph image.
-    """
-    @spec build(%CassandraContainer{}) :: %Container{}
     @impl true
+    @spec build(%CassandraContainer{}) :: %Container{}
     def build(%CassandraContainer{} = config) do
       if not String.starts_with?(config.image, CassandraContainer.default_image()) do
         raise ArgumentError,
