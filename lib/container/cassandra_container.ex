@@ -32,6 +32,10 @@ defmodule Testcontainers.CassandraContainer do
 
   def default_port, do: @default_port
 
+  def get_username, do: @default_username
+
+  def get_password, do: @default_password
+
   def port(%Container{} = container), do: Container.mapped_port(container, @default_port)
 
   def connection_uri(%Container{} = container) do

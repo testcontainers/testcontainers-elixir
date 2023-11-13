@@ -8,10 +8,19 @@ defmodule Testcontainers.Container.CassandraContainerTest do
 
   @cassandra_container CassandraContainer.new()
 
-  container(:cassandra, @cassandra_container)
+  test "cassandra defaults" do
+    assert CassandraContainer.default_port() == 9042
+    assert CassandraContainer.default_image() == "cassandra"
+    assert CassandraContainer.get_username() == "cassandra"
+    assert CassandraContainer.get_password() == "cassandra"
+  end
 
-  test "creates and starts cassandra container", %{cassandra: cassandra} do
-    {:ok, conn} = Xandra.start_link(nodes: [CassandraContainer.connection_uri(cassandra)])
-    # TODO
+  describe "cassandra" do
+    container(:cassandra, @cassandra_container)
+
+    test "can create and start", %{cassandra: cassandra} do
+      {:ok, _conn} = Xandra.start_link(nodes: [CassandraContainer.connection_uri(cassandra)])
+      # TODO
+    end
   end
 end
