@@ -67,7 +67,8 @@ defmodule TestcontainersElixir.MixProject do
       {:ex_doc, "~> 0.30", only: :dev, runtime: false},
       {:myxql, "~> 0.6.0", only: [:dev, :test]},
       {:postgrex, "~> 0.17", only: [:dev, :test]},
-      {:redix, "~> 1.2", only: [:dev, :test]}
+      {:redix, "~> 1.2", only: [:dev, :test]},
+      {:xandra, "~> 0.14", only: [:dev, :test]}
     ]
   end
 
