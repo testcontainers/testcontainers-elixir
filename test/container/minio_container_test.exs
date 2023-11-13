@@ -11,6 +11,11 @@ defmodule Testcontainers.Container.MinioContainerTest do
   container(:minio, @minio_container)
 
   test "creates and starts minio container", %{minio: minio} do
-    IO.inspect(minio)
+    assert MinioContainer.connection_url(minio) |> valid_url?()
+  end
+
+  defp valid_url?(url) do
+    uri = URI.parse(url)
+    uri.scheme in ["http", "https"] and not is_nil(uri.host)
   end
 end

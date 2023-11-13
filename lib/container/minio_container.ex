@@ -7,7 +7,6 @@ defmodule Testcontainers.MinioContainer do
   @default_image "minio/minio"
   @default_tag "RELEASE.2023-11-11T08-14-41Z"
   @default_image_with_tag "#{@default_image}:#{@default_tag}"
-  @default_bucket "test"
   @default_username "minioadmin"
   @default_password "minioadmin"
   @default_s3_port 9000
@@ -25,8 +24,16 @@ defmodule Testcontainers.MinioContainer do
       wait_timeout: @default_wait_timeout
     }
 
+  def get_username, do: @default_username
+  def get_password, do: @default_password
   def default_ui_port, do: @default_ui_port
   def default_s3_port, do: @default_s3_port
+
+  def port(%Container{} = container), do: Container.mapped_port(container, @default_s3_port)
+
+  def connection_url(%Container{} = container) do
+    "http://#{Testcontainers.get_host()}:#{port(container)}"
+  end
 
   defimpl ContainerBuilder do
     import Container
