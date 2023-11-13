@@ -1,7 +1,8 @@
-defmodule Testcontainers.Container.KafkaContainer do
+defmodule Testcontainers.KafkaContainer do
   @moduledoc """
   Provides functionality for creating and managing Kafka container configurations.
   """
+  alias Testcontainers.Container
 
   @default_image "confluentinc/cp-kafka"
   @default_image_with_tag "confluentinc/cp-kafka:7.4.3"
@@ -65,8 +66,6 @@ defmodule Testcontainers.Container.KafkaContainer do
   end
 
   defimpl Testcontainers.ContainerBuilder do
-    alias Testcontainers.Container
-    alias Testcontainers.Container.KafkaContainer
     import Container
 
     @spec build(%KafkaContainer{}) :: %Container{}

@@ -3,7 +3,7 @@ defmodule Testcontainers.Container.KafkaContainerTest do
   import Testcontainers.ExUnit
 
   alias Testcontainers.Container
-  alias Testcontainers.Container.KafkaContainer
+  alias Testcontainers.KafkaContainer
 
   describe "new/0" do
     test "creates a new KafkaContainer struct with default configurations" do
