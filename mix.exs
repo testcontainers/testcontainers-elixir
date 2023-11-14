@@ -59,15 +59,24 @@ defmodule TestcontainersElixir.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:ex_docker_engine_api, "~> 1.43"},
       {:uuid, "~> 1.1"},
-      {:ecto_sql, "~> 3.10", optional: true},
-      {:ecto, "~> 3.10", optional: true},
       {:dialyxir, "~> 1.3", only: [:dev], runtime: false},
       {:ex_doc, "~> 0.30", only: :dev, runtime: false},
+      # docker api
+      {:ex_docker_engine_api, "~> 1.43"},
+      # ecto module
+      {:ecto_sql, "~> 3.10", optional: true},
+      {:ecto, "~> 3.10", optional: true},
+      # mysql
       {:myxql, "~> 0.6.0", only: [:dev, :test]},
+      # postgres
       {:postgrex, "~> 0.17", only: [:dev, :test]},
-      {:redix, "~> 1.2", only: [:dev, :test]}
+      # redis
+      {:redix, "~> 1.2", only: [:dev, :test]},
+      # ceph and minio
+      {:ex_aws, "~> 2.1", only: [:dev, :test]},
+      {:ex_aws_s3, "~> 2.0", only: [:dev, :test]},
+      {:sweet_xml, "~> 0.6", only: [:dev, :test]}
     ]
   end
 

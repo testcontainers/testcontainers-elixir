@@ -174,6 +174,16 @@ defmodule Testcontainers.CephContainer do
     "http://#{Testcontainers.get_host()}:#{port(container)}"
   end
 
+  def connection_opts(%Container{} = container) do
+    [
+      port: CephContainer.port(container),
+      scheme: "http://",
+      host: Testcontainers.get_host(),
+      access_key_id: container.environment[:CEPH_DEMO_ACCESS_KEY],
+      secret_access_key: container.environment[:CEPH_DEMO_SECRET_KEY]
+    ]
+  end
+
   defimpl ContainerBuilder do
     import Container
 

@@ -11,11 +11,16 @@ defmodule Testcontainers.Container.MinioContainerTest do
   container(:minio, @minio_container)
 
   test "creates and starts minio container", %{minio: minio} do
-    assert MinioContainer.connection_url(minio) |> valid_url?()
-  end
+    conn_opts = MinioContainer.connection_opts(minio)
 
-  defp valid_url?(url) do
-    uri = URI.parse(url)
-    uri.scheme in ["http", "https"] and not is_nil(uri.host)
+    {:ok, _result} =
+      ExAws.S3.put_bucket("my-bucket", "")
+      |> ExAws.request(conn_opts)
+
+    {:ok, %{body: %{buckets: [first_bucket | _rest]}}} =
+      ExAws.S3.list_buckets()
+      |> ExAws.request(conn_opts)
+
+    assert first_bucket.name == "my-bucket"
   end
 end

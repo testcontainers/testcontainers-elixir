@@ -35,6 +35,16 @@ defmodule Testcontainers.MinioContainer do
     "http://#{Testcontainers.get_host()}:#{port(container)}"
   end
 
+  def connection_opts(%Container{} = container) do
+    [
+      port: MinioContainer.port(container),
+      scheme: "http://",
+      host: Testcontainers.get_host(),
+      access_key_id: container.environment[:MINIO_ROOT_USER],
+      secret_access_key: container.environment[:MINIO_ROOT_PASSWORD]
+    ]
+  end
+
   defimpl ContainerBuilder do
     import Container
 

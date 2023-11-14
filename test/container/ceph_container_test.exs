@@ -11,17 +11,16 @@ defmodule Testcontainers.Container.CephContainerTest do
   container(:ceph, @ceph_container)
 
   test "creates and starts ceph container", %{ceph: ceph} do
-    url = CephContainer.connection_url(ceph)
+    conn_opts = CephContainer.connection_opts(ceph)
 
-    {:ok, 404, _headers, _body_ref} =
-      :hackney.request(:get, url <> "/bucket_that_does_not_exist")
+    {:ok, _result} =
+      ExAws.S3.put_bucket("my-bucket", "")
+      |> ExAws.request(conn_opts)
 
-    {:ok, 403, _headers, _body_ref} = :hackney.request(:get, url <> "/" <> @ceph_container.bucket)
+    {:ok, %{body: %{buckets: [first_bucket | _rest]}}} =
+      ExAws.S3.list_buckets()
+      |> ExAws.request(conn_opts)
 
-    {:ok, 200, _headers, body_ref} = :hackney.request(:get, url)
-    {:ok, body} = :hackney.body(body_ref)
-    body_str = IO.iodata_to_binary(body)
-
-    assert String.contains?(body_str, "anonymous")
+    assert first_bucket.name == "my-bucket"
   end
 end
