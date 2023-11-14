@@ -194,30 +194,12 @@ defmodule Testcontainers.PostgresContainer do
             "Image #{config.image} is not compatible with #{PostgresContainer.default_image()}"
       end
 
-      port_fn =
-        case config.port do
-          {exposed_port, host_port} ->
-            fn container -> with_fixed_port(container, exposed_port, host_port) end
-
-          port ->
-            fn container -> with_exposed_port(container, port) end
-        end
-
-      maybe_persisntent_volume_fn =
-        case config.persistent_volume do
-          nil ->
-            fn container -> container end
-
-          volume ->
-            fn container -> container |> with_bind_volume(volume, "/var/lib/postgresql/data") end
-        end
-
       new(config.image)
-      |> Kernel.then(port_fn)
+      |> then(PostgresContainer.container_port_fun(config.port))
       |> with_environment(:POSTGRES_USER, config.user)
       |> with_environment(:POSTGRES_PASSWORD, config.password)
       |> with_environment(:POSTGRES_DB, config.database)
-      |> Kernel.then(maybe_persisntent_volume_fn)
+      |> then(PostgresContainer.container_volume_fun(config.persistent_volume))
       |> with_waiting_strategy(
         CommandWaitStrategy.new(
           [
@@ -229,6 +211,24 @@ defmodule Testcontainers.PostgresContainer do
         )
       )
     end
+  end
+
+  @doc false
+  def container_port_fun(nil), do: &Function.identity/1
+
+  def container_port_fun({exposed_port, host_port}) do
+    fn container -> Container.with_fixed_port(container, exposed_port, host_port) end
+  end
+
+  def container_port_fun(port) do
+    fn container -> Container.with_exposed_port(container, port) end
+  end
+
+  @doc false
+  def container_volume_fun(nil), do: &Function.identity/1
+
+  def container_volume_fun(volume) when is_binary(volume) do
+    fn container -> Container.with_bind_volume(container, volume, "/var/lib/postgresql/data") end
   end
 end
 

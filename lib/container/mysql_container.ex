@@ -194,32 +194,35 @@ defmodule Testcontainers.MySqlContainer do
             "Image #{config.image} is not compatible with #{MySqlContainer.default_image()}"
       end
 
-      port_fn =
-        case config.port do
-          {exposed_port, host_port} ->
-            fn container -> with_fixed_port(container, exposed_port, host_port) end
-
-          port ->
-            fn container -> with_exposed_port(container, port) end
-        end
-
-      maybe_persisntent_volume_fn =
-        case config.persistent_volume do
-          nil -> fn container -> container end
-          volume -> fn container -> container |> with_bind_volume(volume, "/var/lib/mysql") end
-        end
-
       new(config.image)
-      |> Kernel.then(port_fn)
+      |> then(MySqlContainer.container_port_fun(config.port))
       |> with_environment(:MYSQL_USER, config.user)
       |> with_environment(:MYSQL_PASSWORD, config.password)
       |> with_environment(:MYSQL_DATABASE, config.database)
-      |> Kernel.then(maybe_persisntent_volume_fn)
+      |> then(MySqlContainer.container_volume_fun(config.persistent_volume))
       |> with_environment(:MYSQL_RANDOM_ROOT_PASSWORD, "yes")
       |> with_waiting_strategy(
         LogWaitStrategy.new(~r/.*port: 3306  MySQL Community Server.*/, config.wait_timeout)
       )
     end
+  end
+
+  @doc false
+  def container_port_fun(nil), do: &Function.identity/1
+
+  def container_port_fun({exposed_port, host_port}) do
+    fn container -> Container.with_fixed_port(container, exposed_port, host_port) end
+  end
+
+  def container_port_fun(port) do
+    fn container -> Container.with_exposed_port(container, port) end
+  end
+
+  @doc false
+  def container_volume_fun(nil), do: &Function.identity/1
+
+  def container_volume_fun(volume) when is_binary(volume) do
+    fn container -> Container.with_bind_volume(container, volume, "/var/lib/mysql") end
   end
 end
 

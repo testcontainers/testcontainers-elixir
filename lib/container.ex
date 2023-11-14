@@ -87,7 +87,7 @@ defmodule Testcontainers.Container do
   Sets a file or the directory on the _host machine_ to be mounted into a _container_.
   """
   def with_bind_mount(%__MODULE__{} = config, host_src, container_dest, options \\ "ro")
-      when is_binary(host_src) and is_binary(container_dest) do
+      when is_binary(host_src) and is_binary(container_dest) and is_binary(options) do
     new_bind_mount = %{host_src: host_src, container_dest: container_dest, options: options}
     %__MODULE__{config | bind_mounts: [new_bind_mount | config.bind_mounts]}
   end
@@ -95,7 +95,8 @@ defmodule Testcontainers.Container do
   @doc """
   Sets a volume to be mounted into a container on target path
   """
-  def with_bind_volume(%__MODULE__{} = config, volume, container_dest, read_only \\ false) do
+  def with_bind_volume(%__MODULE__{} = config, volume, container_dest, read_only \\ false)
+      when is_binary(volume) and is_binary(container_dest) and is_boolean(read_only) do
     new_bind_volume = %{
       volume: volume,
       container_dest: container_dest,
