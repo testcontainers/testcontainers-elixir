@@ -68,7 +68,7 @@ defmodule Testcontainers.CassandraContainer do
       |> with_environment(:CASSANDRA_DC, "datacenter1")
       |> with_waiting_strategy(
         LogWaitStrategy.new(
-          ~r/Starting listening for CQL clients on .*:9042.*/,
+          ~r/Starting listening for CQL clients on \/0\.0\.0\.0:#{CassandraContainer.default_port()}.*/,
           config.wait_timeout
         )
       )
