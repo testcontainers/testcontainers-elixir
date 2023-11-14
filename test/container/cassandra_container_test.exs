@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 defmodule Testcontainers.Container.CassandraContainerTest do
   use ExUnit.Case, async: true
 

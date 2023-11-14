@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 defmodule Testcontainers.CassandraContainer do
   @moduledoc """
   Provides functionality for creating and managing Cassandra container configurations.
