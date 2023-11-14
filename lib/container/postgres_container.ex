@@ -5,8 +5,6 @@ defmodule Testcontainers.PostgresContainer do
   @behaviour Testcontainers.DatabaseBehaviour
   @moduledoc """
   Provides functionality for creating and managing Postgres container configurations.
-
-  This module includes helper methods for setting up a Postgres container with specific parameters such as image, user, password, database, and more.
   """
 
   alias Testcontainers.CommandWaitStrategy

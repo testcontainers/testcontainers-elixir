@@ -2,10 +2,6 @@
 defmodule Testcontainers.CephContainer do
   @moduledoc """
   Provides functionality for creating and managing Ceph container configurations.
-
-  This module provides functions for creating and manipulating configurations for Ceph containers.
-  It allows the setting of specific parameters like image, access keys, secret keys,
-  and other parameters related to the Ceph container.
   """
 
   alias Testcontainers.LogWaitStrategy

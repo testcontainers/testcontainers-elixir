@@ -1,4 +1,8 @@
 defmodule Testcontainers.MinioContainer do
+  @moduledoc """
+  Provides functionality for creating and managing Minio container configurations.
+  """
+
   alias Testcontainers.Container
   alias Testcontainers.MinioContainer
   alias Testcontainers.ContainerBuilder
