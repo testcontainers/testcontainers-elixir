@@ -76,7 +76,7 @@ defmodule TestcontainersElixir.MixProject do
       # ceph and minio
       {:ex_aws, "~> 2.1", only: [:dev, :test]},
       {:ex_aws_s3, "~> 2.0", only: [:dev, :test]},
-      {:sweet_xml, "~> 0.6", only: [:dev, :test]}
+      {:sweet_xml, "~> 0.6", only: [:dev, :test]},
       # cassandra
       {:xandra, "~> 0.14", only: [:dev, :test]}
     ]
