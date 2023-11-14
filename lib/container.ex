@@ -31,7 +31,7 @@ defmodule Testcontainers.Container do
   @doc """
   Sets a _waiting strategy_ for the _container_.
   """
-  def with_waiting_strategy(%__MODULE__{} = config, wait_fn) do
+  def with_waiting_strategy(%__MODULE__{} = config, wait_fn) when is_struct(wait_fn) do
     %__MODULE__{config | wait_strategies: [wait_fn | config.wait_strategies]}
   end
 
@@ -39,7 +39,7 @@ defmodule Testcontainers.Container do
   Sets multiple _waiting strategies_ for the _container_.
   """
   def with_waiting_strategies(%__MODULE__{} = config, wait_fns) when is_list(wait_fns) do
-    %__MODULE__{config | wait_strategies: wait_fns ++ config.wait_strategies}
+    Enum.reduce(wait_fns, config, fn fun, cfg -> with_waiting_strategy(cfg, fun) end)
   end
 
   @doc """
