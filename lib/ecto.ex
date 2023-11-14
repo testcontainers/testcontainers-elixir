@@ -119,6 +119,7 @@ defmodule Testcontainers.Ecto do
     - `:database` (optional) - Specifies the name of the database to be created within the Mysql instance. If not provided, the default behavior is to create a database with the name derived from the application's atom, appended with "_test".
     - `:migrations_path` (optional) - Indicates the path to the migrations folder (defaults to "priv/repo/migrations").
     - `:persistent_volume_name` (optional, EXPERIMENTAL) - Sets a named volume for the data in the database. This is an experimental option, and changes in database container image or other things that could invalidate the data, would make the container not start properly.
+
   ## Database Lifecycle in Testing
 
   It's important to note that the Mysql database initiated by this function will remain operational for the duration of the test process and is not explicitly shut down by the function. The database and its corresponding data are ephemeral, lasting only for the scope of the test session.
