@@ -2,10 +2,6 @@
 defmodule Testcontainers.CephContainer do
   @moduledoc """
   Provides functionality for creating and managing Ceph container configurations.
-
-  This module provides functions for creating and manipulating configurations for Ceph containers.
-  It allows the setting of specific parameters like image, access keys, secret keys,
-  and other parameters related to the Ceph container.
   """
 
   alias Testcontainers.LogWaitStrategy
@@ -172,6 +168,20 @@ defmodule Testcontainers.CephContainer do
   """
   def connection_url(%Container{} = container) do
     "http://#{Testcontainers.get_host()}:#{port(container)}"
+  end
+
+  @doc """
+  Generates the connection options for accessing the Ceph service running within the container.
+  Compatible with what ex_aws expects in `ExAws.request(options)`
+  """
+  def connection_opts(%Container{} = container) do
+    [
+      port: CephContainer.port(container),
+      scheme: "http://",
+      host: Testcontainers.get_host(),
+      access_key_id: container.environment[:CEPH_DEMO_ACCESS_KEY],
+      secret_access_key: container.environment[:CEPH_DEMO_SECRET_KEY]
+    ]
   end
 
   defimpl ContainerBuilder do

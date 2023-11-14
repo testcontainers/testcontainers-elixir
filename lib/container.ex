@@ -9,7 +9,7 @@ defmodule Testcontainers.Container do
   @enforce_keys [:image]
   defstruct [
     :image,
-    cmd: nil,
+    cmd: [],
     environment: %{},
     exposed_ports: [],
     wait_strategies: [],
@@ -28,7 +28,7 @@ defmodule Testcontainers.Container do
     %__MODULE__{
       image: image,
       bind_mounts: opts[:bind_mounts] || [],
-      cmd: opts[:cmd],
+      cmd: opts[:cmd] || [],
       environment: opts[:environment] || %{},
       exposed_ports: Keyword.get(opts, :exposed_ports, []),
       privileged: opts[:privileged] || false,
@@ -68,6 +68,9 @@ defmodule Testcontainers.Container do
     %__MODULE__{config | exposed_ports: [port | filtered_ports]}
   end
 
+  @doc """
+  Adds a fixed _port_ to be exposed on the _container_.
+  """
   def with_fixed_port(%__MODULE__{} = config, port, host_port \\ nil)
       when is_integer(port) and (is_nil(host_port) or is_integer(host_port)) do
     filtered_ports = config.exposed_ports |> Enum.reject(fn p -> p == port end)
@@ -116,6 +119,13 @@ defmodule Testcontainers.Container do
   """
   def with_label(%__MODULE__{} = config, key, value) when is_binary(key) and is_binary(value) do
     %__MODULE__{config | labels: Map.put(config.labels, key, value)}
+  end
+
+  @doc """
+  Sets a cmd to run when the container starts.
+  """
+  def with_cmd(%__MODULE__{} = config, cmd) when is_list(cmd) do
+    %__MODULE__{config | cmd: cmd}
   end
 
   @doc """

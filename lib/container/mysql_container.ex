@@ -5,8 +5,6 @@ defmodule Testcontainers.MySqlContainer do
   @behaviour Testcontainers.DatabaseBehaviour
   @moduledoc """
   Provides functionality for creating and managing MySQL container configurations.
-
-  This module includes helper methods for setting up a MySQL container with specific parameters such as image, user, password, database, and more.
   """
 
   alias Testcontainers.Container

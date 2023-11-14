@@ -4,8 +4,6 @@
 defmodule Testcontainers.RedisContainer do
   @moduledoc """
   Provides functionality for creating and managing Redis container configurations.
-
-  This module includes helper methods for setting up a Redis container with specific parameters such as image and more.
   """
 
   alias Testcontainers.ContainerBuilder

@@ -1,18 +1,18 @@
 # SPDX-License-Identifier: MIT
-defmodule Testcontainers.Container.CephContainerTest do
+defmodule Testcontainers.Container.MinioContainerTest do
   use ExUnit.Case, async: true
 
   import Testcontainers.ExUnit
-  alias Testcontainers.CephContainer
+  alias Testcontainers.MinioContainer
 
   @moduletag timeout: 300_000
 
-  @ceph_container CephContainer.new()
+  @minio_container MinioContainer.new()
 
-  container(:ceph, @ceph_container)
+  container(:minio, @minio_container)
 
-  test "creates and starts ceph container", %{ceph: ceph} do
-    conn_opts = CephContainer.connection_opts(ceph)
+  test "creates and starts minio container", %{minio: minio} do
+    conn_opts = MinioContainer.connection_opts(minio)
 
     {:ok, _result} =
       ExAws.S3.put_bucket("my-bucket", "")
