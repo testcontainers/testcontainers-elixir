@@ -39,6 +39,12 @@ defmodule Testcontainers.Container.CassandraContainerTest do
           "INSERT INTO cassandra_test.users(id, name) VALUES(1, 'Very special name')"
         )
 
+      {:ok, _result} =
+        Xandra.execute(
+          conn,
+          "INSERT INTO cassandra_test.users(id, name) VALUES(2, 'Other name')"
+        )
+
       page =
         with {:ok, prepared} <-
                Xandra.prepare(
@@ -49,6 +55,7 @@ defmodule Testcontainers.Container.CassandraContainerTest do
                Xandra.execute(conn, prepared, [_name = "Very special name"]),
              do: page
 
+      assert length(page.content) == 1
       assert page.content |> Kernel.hd() |> List.last() == "Very special name"
     end
   end

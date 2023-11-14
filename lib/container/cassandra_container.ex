@@ -4,6 +4,7 @@ defmodule Testcontainers.CassandraContainer do
   """
 
   alias Testcontainers.CassandraContainer
+  alias Testcontainers.LogWaitStrategy
   alias Testcontainers.ContainerBuilder
   alias Testcontainers.Container
 
@@ -65,6 +66,12 @@ defmodule Testcontainers.CassandraContainer do
       |> with_environment(:MAX_HEAP_SIZE, "1024M")
       |> with_environment(:CASSANDRA_ENDPOINT_SNITCH, "GossipingPropertyFileSnitch")
       |> with_environment(:CASSANDRA_DC, "datacenter1")
+      |> with_waiting_strategy(
+        LogWaitStrategy.new(
+          ~r/Starting listening for CQL clients on .*:9042.*/,
+          config.wait_timeout
+        )
+      )
     end
   end
 end
