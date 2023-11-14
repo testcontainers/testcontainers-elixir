@@ -68,6 +68,9 @@ defmodule Testcontainers.Container do
     %__MODULE__{config | exposed_ports: [port | filtered_ports]}
   end
 
+  @doc """
+  Adds a fixed _port_ to be exposed on the _container_.
+  """
   def with_fixed_port(%__MODULE__{} = config, port, host_port \\ nil)
       when is_integer(port) and (is_nil(host_port) or is_integer(host_port)) do
     filtered_ports = config.exposed_ports |> Enum.reject(fn p -> p == port end)
@@ -118,6 +121,9 @@ defmodule Testcontainers.Container do
     %__MODULE__{config | labels: Map.put(config.labels, key, value)}
   end
 
+  @doc """
+  Sets a cmd to run when the container starts.
+  """
   def with_cmd(%__MODULE__{} = config, cmd) when is_list(cmd) do
     %__MODULE__{config | cmd: cmd}
   end
