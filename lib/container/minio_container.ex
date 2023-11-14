@@ -33,12 +33,22 @@ defmodule Testcontainers.MinioContainer do
   def default_ui_port, do: @default_ui_port
   def default_s3_port, do: @default_s3_port
 
+  @doc """
+  Retrieves the port mapped by the Docker host for the Minio container.
+  """
   def port(%Container{} = container), do: Container.mapped_port(container, @default_s3_port)
 
+  @doc """
+  Generates the connection URL for accessing the Minio service running within the container.
+  """
   def connection_url(%Container{} = container) do
     "http://#{Testcontainers.get_host()}:#{port(container)}"
   end
 
+  @doc """
+  Generates the connection options for accessing the Minio service running within the container.
+  Compatible with what ex_aws expects in `ExAws.request(options)`
+  """
   def connection_opts(%Container{} = container) do
     [
       port: MinioContainer.port(container),

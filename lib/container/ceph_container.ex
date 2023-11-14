@@ -170,6 +170,10 @@ defmodule Testcontainers.CephContainer do
     "http://#{Testcontainers.get_host()}:#{port(container)}"
   end
 
+  @doc """
+  Generates the connection options for accessing the Ceph service running within the container.
+  Compatible with what ex_aws expects in `ExAws.request(options)`
+  """
   def connection_opts(%Container{} = container) do
     [
       port: CephContainer.port(container),
