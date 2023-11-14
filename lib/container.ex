@@ -9,7 +9,7 @@ defmodule Testcontainers.Container do
   @enforce_keys [:image]
   defstruct [
     :image,
-    cmd: [],
+    cmd: nil,
     environment: %{},
     exposed_ports: [],
     wait_strategies: [],
@@ -17,24 +17,15 @@ defmodule Testcontainers.Container do
     bind_mounts: [],
     bind_volumes: [],
     labels: %{},
-    auto_remove: true,
+    auto_remove: false,
     container_id: nil
   ]
 
   @doc """
   A constructor function to make it easier to construct a container
   """
-  def new(image, opts \\ []) when is_binary(image) do
-    %__MODULE__{
-      image: image,
-      bind_mounts: opts[:bind_mounts] || [],
-      cmd: opts[:cmd] || [],
-      environment: opts[:environment] || %{},
-      exposed_ports: Keyword.get(opts, :exposed_ports, []),
-      privileged: opts[:privileged] || false,
-      auto_remove: opts[:auto_remove] || true,
-      wait_strategies: opts[:wait_strategies] || []
-    }
+  def new(image) when is_binary(image) do
+    %__MODULE__{image: image}
   end
 
   @doc """
@@ -126,6 +117,13 @@ defmodule Testcontainers.Container do
   """
   def with_cmd(%__MODULE__{} = config, cmd) when is_list(cmd) do
     %__MODULE__{config | cmd: cmd}
+  end
+
+  @doc """
+  Sets whether the container should be automatically removed on exit.
+  """
+  def with_auto_remove(%__MODULE__{} = config, auto_remove) when is_boolean(auto_remove) do
+    %__MODULE__{config | auto_remove: auto_remove}
   end
 
   @doc """

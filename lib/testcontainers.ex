@@ -97,6 +97,7 @@ defmodule Testcontainers do
       |> Container.with_exposed_port(8080)
       |> Container.with_environment("RYUK_PORT", "8080")
       |> Container.with_bind_mount("/var/run/docker.sock", "/var/run/docker.sock", "rw")
+      |> Container.with_auto_remove(true)
 
     with {:ok, _} <- Api.pull_image(ryuk_config.image, conn),
          {:ok, ryuk_container_id} <- Api.create_container(ryuk_config, conn),
