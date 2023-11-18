@@ -102,6 +102,23 @@ To start a postgres container when running tests, that also enables testing of a
 
     # .. other setup code
   end
+
+  # in mix.exs
+  # comment out test alias and setup aliases for ecto
+  defp aliases do
+    [
+      setup: [
+        "deps.get", 
+        # "ecto.setup",
+        "assets.setup", 
+        "assets.build"
+      ],
+      # "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
+      # "ecto.reset": ["ecto.drop", "ecto.setup"],
+      # test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
+      # ... SNIP
+    ]
+  end
 ```
 
 This will start a postgres container that will be terminated when the test process ends.
