@@ -262,7 +262,10 @@ defmodule Testcontainers.Ecto do
 
     case Testcontainers.start_container(config) do
       {:ok, container} ->
-        System.at_exit(fn _ -> Testcontainers.stop_container(container.container_id) end)
+        System.at_exit(fn _ ->
+          repo.stop()
+          Testcontainers.stop_container(container.container_id)
+        end)
 
         :ok =
           Application.put_env(
