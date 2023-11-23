@@ -90,14 +90,28 @@ container(:redis, Testcontainers.RedisContainer.new())
 To start a postgres container when running tests, that also enables testing of application initialization with databasse calls at startup, add this in application.ex:
 
 ```elixir
+  # in config/dev.exs:
+  config :testcontainers, 
+    enabled: true
+    database: "hello_dev"
+
   # in config/test.exs:
-  config :testcontainers, enabled: true
+  config :testcontainers, 
+    enabled: true
+    database: "hello_test"
 
   # in lib/my_app/application.ex:
   @impl true
   def start(_type, _args) do
     if Application.get_env(:testcontainers, :enabled, false) do
-      {:ok, _container} = Testcontainers.Ecto.postgres_container(app: :my_app)
+      database = Application.get_env(:testcontainers, :database, "default")
+
+      {:ok, _container} =
+        Testcontainers.Ecto.postgres_container(
+          app: :hello,
+          database: database,
+          persistent_volume_name: "#{database}_data"
+        )
     end
 
     # .. other setup code
