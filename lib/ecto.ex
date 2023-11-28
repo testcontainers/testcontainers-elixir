@@ -262,21 +262,6 @@ defmodule Testcontainers.Ecto do
 
     case Testcontainers.start_container(config) do
       {:ok, container} ->
-        System.at_exit(fn _ ->
-          if Kernel.function_exported?(repo, :stop, 0) and Process.whereis(repo) != nil do
-            try do
-              repo.stop()
-            catch
-              _ ->
-                Logger.log(
-                  "Failed to stop repo #{inspect(repo)} manually. This is just a warning."
-                )
-            end
-          end
-
-          Testcontainers.stop_container(container.container_id)
-        end)
-
         :ok =
           Application.put_env(
             app,
