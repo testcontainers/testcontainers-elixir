@@ -80,5 +80,9 @@ defmodule Testcontainers.CassandraContainer do
         )
       )
     end
+
+    @impl true
+    @spec is_starting(%CassandraContainer{}, %Container{}) :: any()
+    def is_starting(_config, _container), do: nil
   end
 end

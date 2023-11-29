@@ -139,6 +139,10 @@ defmodule Testcontainers.RedisContainer do
         CommandWaitStrategy.new(["redis-cli", "PING"], config.wait_timeout)
       )
     end
+
+    @impl true
+    @spec is_starting(%RedisContainer{}, %Container{}) :: any()
+    def is_starting(_config, _container), do: nil
   end
 end
 

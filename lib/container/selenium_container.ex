@@ -68,6 +68,10 @@ defmodule Testcontainers.SeleniumContainer do
         PortWaitStrategy.new("127.0.0.1", config.port2, config.wait_timeout, 1000)
       ])
     end
+
+    @impl true
+    @spec is_starting(%SeleniumContainer{}, %Container{}) :: any()
+    def is_starting(_config, _container), do: nil
   end
 end
 

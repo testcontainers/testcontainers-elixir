@@ -215,6 +215,7 @@ defmodule Testcontainers do
          {:ok, id} <- Api.create_container(config, state.conn),
          :ok <- Api.start_container(id, state.conn),
          {:ok, container} <- Api.get_container(id, state.conn),
+         _ <- ContainerBuilder.is_starting(config, container),
          :ok <- wait_for_container(container, config.wait_strategies || [], state.conn) do
       {:ok, container}
     end

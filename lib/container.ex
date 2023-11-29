@@ -146,5 +146,9 @@ defmodule Testcontainers.Container do
     def build(%Testcontainers.Container{} = config) do
       config
     end
+
+    @impl true
+    @spec is_starting(%Testcontainers.Container{}, %Testcontainers.Container{}) :: any()
+    def is_starting(_config, _container), do: nil
   end
 end

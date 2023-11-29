@@ -4,4 +4,7 @@ defprotocol Testcontainers.ContainerBuilder do
   """
   @spec build(t()) :: %Testcontainers.Container{}
   def build(builder)
+
+  @spec is_starting(t(), %Testcontainers.Container{}) :: any()
+  def is_starting(builder, container)
 end

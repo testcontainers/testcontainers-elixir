@@ -230,6 +230,10 @@ defmodule Testcontainers.CephContainer do
         )
       )
     end
+
+    @impl true
+    @spec is_starting(%CephContainer{}, %Container{}) :: any()
+    def is_starting(_config, _container), do: nil
   end
 end
 

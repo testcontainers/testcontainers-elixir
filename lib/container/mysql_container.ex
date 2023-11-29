@@ -205,6 +205,10 @@ defmodule Testcontainers.MySqlContainer do
         LogWaitStrategy.new(~r/.*port: 3306  MySQL Community Server.*/, config.wait_timeout)
       )
     end
+
+    @impl true
+    @spec is_starting(%MySqlContainer{}, %Container{}) :: any()
+    def is_starting(_config, _container), do: nil
   end
 
   @doc false

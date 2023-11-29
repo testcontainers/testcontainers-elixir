@@ -74,5 +74,9 @@ defmodule Testcontainers.MinioContainer do
         LogWaitStrategy.new(~r/.*Status:         1 Online, 0 Offline..*/, config.wait_timeout)
       )
     end
+
+    @impl true
+    @spec is_starting(%MinioContainer{}, %Container{}) :: any()
+    def is_starting(_config, _container), do: nil
   end
 end
