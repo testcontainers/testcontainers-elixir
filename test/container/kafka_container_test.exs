@@ -11,9 +11,11 @@ defmodule Testcontainers.Container.KafkaContainerTest do
 
       assert config.image == "confluentinc/cp-kafka:7.4.3"
       assert config.kafka_port == 9092
-      assert config.broker_port == 9093
+      assert config.broker_port == 29092
       assert config.zookeeper_port == 2181
       assert config.wait_timeout == 60_000
+      assert config.zookeeper_strategy == :embedded
+      assert config.default_topic_partitions == 1
     end
   end
 
@@ -28,11 +30,6 @@ defmodule Testcontainers.Container.KafkaContainerTest do
     test "raises if the image is not a binary" do
       config = KafkaContainer.new()
       assert_raise FunctionClauseError, fn -> KafkaContainer.with_image(config, 6.2) end
-    end
-
-    test "raises if the image is not a confluentinc image" do
-      config = KafkaContainer.new()
-      assert_raise FunctionClauseError, fn -> KafkaContainer.with_image(config, "kafka:6.2.0") end
     end
   end
 
@@ -81,6 +78,16 @@ defmodule Testcontainers.Container.KafkaContainerTest do
     end
   end
 
+  describe "with_zookeeper_strategy/2" do
+    test "raises if the zookeeper strategy is not :internal or :external" do
+      config = KafkaContainer.new()
+
+      assert_raise FunctionClauseError, fn ->
+        KafkaContainer.with_zookeeper_strategy(config, :host)
+      end
+    end
+  end
+
   describe "with_wait_timeout/2" do
     test "overrides the default wait timeout used for the Kafka container" do
       config = KafkaContainer.new()
@@ -98,6 +105,23 @@ defmodule Testcontainers.Container.KafkaContainerTest do
     end
   end
 
+  describe "with_topic_partitions/2" do
+    test "overrides the default topic partitions used for the Kafka container" do
+      config = KafkaContainer.new()
+      new_config = KafkaContainer.with_topic_partitions(config, 2)
+
+      assert new_config.default_topic_partitions == 2
+    end
+
+    test "raises if the topic partitions is not an integer" do
+      config = KafkaContainer.new()
+
+      assert_raise FunctionClauseError, fn ->
+        KafkaContainer.with_topic_partitions(config, "2")
+      end
+    end
+  end
+
   describe "integration testing" do
     container(:kafka, KafkaContainer.new())
 
@@ -105,7 +129,7 @@ defmodule Testcontainers.Container.KafkaContainerTest do
       uris = [{"localhost", Container.mapped_port(kafka, 9092) || 9092}]
 
       {:ok, pid} = KafkaEx.create_worker(:worker, uris: uris, consumer_group: "kafka_ex")
-      on_exit(pid, fn -> KafkaEx.stop_worker(:worker) end)
+      on_exit(fn -> Process.exit(pid, :kill) end)
 
       request = %KafkaEx.Protocol.CreateTopics.TopicRequest{
         topic: "test_topic",
