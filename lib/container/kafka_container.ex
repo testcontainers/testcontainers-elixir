@@ -14,6 +14,7 @@ defmodule Testcontainers.KafkaContainer do
   @default_wait_timeout 60_000
   @default_consensus_strategy :zookeeper_embedded
   @default_topic_partitions 1
+  @default_cluster_id "4L6g3nShT-eMCtK--X86sw"
 
   @enforce_keys [
     :image,
@@ -21,6 +22,7 @@ defmodule Testcontainers.KafkaContainer do
     :broker_port,
     :zookeeper_port,
     :zookeeper_host,
+    :cluster_id,
     :wait_timeout,
     :consensus_strategy,
     :default_topic_partitions
@@ -29,6 +31,7 @@ defmodule Testcontainers.KafkaContainer do
     :image,
     :kafka_port,
     :broker_port,
+    :cluster_id,
     :zookeeper_port,
     :zookeeper_host,
     :wait_timeout,
@@ -45,6 +48,7 @@ defmodule Testcontainers.KafkaContainer do
       kafka_port: @default_kafka_port,
       broker_port: @default_broker_port,
       zookeeper_port: @default_zookeeper_port,
+      cluster_id: @default_cluster_id,
       wait_timeout: @default_wait_timeout,
       consensus_strategy: @default_consensus_strategy,
       zookeeper_host: nil,
@@ -92,7 +96,7 @@ defmodule Testcontainers.KafkaContainer do
 
   @doc """
   Overrides the default zookeeper host used for the Kafka container.
-  Available only when zookeeper_strategy is external
+  Available only when consensus_strategy is external
   """
   def with_zookeeper_host(
         %__MODULE__{consensus_strategy: :zookeeper_external} = config,
@@ -100,6 +104,15 @@ defmodule Testcontainers.KafkaContainer do
       )
       when is_binary(zookeeper_host) do
     %{config | zookeeper_host: zookeeper_host}
+  end
+
+  @doc """
+  Overrides the default zookeeper host used for the Kafka container.
+  Available only when consensus_strategy is kraft
+  """
+  def with_cluster_id(%__MODULE__{consensus_strategy: :kraft} = config, cluster_id)
+      when is_binary(cluster_id) do
+    %{config | cluster_id: cluster_id}
   end
 
   @doc """
@@ -182,13 +195,14 @@ defmodule Testcontainers.KafkaContainer do
     defp build_startup_script(container, config) do
       container
       |> init_script(config)
-      |> consensus_strategy_command(config)
+      |> consensus_strategy_command(container, config)
     end
 
-    defp consensus_strategy_command(script, config) do
+    defp consensus_strategy_command(script, container, config) do
       case config.consensus_strategy do
         :zookeeper_embedded -> embedded_zookeeper_script(script, config)
         :zookeeper_external -> external_zookeeper_script(script, config)
+        :kraft -> kraft_script(script, container, config)
         value -> raise "Consensus strategy #{inspect(value)} not implemented"
       end
     end
@@ -209,6 +223,29 @@ defmodule Testcontainers.KafkaContainer do
       """
       #{script}
       export KAFKA_ZOOKEEPER_CONNECT='#{config.zookeeper_host}:#{config.zookeeper_port}'
+      /etc/confluent/docker/run
+      """
+    end
+
+    # Currently we support only single node as QUORUM_VOTERS requires to know hostnames
+    # of all voters
+    defp kraft_script(script, container, config) do
+      broker_id = Map.fetch!(container.environment, :KAFKA_BROKER_ID)
+      listeners = Map.fetch!(container.environment, :KAFKA_LISTENERS)
+      protocol_map = Map.fetch!(container.environment, :KAFKA_LISTENER_SECURITY_PROTOCOL_MAP)
+
+      """
+      #{script}
+      export CLUSTER_ID=#{config.cluster_id}
+      export KAFKA_NODE_ID=#{broker_id}
+      export KAFKA_PROCESS_ROLES=broker,controller
+      export KAFKA_LISTENERS=#{listeners},CONTROLLER://0.0.0.0:9094
+      export KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=#{protocol_map},CONTROLLER:PLAINTEXT
+      export KAFKA_INTER_BROKER_LISTENER_NAME=BROKER
+      export KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      export KAFKA_CONTROLLER_QUORUM_VOTERS=1@$(hostname -i):9094
+      sed -i '/KAFKA_ZOOKEEPER_CONNECT/d' /etc/confluent/docker/configure
+      echo 'kafka-storage format --ignore-formatted -t "#{config.cluster_id}" -c /etc/kafka/kafka.properties' >> /etc/confluent/docker/configure
       /etc/confluent/docker/run
       """
     end
