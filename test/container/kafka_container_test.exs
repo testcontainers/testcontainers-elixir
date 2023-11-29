@@ -14,7 +14,7 @@ defmodule Testcontainers.Container.KafkaContainerTest do
       assert config.broker_port == 29092
       assert config.zookeeper_port == 2181
       assert config.wait_timeout == 60_000
-      assert config.zookeeper_strategy == :embedded
+      assert config.consensus_strategy == :zookeeper_embedded
       assert config.zookeeper_host == nil
       assert config.default_topic_partitions == 1
     end
@@ -71,24 +71,32 @@ defmodule Testcontainers.Container.KafkaContainerTest do
     end
 
     test "raises if the zookeeper port is not an integer" do
-      config = KafkaContainer.new()
+      config = KafkaContainer.new() |> KafkaContainer.with_consensus_strategy(:zookeeper_embedded)
 
       assert_raise FunctionClauseError, fn ->
         KafkaContainer.with_zookeeper_port(config, "2182")
+      end
+    end
+
+    test "raises if consensus strategy is not zookeeper" do
+      config = KafkaContainer.new() |> KafkaContainer.with_consensus_strategy(:kraft)
+
+      assert_raise FunctionClauseError, fn ->
+        KafkaContainer.with_zookeeper_port(config, 2182)
       end
     end
   end
 
   describe "with_zookeeper_host/2" do
     test "overrides the default zookeeper host used for the Kafka container" do
-      config = KafkaContainer.new() |> KafkaContainer.with_zookeeper_strategy(:external)
+      config = KafkaContainer.new() |> KafkaContainer.with_consensus_strategy(:zookeeper_external)
       new_config = KafkaContainer.with_zookeeper_host(config, "localhost")
 
       assert new_config.zookeeper_host == "localhost"
     end
 
     test "raises if the zookeeper host is not an binary" do
-      config = KafkaContainer.new() |> KafkaContainer.with_zookeeper_strategy(:external)
+      config = KafkaContainer.new() |> KafkaContainer.with_consensus_strategy(:zookeeper_external)
 
       assert_raise FunctionClauseError, fn ->
         KafkaContainer.with_zookeeper_host(config, 123)
@@ -96,7 +104,7 @@ defmodule Testcontainers.Container.KafkaContainerTest do
     end
 
     test "raises if the zookeeper strategy is not an external" do
-      config = KafkaContainer.new() |> KafkaContainer.with_zookeeper_strategy(:embedded)
+      config = KafkaContainer.new() |> KafkaContainer.with_consensus_strategy(:zookeeper_embedded)
 
       assert_raise FunctionClauseError, fn ->
         KafkaContainer.with_zookeeper_host(config, "localhost")
@@ -104,12 +112,19 @@ defmodule Testcontainers.Container.KafkaContainerTest do
     end
   end
 
-  describe "with_zookeeper_strategy/2" do
-    test "raises if the zookeeper strategy is not :internal or :external" do
+  describe "with_consensus_strategy/2" do
+    test "overrides the consensus strategy host used for the Kafka container" do
+      config = KafkaContainer.new()
+      new_config = KafkaContainer.with_consensus_strategy(config, :zookeeper_external)
+
+      assert new_config.consensus_strategy == :zookeeper_external
+    end
+
+    test "raises if the zookeeper strategy is invalid" do
       config = KafkaContainer.new()
 
       assert_raise FunctionClauseError, fn ->
-        KafkaContainer.with_zookeeper_strategy(config, :host)
+        KafkaContainer.with_consensus_strategy(config, :host)
       end
     end
   end
@@ -204,7 +219,7 @@ defmodule Testcontainers.Container.KafkaContainerTest do
     {:ok, kafka} =
       Testcontainers.start_container(
         KafkaContainer.new()
-        |> KafkaContainer.with_zookeeper_strategy(:external)
+        |> KafkaContainer.with_consensus_strategy(:zookeeper_external)
         |> KafkaContainer.with_zookeeper_host(zookeeper.ip_address)
       )
 

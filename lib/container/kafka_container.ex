@@ -12,7 +12,7 @@ defmodule Testcontainers.KafkaContainer do
   @default_broker_port 29092
   @default_zookeeper_port 2181
   @default_wait_timeout 60_000
-  @default_zookeeper_strategy :embedded
+  @default_consensus_strategy :zookeeper_embedded
   @default_topic_partitions 1
 
   @enforce_keys [
@@ -22,7 +22,7 @@ defmodule Testcontainers.KafkaContainer do
     :zookeeper_port,
     :zookeeper_host,
     :wait_timeout,
-    :zookeeper_strategy,
+    :consensus_strategy,
     :default_topic_partitions
   ]
   defstruct [
@@ -32,7 +32,7 @@ defmodule Testcontainers.KafkaContainer do
     :zookeeper_port,
     :zookeeper_host,
     :wait_timeout,
-    :zookeeper_strategy,
+    :consensus_strategy,
     :default_topic_partitions
   ]
 
@@ -46,7 +46,7 @@ defmodule Testcontainers.KafkaContainer do
       broker_port: @default_broker_port,
       zookeeper_port: @default_zookeeper_port,
       wait_timeout: @default_wait_timeout,
-      zookeeper_strategy: @default_zookeeper_strategy,
+      consensus_strategy: @default_consensus_strategy,
       zookeeper_host: nil,
       default_topic_partitions: @default_topic_partitions
     }
@@ -75,18 +75,18 @@ defmodule Testcontainers.KafkaContainer do
   end
 
   @doc """
-  Overrides the default zookeeper strategy used for the Kafka container.
+  Overrides the default consensus strategy used for the Kafka container.
   """
-  def with_zookeeper_strategy(%__MODULE__{} = config, zookeeper_strategy)
-      when zookeeper_strategy in [:embedded, :external] do
-    %{config | zookeeper_strategy: zookeeper_strategy}
+  def with_consensus_strategy(%__MODULE__{} = config, consensus_strategy)
+      when consensus_strategy in [:zookeeper_embedded, :zookeeper_external, :kraft] do
+    %{config | consensus_strategy: consensus_strategy}
   end
 
   @doc """
   Overrides the default zookeeper port used for the Kafka container.
   """
-  def with_zookeeper_port(%__MODULE__{} = config, zookeeper_port)
-      when is_integer(zookeeper_port) do
+  def with_zookeeper_port(%__MODULE__{consensus_strategy: strategy} = config, zookeeper_port)
+      when is_integer(zookeeper_port) and strategy in [:zookeeper_embedded, :zookeeper_external] do
     %{config | zookeeper_port: zookeeper_port}
   end
 
@@ -94,7 +94,10 @@ defmodule Testcontainers.KafkaContainer do
   Overrides the default zookeeper host used for the Kafka container.
   Available only when zookeeper_strategy is external
   """
-  def with_zookeeper_host(%__MODULE__{zookeeper_strategy: :external} = config, zookeeper_host)
+  def with_zookeeper_host(
+        %__MODULE__{consensus_strategy: :zookeeper_external} = config,
+        zookeeper_host
+      )
       when is_binary(zookeeper_host) do
     %{config | zookeeper_host: zookeeper_host}
   end
@@ -179,14 +182,14 @@ defmodule Testcontainers.KafkaContainer do
     defp build_startup_script(container, config) do
       container
       |> init_script(config)
-      |> zookeeper_command(config)
+      |> consensus_strategy_command(config)
     end
 
-    defp zookeeper_command(script, config) do
-      case config.zookeeper_strategy do
-        :embedded -> embedded_zookeeper_script(script, config)
-        :external -> external_zookeeper_script(script, config)
-        _ -> script
+    defp consensus_strategy_command(script, config) do
+      case config.consensus_strategy do
+        :zookeeper_embedded -> embedded_zookeeper_script(script, config)
+        :zookeeper_external -> external_zookeeper_script(script, config)
+        value -> raise "Consensus strategy #{inspect(value)} not implemented"
       end
     end
 
