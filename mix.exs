@@ -80,7 +80,9 @@ defmodule TestcontainersElixir.MixProject do
       # cassandra
       {:xandra, "~> 0.14", only: [:dev, :test]},
       # kafka
-      {:kafka_ex, "~> 0.13", only: [:dev, :test]}
+      {:kafka_ex, "~> 0.13", only: [:dev, :test]},
+      # Zookeeper
+      {:erlzk, "~> 0.6.2", only: [:dev, :test]}
     ]
   end
 
