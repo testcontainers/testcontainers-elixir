@@ -3,8 +3,6 @@ defmodule Testcontainers.KafkaContainer do
   Provides functionality for creating and managing Kafka container configurations.
   """
   alias Testcontainers.Container
-
-  alias Testcontainers.Container
   alias Testcontainers.KafkaContainer
   alias Testcontainers.CommandWaitStrategy
 
@@ -22,6 +20,7 @@ defmodule Testcontainers.KafkaContainer do
     :kafka_port,
     :broker_port,
     :zookeeper_port,
+    :zookeeper_host,
     :wait_timeout,
     :zookeeper_strategy,
     :default_topic_partitions
@@ -31,6 +30,7 @@ defmodule Testcontainers.KafkaContainer do
     :kafka_port,
     :broker_port,
     :zookeeper_port,
+    :zookeeper_host,
     :wait_timeout,
     :zookeeper_strategy,
     :default_topic_partitions
@@ -47,6 +47,7 @@ defmodule Testcontainers.KafkaContainer do
       zookeeper_port: @default_zookeeper_port,
       wait_timeout: @default_wait_timeout,
       zookeeper_strategy: @default_zookeeper_strategy,
+      zookeeper_host: nil,
       default_topic_partitions: @default_topic_partitions
     }
   end
@@ -74,6 +75,14 @@ defmodule Testcontainers.KafkaContainer do
   end
 
   @doc """
+  Overrides the default zookeeper strategy used for the Kafka container.
+  """
+  def with_zookeeper_strategy(%__MODULE__{} = config, zookeeper_strategy)
+      when zookeeper_strategy in [:embedded, :external] do
+    %{config | zookeeper_strategy: zookeeper_strategy}
+  end
+
+  @doc """
   Overrides the default zookeeper port used for the Kafka container.
   """
   def with_zookeeper_port(%__MODULE__{} = config, zookeeper_port)
@@ -82,11 +91,12 @@ defmodule Testcontainers.KafkaContainer do
   end
 
   @doc """
-  Overrides the default zookeeper strategy used for the Kafka container.
+  Overrides the default zookeeper host used for the Kafka container.
+  Available only when zookeeper_strategy is external
   """
-  def with_zookeeper_strategy(%__MODULE__{} = config, zookeeper_strategy)
-      when zookeeper_strategy in [:embedded] do
-    %{config | zookeeper_strategy: zookeeper_strategy}
+  def with_zookeeper_host(%__MODULE__{zookeeper_strategy: :external} = config, zookeeper_host)
+      when is_binary(zookeeper_host) do
+    %{config | zookeeper_host: zookeeper_host}
   end
 
   @doc """
@@ -107,8 +117,8 @@ defmodule Testcontainers.KafkaContainer do
   defimpl Testcontainers.ContainerBuilder do
     import Container
 
-    @spec build(%KafkaContainer{}) :: %Container{}
     @impl true
+    @spec build(%KafkaContainer{}) :: %Container{}
     def build(%KafkaContainer{} = config) do
       new(config.image)
       |> with_fixed_port(config.kafka_port)
@@ -175,6 +185,7 @@ defmodule Testcontainers.KafkaContainer do
     defp zookeeper_command(script, config) do
       case config.zookeeper_strategy do
         :embedded -> embedded_zookeeper_script(script, config)
+        :external -> external_zookeeper_script(script, config)
         _ -> script
       end
     end
@@ -182,10 +193,19 @@ defmodule Testcontainers.KafkaContainer do
     defp embedded_zookeeper_script(script, config) do
       """
       #{script}
+      export KAFKA_ZOOKEEPER_CONNECT='localhost:#{config.zookeeper_port}'
       echo 'clientPort=#{config.zookeeper_port}' > zookeeper.properties
       echo 'dataDir=/var/lib/zookeeper/data' >> zookeeper.properties
       echo 'dataLogDir=/var/lib/zookeeper/log' >> zookeeper.properties
       zookeeper-server-start zookeeper.properties &
+      /etc/confluent/docker/run
+      """
+    end
+
+    defp external_zookeeper_script(script, config) do
+      """
+      #{script}
+      export KAFKA_ZOOKEEPER_CONNECT='#{config.zookeeper_host}:#{config.zookeeper_port}'
       /etc/confluent/docker/run
       """
     end
@@ -196,7 +216,6 @@ defmodule Testcontainers.KafkaContainer do
       external = "OUTSIDE://#{Testcontainers.get_host()}:#{config.kafka_port}"
 
       """
-      export KAFKA_ZOOKEEPER_CONNECT='localhost:#{config.zookeeper_port}'
       export KAFKA_ADVERTISED_LISTENERS=#{internal},#{external}
       echo '' > /etc/confluent/docker/ensure
       """

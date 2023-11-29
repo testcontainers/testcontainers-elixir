@@ -12,6 +12,7 @@ defmodule Testcontainers.Container do
     cmd: nil,
     environment: %{},
     exposed_ports: [],
+    ip_address: nil,
     wait_strategies: [],
     privileged: false,
     bind_mounts: [],

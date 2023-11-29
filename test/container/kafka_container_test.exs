@@ -1,5 +1,5 @@
 defmodule Testcontainers.Container.KafkaContainerTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
   import Testcontainers.ExUnit
 
   alias Testcontainers.Container
@@ -15,6 +15,7 @@ defmodule Testcontainers.Container.KafkaContainerTest do
       assert config.zookeeper_port == 2181
       assert config.wait_timeout == 60_000
       assert config.zookeeper_strategy == :embedded
+      assert config.zookeeper_host == nil
       assert config.default_topic_partitions == 1
     end
   end
@@ -78,6 +79,31 @@ defmodule Testcontainers.Container.KafkaContainerTest do
     end
   end
 
+  describe "with_zookeeper_host/2" do
+    test "overrides the default zookeeper host used for the Kafka container" do
+      config = KafkaContainer.new() |> KafkaContainer.with_zookeeper_strategy(:external)
+      new_config = KafkaContainer.with_zookeeper_host(config, "localhost")
+
+      assert new_config.zookeeper_host == "localhost"
+    end
+
+    test "raises if the zookeeper host is not an binary" do
+      config = KafkaContainer.new() |> KafkaContainer.with_zookeeper_strategy(:external)
+
+      assert_raise FunctionClauseError, fn ->
+        KafkaContainer.with_zookeeper_host(config, 123)
+      end
+    end
+
+    test "raises if the zookeeper strategy is not an external" do
+      config = KafkaContainer.new() |> KafkaContainer.with_zookeeper_strategy(:embedded)
+
+      assert_raise FunctionClauseError, fn ->
+        KafkaContainer.with_zookeeper_host(config, "localhost")
+      end
+    end
+  end
+
   describe "with_zookeeper_strategy/2" do
     test "raises if the zookeeper strategy is not :internal or :external" do
       config = KafkaContainer.new()
@@ -122,14 +148,14 @@ defmodule Testcontainers.Container.KafkaContainerTest do
     end
   end
 
-  describe "integration testing" do
+  describe "with internal zookeeper" do
     container(:kafka, KafkaContainer.new())
 
     test "provides a ready-to-use kafka container", %{kafka: kafka} do
       uris = [{"localhost", Container.mapped_port(kafka, 9092) || 9092}]
 
       {:ok, pid} = KafkaEx.create_worker(:worker, uris: uris, consumer_group: "kafka_ex")
-      on_exit(fn -> Process.exit(pid, :kill) end)
+      on_exit(fn -> :ok = KafkaEx.stop_worker(pid) end)
 
       request = %KafkaEx.Protocol.CreateTopics.TopicRequest{
         topic: "test_topic",
@@ -145,5 +171,45 @@ defmodule Testcontainers.Container.KafkaContainerTest do
 
       assert response.value == "hey"
     end
+  end
+
+  describe "with external zookeeper" do
+    test "provides a ready-to-use kafka container" do
+      {:ok, kafka} = start_kafka_with_external_zookeeper()
+      uris = [{"localhost", Container.mapped_port(kafka, 9092) || 9092}]
+
+      {:ok, pid} = KafkaEx.create_worker(:worker, uris: uris, consumer_group: "kafka_ex")
+      on_exit(fn -> :ok = KafkaEx.stop_worker(pid) end)
+
+      request = %KafkaEx.Protocol.CreateTopics.TopicRequest{
+        topic: "test_topic",
+        num_partitions: 1,
+        replication_factor: 1,
+        replica_assignment: []
+      }
+
+      _ = KafkaEx.create_topics([request], worker_name: :worker)
+      {:ok, _} = KafkaEx.produce("test_topic", 0, "hey", worker_name: :worker, required_acks: 1)
+      stream = KafkaEx.stream("test_topic", 0, worker_name: :worker)
+      [response] = Enum.take(stream, 1)
+
+      assert response.value == "hey"
+    end
+  end
+
+  defp start_kafka_with_external_zookeeper do
+    {:ok, zookeeper} = Testcontainers.start_container(Testcontainers.ZookeeperContainer.new())
+    on_exit(fn -> Testcontainers.stop_container(zookeeper.container_id) end)
+
+    {:ok, kafka} =
+      Testcontainers.start_container(
+        KafkaContainer.new()
+        |> KafkaContainer.with_zookeeper_strategy(:external)
+        |> KafkaContainer.with_zookeeper_host(zookeeper.ip_address)
+      )
+
+    on_exit(fn -> Testcontainers.stop_container(kafka.container_id) end)
+
+    {:ok, kafka}
   end
 end
