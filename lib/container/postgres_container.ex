@@ -213,8 +213,8 @@ defmodule Testcontainers.PostgresContainer do
     end
 
     @impl true
-    @spec is_starting(%PostgresContainer{}, %Container{}) :: any()
-    def is_starting(_config, _container), do: nil
+    @spec is_starting(%PostgresContainer{}, %Container{}, %Tesla.Env{}) :: any()
+    def is_starting(_config, _container, _conn), do: nil
   end
 
   @doc false

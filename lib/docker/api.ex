@@ -68,6 +68,38 @@ defmodule Testcontainers.Docker.Api do
     end
   end
 
+  def put_files(container_id, connection, path, file_contents) do
+    with {:ok, temp_file} <- write_temp_file(file_contents),
+         {:ok, tar_stream} <- create_tar_stream(temp_file) do
+      Api.Container.put_container_archive(connection, container_id, path, tar_stream)
+    else
+      {:error, reason} ->
+        IO.puts("Failed to create TAR stream: #{reason}")
+        {:error, reason}
+    end
+  end
+
+  # Helper function to write file contents to a temporary file
+  defp write_temp_file(contents) do
+    temp_file = "/tmp/#{UUID.uuid4()}.tmp"
+
+    case File.write(temp_file, contents) do
+      :ok ->
+        {:ok, temp_file}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  # Helper function to create a tar stream from a file
+  defp create_tar_stream(file_path) do
+    tar_file = "#{file_path}.tar"
+    # file_path must be charlist ref https://til.kaiwern.com/tags/88
+    :ok = :erl_tar.create(tar_file, [String.to_charlist(file_path)], [:write, :compressed])
+    {:ok, File.stream!(tar_file)}
+  end
+
   def inspect_exec(exec_id, conn) do
     case DockerEngineAPI.Api.Exec.exec_inspect(conn, exec_id) do
       {:ok, %DockerEngineAPI.Model.ExecInspectResponse{} = body} ->

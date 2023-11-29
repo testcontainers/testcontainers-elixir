@@ -82,7 +82,7 @@ defmodule Testcontainers.CassandraContainer do
     end
 
     @impl true
-    @spec is_starting(%CassandraContainer{}, %Container{}) :: any()
-    def is_starting(_config, _container), do: nil
+    @spec is_starting(%CassandraContainer{}, %Container{}, %Tesla.Env{}) :: any()
+    def is_starting(_config, _container, _conn), do: nil
   end
 end

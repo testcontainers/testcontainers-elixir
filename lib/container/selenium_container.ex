@@ -70,8 +70,8 @@ defmodule Testcontainers.SeleniumContainer do
     end
 
     @impl true
-    @spec is_starting(%SeleniumContainer{}, %Container{}) :: any()
-    def is_starting(_config, _container), do: nil
+    @spec is_starting(%SeleniumContainer{}, %Container{}, %Tesla.Env{}) :: any()
+    def is_starting(_config, _container, _conn), do: nil
   end
 end
 
