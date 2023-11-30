@@ -13,12 +13,12 @@ defmodule Test.NginxContainer do
     end
 
     @impl true
-    @spec is_starting(%Test.NginxContainer{}, %Testcontainers.Container{}, %Tesla.Env{}) :: any()
+    @spec is_starting(%Test.NginxContainer{}, %Testcontainers.Container{}, %Tesla.Env{}) :: :ok
     def is_starting(_config, container, conn) do
-      {:ok, _} =
-        Docker.Api.put_file(container.container_id, conn, "/tmp", "foo.txt", "Hello foo bar")
-
-      nil
+      with {:ok, _} <-
+             Docker.Api.put_file(container.container_id, conn, "/tmp", "foo.txt", "Hello foo bar") do
+        :ok
+      end
     end
   end
 end

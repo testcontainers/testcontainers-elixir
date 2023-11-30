@@ -149,7 +149,7 @@ defmodule Testcontainers.Container do
 
     @impl true
     @spec is_starting(%Testcontainers.Container{}, %Testcontainers.Container{}, %Tesla.Env{}) ::
-            any()
-    def is_starting(_config, _container, _conn), do: nil
+            :ok
+    def is_starting(_config, _container, _conn), do: :ok
   end
 end

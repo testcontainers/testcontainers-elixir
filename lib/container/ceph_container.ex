@@ -232,8 +232,8 @@ defmodule Testcontainers.CephContainer do
     end
 
     @impl true
-    @spec is_starting(%CephContainer{}, %Container{}, %Tesla.Env{}) :: any()
-    def is_starting(_config, _container, _conn), do: nil
+    @spec is_starting(%CephContainer{}, %Container{}, %Tesla.Env{}) :: :ok
+    def is_starting(_config, _container, _conn), do: :ok
   end
 end
 
