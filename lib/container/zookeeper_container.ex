@@ -53,7 +53,7 @@ defmodule Testcontainers.ZookeeperContainer do
     @spec build(%ZookeeperContainer{}) :: %Container{}
     def build(%ZookeeperContainer{} = config) do
       new(config.image)
-      |> with_fixed_port(config.port)
+      |> with_exposed_port(config.port)
       |> with_environment(:ALLOW_ANONYMOUS_LOGIN, "true")
       |> with_waiting_strategy(
         CommandWaitStrategy.new(
