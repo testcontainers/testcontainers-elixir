@@ -3,6 +3,7 @@ defmodule Testcontainers.KafkaContainer do
   Provides functionality for creating and managing Kafka container configurations.
   """
   alias Testcontainers.Container
+  alias Testcontainers.Docker
   alias Testcontainers.KafkaContainer
   alias Testcontainers.CommandWaitStrategy
 
@@ -16,6 +17,8 @@ defmodule Testcontainers.KafkaContainer do
   @default_topic_partitions 1
   @default_cluster_id "4L6g3nShT-eMCtK--X86sw"
 
+  @start_file_path "tc-start.sh"
+
   @enforce_keys [
     :image,
     :kafka_port,
@@ -25,7 +28,8 @@ defmodule Testcontainers.KafkaContainer do
     :cluster_id,
     :wait_timeout,
     :consensus_strategy,
-    :default_topic_partitions
+    :default_topic_partitions,
+    :start_file_path
   ]
   defstruct [
     :image,
@@ -36,7 +40,8 @@ defmodule Testcontainers.KafkaContainer do
     :zookeeper_host,
     :wait_timeout,
     :consensus_strategy,
-    :default_topic_partitions
+    :default_topic_partitions,
+    :start_file_path
   ]
 
   @doc """
@@ -52,7 +57,8 @@ defmodule Testcontainers.KafkaContainer do
       wait_timeout: @default_wait_timeout,
       consensus_strategy: @default_consensus_strategy,
       zookeeper_host: nil,
-      default_topic_partitions: @default_topic_partitions
+      default_topic_partitions: @default_topic_partitions,
+      start_file_path: @start_file_path
     }
   end
 
@@ -137,23 +143,33 @@ defmodule Testcontainers.KafkaContainer do
     @spec build(%KafkaContainer{}) :: %Container{}
     def build(%KafkaContainer{} = config) do
       new(config.image)
-      |> with_fixed_port(config.kafka_port)
+      |> with_exposed_port(config.kafka_port)
       |> with_environment(:KAFKA_BROKER_ID, "1")
       |> with_listener_config(config)
       |> with_topic_config(config)
       |> with_startup_script(config)
-      |> with_waiting_strategies([
-        CommandWaitStrategy.new(
-          ["kafka-topics", "--bootstrap-server", "localhost:#{config.kafka_port}", "--list"],
-          config.wait_timeout,
-          1000
-        ),
+      |> with_waiting_strategy(
         CommandWaitStrategy.new(
           ["kafka-broker-api-versions", "--bootstrap-server", "localhost:#{config.kafka_port}"],
           config.wait_timeout,
           1000
         )
-      ])
+      )
+    end
+
+    @doc """
+    Checks if the container is starting.
+    If yes, that means that we know both the host and the port of the container and we can
+    assign them to the config.
+    """
+    @impl true
+    @spec is_starting(%KafkaContainer{}, %Testcontainers.Container{}, %Tesla.Env{}) :: :ok
+    def is_starting(config = %{start_file_path: start_file_path}, container, conn) do
+      with script <- build_startup_script(container, config),
+           {:ok, _} <-
+             Docker.Api.put_file(container.container_id, conn, "/", start_file_path, script) do
+        :ok
+      end
     end
 
     # ------------------Listeners------------------
@@ -170,6 +186,7 @@ defmodule Testcontainers.KafkaContainer do
       |> with_environment(:KAFKA_INTER_BROKER_LISTENER_NAME, "BROKER")
     end
 
+    # ------------------Topics------------------
     defp with_topic_config(container, _config) do
       container
       |> with_environment(:KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR, "1")
@@ -180,25 +197,24 @@ defmodule Testcontainers.KafkaContainer do
     end
 
     # ------------------Startup------------------
-    defp with_startup_script(container, config) do
-      script = container |> build_startup_script(config)
-
-      command =
-        String.split(script, "\n")
-        |> Enum.map(&String.trim/1)
-        |> Enum.reject(&(&1 == ""))
-        |> Enum.join("\n")
-
-      with_cmd(container, ["sh", "-c", command])
+    defp with_startup_script(container, %{start_file_path: start_file_path}) do
+      with_cmd(container, [
+        "sh",
+        "-c",
+        "while [ ! -f /#{start_file_path} ]; do echo 'ok' && sleep 0.1; done; sh /#{start_file_path};"
+      ])
     end
 
+    # ------------------Startup Script------------------
     defp build_startup_script(container, config) do
       container
       |> init_script(config)
-      |> consensus_strategy_command(container, config)
+      |> add_consensus_strategy(container, config)
+      |> add_run_command()
+      |> parse_script()
     end
 
-    defp consensus_strategy_command(script, container, config) do
+    defp add_consensus_strategy(script, container, config) do
       case config.consensus_strategy do
         :zookeeper_embedded -> embedded_zookeeper_script(script, config)
         :zookeeper_external -> external_zookeeper_script(script, config)
@@ -215,7 +231,6 @@ defmodule Testcontainers.KafkaContainer do
       echo 'dataDir=/var/lib/zookeeper/data' >> zookeeper.properties
       echo 'dataLogDir=/var/lib/zookeeper/log' >> zookeeper.properties
       zookeeper-server-start zookeeper.properties &
-      /etc/confluent/docker/run
       """
     end
 
@@ -223,7 +238,6 @@ defmodule Testcontainers.KafkaContainer do
       """
       #{script}
       export KAFKA_ZOOKEEPER_CONNECT='#{config.zookeeper_host}:#{config.zookeeper_port}'
-      /etc/confluent/docker/run
       """
     end
 
@@ -246,19 +260,36 @@ defmodule Testcontainers.KafkaContainer do
       export KAFKA_CONTROLLER_QUORUM_VOTERS=1@$(hostname -i):9094
       sed -i '/KAFKA_ZOOKEEPER_CONNECT/d' /etc/confluent/docker/configure
       echo 'kafka-storage format --ignore-formatted -t "#{config.cluster_id}" -c /etc/kafka/kafka.properties' >> /etc/confluent/docker/configure
-      /etc/confluent/docker/run
       """
     end
 
     # ----------------------- Default -----------------------
-    defp init_script(_container, config) do
+    defp init_script(container, config) do
       internal = "BROKER://$(hostname -i):#{config.broker_port}"
-      external = "OUTSIDE://#{Testcontainers.get_host()}:#{config.kafka_port}"
+
+      external =
+        "OUTSIDE://#{Testcontainers.get_host()}:#{Container.mapped_port(container, config.kafka_port)}"
 
       """
       export KAFKA_ADVERTISED_LISTENERS=#{internal},#{external}
       echo '' > /etc/confluent/docker/ensure
       """
+    end
+
+    defp add_run_command(script) do
+      """
+      #{script}
+      /etc/confluent/docker/run
+      echo finished
+      """
+    end
+
+    defp parse_script(script) do
+      script
+      |> String.split("\n")
+      |> Enum.map(&String.trim/1)
+      |> Enum.reject(&(&1 == ""))
+      |> Enum.join("\n")
     end
   end
 end

@@ -1,5 +1,5 @@
 defmodule Testcontainers.Container.KafkaContainerTest do
-  use ExUnit.Case, async: false
+  use ExUnit.Case, async: true
   import Testcontainers.ExUnit
 
   alias Testcontainers.Container

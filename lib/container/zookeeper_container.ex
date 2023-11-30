@@ -63,5 +63,9 @@ defmodule Testcontainers.ZookeeperContainer do
         )
       )
     end
+
+    @impl true
+    @spec is_starting(%ZookeeperContainer{}, %Container{}, %Tesla.Env{}) :: :ok
+    def is_starting(_config, _container, _conn), do: :ok
   end
 end
