@@ -68,34 +68,28 @@ defmodule Testcontainers.Docker.Api do
     end
   end
 
-  def put_file(container_id, connection, path, file_contents) do
-    with {:ok, temp_file} <- write_temp_file(file_contents),
-         {:ok, tar_file_contents} <- create_tar_stream(temp_file) do
+  def put_file(container_id, connection, path, file_name, file_contents) do
+    with {:ok, tar_file_contents} <- create_tar_stream(file_name, file_contents) do
       Api.Container.put_container_archive(connection, container_id, path, tar_file_contents)
     end
   end
 
-  # Helper function to write file contents to a temporary file
-  defp write_temp_file(contents) do
-    temp_file = "/tmp/#{UUID.uuid4()}.tmp"
-
-    case File.write(temp_file, contents) do
-      :ok ->
-        {:ok, temp_file}
-
-      {:error, reason} ->
-        {:error, reason}
-    end
-  end
-
   # Helper function to create a tar stream from a file
-  defp create_tar_stream(file_path) do
-    tar_file = "#{file_path}.tar"
-    # file_path must be charlist ref https://til.kaiwern.com/tags/88
-    :ok =
-      :erl_tar.create(tar_file, [String.to_charlist(file_path)], [:write, :compressed, :verbose])
+  defp create_tar_stream(file_name, file_contents) do
+    tar_file = System.tmp_dir!() |> Path.join("#{UUID.uuid4()})-#{file_name}.tar")
 
-    File.read(tar_file)
+    :ok =
+      :erl_tar.create(
+        tar_file,
+        # file_name must be charlist ref https://til.kaiwern.com/tags/88
+        [{file_name |> String.to_charlist(), file_contents}],
+        [:write, :compressed]
+      )
+
+    with {:ok, tar_file_contents} <- File.read(tar_file),
+         :ok <- File.rm(tar_file) do
+      {:ok, tar_file_contents}
+    end
   end
 
   def inspect_exec(exec_id, conn) do
