@@ -31,6 +31,10 @@ defmodule Testcontainers do
   @doc false
   def get_host(name \\ __MODULE__), do: wait_for_call(:get_host, name)
 
+  def get_docker_host(name \\ __MODULE__) do
+    wait_for_call(:get_docker_host, name)
+  end
+
   @doc """
   Starts a new container based on the provided configuration, applying any specified wait strategies.
 

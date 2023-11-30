@@ -4,6 +4,7 @@ defmodule Testcontainers.Container.KafkaContainerTest do
 
   alias Testcontainers.Container
   alias Testcontainers.KafkaContainer
+  alias Test.ZookeeperContainer
 
   describe "new/0" do
     test "creates a new KafkaContainer struct with default configurations" do
@@ -264,16 +265,14 @@ defmodule Testcontainers.Container.KafkaContainerTest do
   end
 
   defp start_kafka_with_external_zookeeper do
-    zookeeper_config = Testcontainers.ZookeeperContainer.new()
-    {:ok, zookeeper} = Testcontainers.start_container(zookeeper_config)
+    {:ok, zookeeper} = Testcontainers.start_container(%ZookeeperContainer{})
     on_exit(fn -> Testcontainers.stop_container(zookeeper.container_id) end)
 
     {:ok, kafka} =
       Testcontainers.start_container(
         KafkaContainer.new()
         |> KafkaContainer.with_consensus_strategy(:zookeeper_external)
-        |> KafkaContainer.with_zookeeper_host("host.docker.internal")
-        |> KafkaContainer.with_zookeeper_port(Container.mapped_port(zookeeper, zookeeper_config.port))
+        |> KafkaContainer.with_zookeeper_host(zookeeper.ip_address)
       )
 
     on_exit(fn -> Testcontainers.stop_container(kafka.container_id) end)
