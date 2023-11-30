@@ -61,6 +61,8 @@ defmodule Testcontainers.Container do
 
   @doc """
   Adds a fixed _port_ to be exposed on the _container_.
+  This approach to managing ports is not recommended by Testcontainers.
+  Use at your own risk.
   """
   def with_fixed_port(%__MODULE__{} = config, port, host_port \\ nil)
       when is_integer(port) and (is_nil(host_port) or is_integer(host_port)) do
