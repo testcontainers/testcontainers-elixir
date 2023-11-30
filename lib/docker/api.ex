@@ -68,14 +68,10 @@ defmodule Testcontainers.Docker.Api do
     end
   end
 
-  def put_files(container_id, connection, path, file_contents) do
+  def put_file(container_id, connection, path, file_contents) do
     with {:ok, temp_file} <- write_temp_file(file_contents),
-         {:ok, tar_stream} <- create_tar_stream(temp_file) do
-      Api.Container.put_container_archive(connection, container_id, path, tar_stream)
-    else
-      {:error, reason} ->
-        IO.puts("Failed to create TAR stream: #{reason}")
-        {:error, reason}
+         {:ok, tar_file_contents} <- create_tar_stream(temp_file) do
+      Api.Container.put_container_archive(connection, container_id, path, tar_file_contents)
     end
   end
 
@@ -96,8 +92,10 @@ defmodule Testcontainers.Docker.Api do
   defp create_tar_stream(file_path) do
     tar_file = "#{file_path}.tar"
     # file_path must be charlist ref https://til.kaiwern.com/tags/88
-    :ok = :erl_tar.create(tar_file, [String.to_charlist(file_path)], [:write, :compressed])
-    {:ok, File.stream!(tar_file)}
+    :ok =
+      :erl_tar.create(tar_file, [String.to_charlist(file_path)], [:write, :compressed, :verbose])
+
+    File.read(tar_file)
   end
 
   def inspect_exec(exec_id, conn) do
