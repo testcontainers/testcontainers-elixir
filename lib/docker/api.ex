@@ -68,6 +68,30 @@ defmodule Testcontainers.Docker.Api do
     end
   end
 
+  def put_file(container_id, connection, path, file_name, file_contents) do
+    with {:ok, tar_file_contents} <- create_tar_stream(file_name, file_contents) do
+      Api.Container.put_container_archive(connection, container_id, path, tar_file_contents)
+    end
+  end
+
+  # Helper function to create a tar stream from a file
+  defp create_tar_stream(file_name, file_contents) do
+    tar_file = System.tmp_dir!() |> Path.join("#{UUID.uuid4()})-#{file_name}.tar")
+
+    :ok =
+      :erl_tar.create(
+        tar_file,
+        # file_name must be charlist ref https://til.kaiwern.com/tags/88
+        [{file_name |> String.to_charlist(), file_contents}],
+        [:write, :compressed]
+      )
+
+    with {:ok, tar_file_contents} <- File.read(tar_file),
+         :ok <- File.rm(tar_file) do
+      {:ok, tar_file_contents}
+    end
+  end
+
   def inspect_exec(exec_id, conn) do
     case DockerEngineAPI.Api.Exec.exec_inspect(conn, exec_id) do
       {:ok, %DockerEngineAPI.Model.ExecInspectResponse{} = body} ->

@@ -5,6 +5,6 @@ defprotocol Testcontainers.ContainerBuilder do
   @spec build(t()) :: %Testcontainers.Container{}
   def build(builder)
 
-  @spec is_starting(t(), %Testcontainers.Container{}) :: any()
-  def is_starting(builder, container)
+  @spec is_starting(t(), %Testcontainers.Container{}, %Tesla.Env{}) :: :ok
+  def is_starting(builder, container, connection)
 end
