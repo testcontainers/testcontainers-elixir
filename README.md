@@ -98,20 +98,22 @@ To start a postgres container when running tests, that also enables testing of a
   # in config/test.exs:
   config :testcontainers, 
     enabled: true
-    database: "hello_test"
 
-  # in lib/my_app/application.ex:
+  # in lib/hello/application.ex:
   @impl true
   def start(_type, _args) do
     if Application.get_env(:testcontainers, :enabled, false) do
-      database = Application.get_env(:testcontainers, :database, "default")
-
       {:ok, _container} =
-        Testcontainers.Ecto.postgres_container(
-          app: :hello,
-          database: database,
-          persistent_volume_name: "#{database}_data"
-        )
+        case Application.get_env(:testcontainers, :database) do
+          nil ->
+            Testcontainers.Ecto.postgres_container(app: :hello)
+
+          database ->
+            Testcontainers.Ecto.postgres_container(
+              app: :hello,
+              persistent_volume_name: "#{database}_data"
+            )
+        end
     end
 
     # .. other setup code
