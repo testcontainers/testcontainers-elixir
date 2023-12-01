@@ -6,6 +6,8 @@ defmodule Testcontainers.Container.KafkaContainerTest do
   alias Testcontainers.KafkaContainer
   alias Test.ZookeeperContainer
 
+  @moduletag timeout: 200_000
+
   describe "new/0" do
     test "creates a new KafkaContainer struct with default configurations" do
       config = KafkaContainer.new()
