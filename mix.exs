@@ -78,7 +78,11 @@ defmodule TestcontainersElixir.MixProject do
       {:ex_aws_s3, "~> 2.0", only: [:dev, :test]},
       {:sweet_xml, "~> 0.6", only: [:dev, :test]},
       # cassandra
-      {:xandra, "~> 0.14", only: [:dev, :test]}
+      {:xandra, "~> 0.14", only: [:dev, :test]},
+      # kafka
+      {:kafka_ex, "~> 0.13", only: [:dev, :test]},
+      # Zookeeper
+      {:erlzk, "~> 0.6.2", only: [:dev, :test]}
     ]
   end
 

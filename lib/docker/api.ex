@@ -221,13 +221,14 @@ defmodule Testcontainers.Docker.Api do
   defp from(%DockerEngineAPI.Model.ContainerInspectResponse{
          Id: container_id,
          Image: image,
-         NetworkSettings: %{Ports: ports},
+         NetworkSettings: %{IPAddress: ip_address, Ports: ports},
          Config: %{Env: env, Labels: labels}
        }) do
     %Container{
       container_id: container_id,
       image: image,
       labels: labels,
+      ip_address: ip_address,
       exposed_ports:
         Enum.reduce(ports || [], [], fn {key, ports}, acc ->
           acc ++
