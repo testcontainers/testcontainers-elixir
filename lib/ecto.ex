@@ -275,8 +275,6 @@ defmodule Testcontainers.Ecto do
             )
           )
 
-        {:ok, pid} = repo.start_link()
-
         absolute_migrations_path =
           if Path.absname(migrations_path) != migrations_path,
             do: Application.app_dir(app, migrations_path),
@@ -291,14 +289,24 @@ defmodule Testcontainers.Ecto do
               :ok
           end
 
-        Ecto.Migrator.run(repo, absolute_migrations_path, :up, all: true)
-
-        GenServer.stop(pid)
-
-        {:ok, container}
+        with {:ok, _, _} <- run_migrations(repo, absolute_migrations_path) do
+          {:ok, container}
+        end
 
       {:error, reason} ->
         {:error, reason}
+    end
+  end
+
+  defp run_migrations(repo, migrations_path) do
+    try do
+      Ecto.Migrator.with_repo(
+        repo,
+        &Ecto.Migrator.run(&1, migrations_path, :up, all: true)
+      )
+    rescue
+      e ->
+        {:error, e}
     end
   end
 
