@@ -4,14 +4,18 @@ defmodule Testcontainers.EctoErrorsTest do
   import Testcontainers.Ecto
 
   test "repo cannot be nil" do
-    assert_raise UndefinedFunctionError,
-                 "function Testcontainers.Repo.config/0 is undefined (module Testcontainers.Repo is not available)",
-                 fn ->
-                   mysql_container(
-                     app: :testcontainers,
-                     repo: nil
-                   )
-                 end
+    assert {:error,
+            %UndefinedFunctionError{
+              module: Testcontainers.Repo,
+              function: :config,
+              arity: 0,
+              reason: nil,
+              message: nil
+            }} =
+             mysql_container(
+               app: :testcontainers,
+               repo: nil
+             )
   end
 
   test "repo must be atom" do
