@@ -12,7 +12,7 @@ defmodule TestcontainersElixir.MixProject do
       version: @version,
       description:
         "Testcontainers is an Elixir library that supports ExUnit tests, providing lightweight, throwaway instances of common databases, Selenium web browsers, or anything else that can run in a Docker container.",
-      elixir: "~> 1.15",
+      elixir: "~> 1.13",
       source_url: @source_url,
       homepage_url: @source_url,
       aliases: aliases(),
@@ -65,14 +65,14 @@ defmodule TestcontainersElixir.MixProject do
       # docker api
       {:ex_docker_engine_api, "~> 1.43"},
       # ecto module
-      {:ecto_sql, "~> 3.10", optional: true},
-      {:ecto, "~> 3.10", optional: true},
+      {:ecto_sql, "~> 3.3", optional: true},
+      {:ecto, "~> 3.3", optional: true},
       # mysql
-      {:myxql, "~> 0.6.0", only: [:dev, :test]},
+      {:myxql, "~> 0.4", only: [:dev, :test]},
       # postgres
-      {:postgrex, "~> 0.17", only: [:dev, :test]},
+      {:postgrex, "~> 0.14", only: [:dev, :test]},
       # redis
-      {:redix, "~> 1.2", only: [:dev, :test]},
+      {:redix, "~> 1.0", only: [:dev, :test]},
       # ceph and minio
       {:ex_aws, "~> 2.1", only: [:dev, :test]},
       {:ex_aws_s3, "~> 2.0", only: [:dev, :test]},
