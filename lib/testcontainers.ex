@@ -93,7 +93,7 @@ defmodule Testcontainers do
       |> Base.encode16()
 
     ryuk_config =
-      Container.new("testcontainers/ryuk:0.5.1")
+      Container.new("testcontainers/ryuk:0.6.0")
       |> Container.with_exposed_port(8080)
       |> Container.with_environment("RYUK_PORT", "8080")
       |> Container.with_bind_mount("/var/run/docker.sock", "/var/run/docker.sock", "rw")
