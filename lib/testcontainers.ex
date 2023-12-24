@@ -57,7 +57,7 @@ defmodule Testcontainers do
        }}
     else
       error ->
-        {:stop, error, options}
+        {:stop, error}
     end
   end
 
