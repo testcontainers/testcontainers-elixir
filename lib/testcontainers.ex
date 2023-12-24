@@ -25,8 +25,40 @@ defmodule Testcontainers do
   @impl true
   def init(options \\ []) do
     Process.flag(:trap_exit, true)
-    send(self(), :load)
-    {:ok, %{options: options}}
+
+    {conn, docker_host_url} = Connection.get_connection(options)
+
+    session_id =
+      :crypto.hash(:sha, "#{inspect(self())}#{DateTime.utc_now() |> DateTime.to_string()}")
+      |> Base.encode16()
+
+    ryuk_config =
+      Container.new("testcontainers/ryuk:0.6.0")
+      |> Container.with_exposed_port(8080)
+      |> Container.with_environment("RYUK_PORT", "8080")
+      |> Container.with_bind_mount("/var/run/docker.sock", "/var/run/docker.sock", "rw")
+      |> Container.with_auto_remove(true)
+
+    with {:ok, _} <- Api.pull_image(ryuk_config.image, conn),
+         {:ok, ryuk_container_id} <- Api.create_container(ryuk_config, conn),
+         :ok <- Api.start_container(ryuk_container_id, conn),
+         {:ok, container} <- Api.get_container(ryuk_container_id, conn),
+         {:ok, socket} <- create_ryuk_socket(container),
+         :ok <- register_ryuk_filter(session_id, socket),
+         {:ok, docker_host} <- get_docker_host(docker_host_url, conn) do
+      Logger.log("Testcontainers initialized")
+
+      {:ok,
+       %{
+         socket: socket,
+         conn: conn,
+         docker_host: docker_host,
+         session_id: session_id
+       }}
+    else
+      error ->
+        {:stop, error, options}
+    end
   end
 
   @doc false
@@ -83,43 +115,6 @@ defmodule Testcontainers do
   """
   def stop_container(container_id, name \\ __MODULE__) when is_binary(container_id) do
     wait_for_call({:stop_container, container_id}, name)
-  end
-
-  @impl true
-  def handle_info(:load, state) do
-    {conn, docker_host_url} = Connection.get_connection(state.options)
-
-    session_id =
-      :crypto.hash(:sha, "#{inspect(self())}#{DateTime.utc_now() |> DateTime.to_string()}")
-      |> Base.encode16()
-
-    ryuk_config =
-      Container.new("testcontainers/ryuk:0.6.0")
-      |> Container.with_exposed_port(8080)
-      |> Container.with_environment("RYUK_PORT", "8080")
-      |> Container.with_bind_mount("/var/run/docker.sock", "/var/run/docker.sock", "rw")
-      |> Container.with_auto_remove(true)
-
-    with {:ok, _} <- Api.pull_image(ryuk_config.image, conn),
-         {:ok, ryuk_container_id} <- Api.create_container(ryuk_config, conn),
-         :ok <- Api.start_container(ryuk_container_id, conn),
-         {:ok, container} <- Api.get_container(ryuk_container_id, conn),
-         {:ok, socket} <- create_ryuk_socket(container),
-         :ok <- register_ryuk_filter(session_id, socket),
-         {:ok, docker_host} <- get_docker_host(docker_host_url, conn) do
-      Logger.log("Testcontainers initialized")
-
-      {:noreply,
-       %{
-         socket: socket,
-         conn: conn,
-         docker_host: docker_host,
-         session_id: session_id
-       }}
-    else
-      error ->
-        {:stop, error, state}
-    end
   end
 
   @impl true

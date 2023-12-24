@@ -22,7 +22,11 @@ defmodule Testcontainers.EctoMysqlTest do
   end
 
   test "fails properly when migrations doesnt pass successfully" do
-    assert {:error, %MyXQL.Error{message: "You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'stringa NOT NULL, `hashed_password` varchar(255) NOT NULL, `confirmed_at` dateti' at line 1"}} =
+    assert {:error,
+            %MyXQL.Error{
+              message:
+                "You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'stringa NOT NULL, `hashed_password` varchar(255) NOT NULL, `confirmed_at` dateti' at line 1"
+            }} =
              mysql_container(
                app: :testcontainers,
                migrations_path: "#{__DIR__}/support/bad_migrations",
