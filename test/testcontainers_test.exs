@@ -9,8 +9,8 @@ defmodule TestcontainersTest do
   test "will cleanup containers" do
     {:ok, pid} = Testcontainers.start_link(name: :cleanup_test1)
     {:ok, container} = Testcontainers.start_container(MySqlContainer.new(), pid)
-    GenServer.stop(pid)
-    TestHelper.wait_for_genserver_state(:cleanup_test1, :down)
+    :ok = GenServer.stop(pid)
+    :ok = TestHelper.wait_for_genserver_state(:cleanup_test1, :down)
 
     :ok =
       TestHelper.wait_for_lambda(

@@ -24,6 +24,7 @@ defmodule Testcontainers do
 
   @impl true
   def init(options \\ []) do
+    Process.flag(:trap_exit, true)
     send(self(), :load)
     {:ok, %{options: options}}
   end
