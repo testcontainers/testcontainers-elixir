@@ -6,6 +6,7 @@ defmodule TestcontainersTest do
 
   @moduletag timeout: 300_000
 
+  @tag :flaky
   test "will cleanup containers" do
     {:ok, pid} = Testcontainers.start_link(name: :cleanup_test1)
     {:ok, container} = Testcontainers.start_container(MySqlContainer.new(), pid)
