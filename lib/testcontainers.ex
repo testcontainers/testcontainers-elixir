@@ -26,6 +26,10 @@ defmodule Testcontainers do
   def init(options \\ []) do
     Process.flag(:trap_exit, true)
 
+    setup(options)
+  end
+
+  defp setup(options) do
     {conn, docker_host_url} = Connection.get_connection(options)
 
     session_id =
@@ -190,12 +194,12 @@ defmodule Testcontainers do
         "label=#{container_label()}=#{true}\n"
     )
 
-    case :gen_tcp.recv(socket, 0, 1_000) do
+    case :gen_tcp.recv(socket, 0, 2_000) do
       {:ok, "ACK\n"} ->
         :ok
 
       {:error, reason} ->
-        {:error, reason}
+        {:error, {:failed_to_register_ryuk_filter, reason}}
     end
   end
 
