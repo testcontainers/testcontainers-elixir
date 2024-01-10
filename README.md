@@ -87,7 +87,7 @@ container(:redis, Testcontainers.RedisContainer.new())
 
 ### In a Phoenix project:
 
-To start a postgres container when running tests, that also enables testing of application initialization with databasse calls at startup, add this in application.ex:
+To start a postgres container when running tests, that also enables testing of application initialization with database calls at startup, add this in application.ex:
 
 ```elixir
   # in config/dev.exs:
@@ -139,7 +139,7 @@ To start a postgres container when running tests, that also enables testing of a
 
 This will start a postgres container that will be terminated when the test process ends.
 
-The database config in config/test.exs will be temporaly updated in-memory with the random host port on the container, and other properties like username, password and database. In most cases these will default to "test" unless overridden.
+The database config in config/test.exs will be temporarily updated in-memory with the random host port on the container, and other properties like username, password and database. In most cases these will default to "test" unless overridden.
 
 See documentation on [Testcontainers.Ecto](https://hexdocs.pm/testcontainers/Testcontainers.Ecto.html) for more information about the options it can take.
 
