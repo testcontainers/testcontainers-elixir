@@ -21,7 +21,7 @@ defmodule Testcontainers.EctoMysqlTest do
     Testcontainers.stop_container(container.container_id)
   end
 
-  test "fails properly when migrations doesnt pass successfully" do
+  test "fails properly when migrations doesn't pass successfully" do
     assert {:error,
             %MyXQL.Error{
               message:

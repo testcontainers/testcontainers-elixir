@@ -21,7 +21,7 @@ defmodule Testcontainers.EctoPostgresTest do
     Testcontainers.stop_container(container.container_id)
   end
 
-  test "fails properly when migrations doesnt pass successfully" do
+  test "fails properly when migrations doesn't pass successfully" do
     assert {:error, %Postgrex.Error{postgres: %{message: "type \"stringa\" does not exist"}}} =
              postgres_container(
                app: :testcontainers,
