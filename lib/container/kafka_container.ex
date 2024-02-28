@@ -11,6 +11,7 @@ defmodule Testcontainers.KafkaContainer do
   @default_image_with_tag "#{@default_image}:7.4.3"
   @default_kafka_port 9092
   @default_broker_port 29092
+  @default_broker_id 1
   @default_zookeeper_port 2181
   @default_wait_timeout 60_000
   @default_consensus_strategy :zookeeper_embedded
@@ -23,6 +24,7 @@ defmodule Testcontainers.KafkaContainer do
     :image,
     :kafka_port,
     :broker_port,
+    :broker_id,
     :zookeeper_port,
     :zookeeper_host,
     :cluster_id,
@@ -35,6 +37,7 @@ defmodule Testcontainers.KafkaContainer do
     :image,
     :kafka_port,
     :broker_port,
+    :broker_id,
     :cluster_id,
     :zookeeper_port,
     :zookeeper_host,
@@ -52,6 +55,7 @@ defmodule Testcontainers.KafkaContainer do
       image: @default_image_with_tag,
       kafka_port: @default_kafka_port,
       broker_port: @default_broker_port,
+      broker_id: @default_broker_id,
       zookeeper_port: @default_zookeeper_port,
       cluster_id: @default_cluster_id,
       wait_timeout: @default_wait_timeout,
@@ -82,6 +86,13 @@ defmodule Testcontainers.KafkaContainer do
   """
   def with_broker_port(%__MODULE__{} = config, broker_port) when is_integer(broker_port) do
     %{config | broker_port: broker_port}
+  end
+
+  @doc """
+  Overrides the default broker id used for the Kafka container.
+  """
+  def with_broker_id(%__MODULE__{} = config, broker_id) when is_integer(broker_id) do
+    %{config | broker_id: broker_id}
   end
 
   @doc """
@@ -144,7 +155,6 @@ defmodule Testcontainers.KafkaContainer do
     def build(%KafkaContainer{} = config) do
       new(config.image)
       |> with_exposed_port(config.kafka_port)
-      |> with_environment(:KAFKA_BROKER_ID, "1")
       |> with_listener_config(config)
       |> with_topic_config(config)
       |> with_startup_script(config)
@@ -187,10 +197,10 @@ defmodule Testcontainers.KafkaContainer do
     end
 
     # ------------------Topics------------------
-    defp with_topic_config(container, _config) do
+    defp with_topic_config(container, config) do
       container
       |> with_environment(:KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR, "1")
-      |> with_environment(:KAFKA_OFFSETS_TOPIC_NUM_PARTITIONS, "1")
+      |> with_environment(:KAFKA_OFFSETS_TOPIC_NUM_PARTITIONS, "#{config.default_topic_partitions}")
       |> with_environment(:KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR, "1")
       |> with_environment(:KAFKA_TRANSACTION_STATE_LOG_MIN_ISR, "1")
       |> with_environment(:KAFKA_AUTO_CREATE_TOPICS_ENABLE, "false")
@@ -244,14 +254,13 @@ defmodule Testcontainers.KafkaContainer do
     # Currently we support only single node as QUORUM_VOTERS requires to know hostnames
     # of all voters
     defp kraft_script(script, container, config) do
-      broker_id = Map.fetch!(container.environment, :KAFKA_BROKER_ID)
       listeners = Map.fetch!(container.environment, :KAFKA_LISTENERS)
       protocol_map = Map.fetch!(container.environment, :KAFKA_LISTENER_SECURITY_PROTOCOL_MAP)
 
       """
       #{script}
       export CLUSTER_ID=#{config.cluster_id}
-      export KAFKA_NODE_ID=#{broker_id}
+      export KAFKA_NODE_ID=#{config.broker_id}
       export KAFKA_PROCESS_ROLES=broker,controller
       export KAFKA_LISTENERS=#{listeners},CONTROLLER://0.0.0.0:9094
       export KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=#{protocol_map},CONTROLLER:PLAINTEXT
@@ -271,6 +280,7 @@ defmodule Testcontainers.KafkaContainer do
         "OUTSIDE://#{Testcontainers.get_host()}:#{Container.mapped_port(container, config.kafka_port)}"
 
       """
+      export KAFKA_BROKER_ID=#{config.broker_id}
       export KAFKA_ADVERTISED_LISTENERS=#{internal},#{external}
       echo '' > /etc/confluent/docker/ensure
       """
