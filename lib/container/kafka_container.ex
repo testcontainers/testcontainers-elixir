@@ -200,7 +200,10 @@ defmodule Testcontainers.KafkaContainer do
     defp with_topic_config(container, config) do
       container
       |> with_environment(:KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR, "1")
-      |> with_environment(:KAFKA_OFFSETS_TOPIC_NUM_PARTITIONS, "#{config.default_topic_partitions}")
+      |> with_environment(
+        :KAFKA_OFFSETS_TOPIC_NUM_PARTITIONS,
+        "#{config.default_topic_partitions}"
+      )
       |> with_environment(:KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR, "1")
       |> with_environment(:KAFKA_TRANSACTION_STATE_LOG_MIN_ISR, "1")
       |> with_environment(:KAFKA_AUTO_CREATE_TOPICS_ENABLE, "false")

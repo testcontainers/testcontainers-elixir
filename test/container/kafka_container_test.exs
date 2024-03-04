@@ -210,21 +210,17 @@ defmodule Testcontainers.Container.KafkaContainerTest do
     container(:kafka, KafkaContainer.new())
 
     test "provides a ready-to-use kafka container", %{kafka: kafka} do
+      worker_name = :worker
+      topic_name = "test_topic"
       uris = [{"localhost", Container.mapped_port(kafka, 9092)}]
 
       {:ok, pid} = KafkaEx.create_worker(:worker, uris: uris, consumer_group: "kafka_ex")
       on_exit(fn -> :ok = KafkaEx.stop_worker(pid) end)
 
-      request = %KafkaEx.Protocol.CreateTopics.TopicRequest{
-        topic: "test_topic",
-        num_partitions: 1,
-        replication_factor: 1,
-        replica_assignment: []
-      }
+      :ok = create_topic(worker_name, topic_name, [])
 
-      _ = KafkaEx.create_topics([request], worker_name: :worker)
-      {:ok, _} = KafkaEx.produce("test_topic", 0, "hey", worker_name: :worker, required_acks: 1)
-      stream = KafkaEx.stream("test_topic", 0, worker_name: :worker)
+      {:ok, _} = KafkaEx.produce(topic_name, 0, "hey", worker_name: worker_name, required_acks: 1)
+      stream = KafkaEx.stream(topic_name, 0, worker_name: :worker)
       [response] = Enum.take(stream, 1)
 
       assert response.value == "hey"
@@ -236,21 +232,17 @@ defmodule Testcontainers.Container.KafkaContainerTest do
       {:ok, zookeeper} = start_external_zookeeper()
       {:ok, kafka} = start_kafka_with_external_zookeeper(zookeeper, 1, 9092)
 
+      worker_name = :worker
+      topic_name = "test_topic"
       uris = [{"localhost", Container.mapped_port(kafka, 9092)}]
 
-      {:ok, pid} = KafkaEx.create_worker(:worker, uris: uris, consumer_group: "kafka_ex")
+      {:ok, pid} = KafkaEx.create_worker(worker_name, uris: uris, consumer_group: "kafka_ex")
       on_exit(fn -> :ok = KafkaEx.stop_worker(pid) end)
 
-      request = %KafkaEx.Protocol.CreateTopics.TopicRequest{
-        topic: "test_topic",
-        num_partitions: 1,
-        replication_factor: 1,
-        replica_assignment: []
-      }
+      :ok = create_topic(worker_name, topic_name, [])
 
-      _ = KafkaEx.create_topics([request], worker_name: :worker)
-      {:ok, _} = KafkaEx.produce("test_topic", 0, "hey", worker_name: :worker, required_acks: 1)
-      stream = KafkaEx.stream("test_topic", 0, worker_name: :worker)
+      {:ok, _} = KafkaEx.produce(topic_name, 0, "hey", worker_name: worker_name, required_acks: 1)
+      stream = KafkaEx.stream(topic_name, 0, worker_name: worker_name)
       [response] = Enum.take(stream, 1)
 
       assert response.value == "hey"
@@ -261,25 +253,23 @@ defmodule Testcontainers.Container.KafkaContainerTest do
       {:ok, kafka1} = start_kafka_with_external_zookeeper(zookeeper, 1, 9092)
       {:ok, kafka2} = start_kafka_with_external_zookeeper(zookeeper, 2, 9093)
 
+      writer_name = :writer
+      reader_name = :reader
+      topic_name = "test_topic"
       uris_one = [{"localhost", Container.mapped_port(kafka1, 9092)}]
       uris_two = [{"localhost", Container.mapped_port(kafka2, 9093)}]
 
-      {:ok, pid} = KafkaEx.create_worker(:writer, uris: uris_one, consumer_group: "kafka_ex")
+      {:ok, pid} = KafkaEx.create_worker(writer_name, uris: uris_one, consumer_group: "kafka_ex")
       on_exit(fn -> :ok = KafkaEx.stop_worker(pid) end)
 
-      request = %KafkaEx.Protocol.CreateTopics.TopicRequest{
-        topic: "test_topic",
-        num_partitions: 1,
-        replication_factor: 1,
-        replica_assignment: []
-      }
+      # Produce a message to the topic using client connected to kafka1
+      :ok = create_topic(writer_name, topic_name, [])
+      {:ok, _} = KafkaEx.produce(topic_name, 0, "hey", worker_name: writer_name, required_acks: 1)
 
-      _ = KafkaEx.create_topics([request], worker_name: :writer)
-      {:ok, _} = KafkaEx.produce("test_topic", 0, "hey", worker_name: :writer, required_acks: 1)
-
-      {:ok, pid} = KafkaEx.create_worker(:reader, uris: uris_two, consumer_group: "kafka_ex")
+      # Consume the message from the topic using client connected to kafka2
+      {:ok, pid} = KafkaEx.create_worker(reader_name, uris: uris_two, consumer_group: "kafka_ex")
       on_exit(fn -> :ok = KafkaEx.stop_worker(pid) end)
-      stream = KafkaEx.stream("test_topic", 0, worker_name: :reader)
+      stream = KafkaEx.stream(topic_name, 0, worker_name: reader_name)
       [response] = Enum.take(stream, 1)
 
       assert response.value == "hey"
@@ -290,21 +280,17 @@ defmodule Testcontainers.Container.KafkaContainerTest do
     container(:kafka, KafkaContainer.new() |> KafkaContainer.with_consensus_strategy(:kraft))
 
     test "provides a ready-to-use kafka container", %{kafka: kafka} do
+      worker_name = :worker
+      topic_name = "test_topic"
       uris = [{"localhost", Container.mapped_port(kafka, 9092)}]
 
-      {:ok, pid} = KafkaEx.create_worker(:worker, uris: uris, consumer_group: "kafka_ex")
+      {:ok, pid} = KafkaEx.create_worker(worker_name, uris: uris, consumer_group: "kafka_ex")
       on_exit(fn -> :ok = KafkaEx.stop_worker(pid) end)
 
-      request = %KafkaEx.Protocol.CreateTopics.TopicRequest{
-        topic: "test_topic",
-        num_partitions: 1,
-        replication_factor: 1,
-        replica_assignment: []
-      }
+      :ok = create_topic(:worker, topic_name, [])
 
-      _ = KafkaEx.create_topics([request], worker_name: :worker)
-      {:ok, _} = KafkaEx.produce("test_topic", 0, "hey", worker_name: :worker, required_acks: 1)
-      stream = KafkaEx.stream("test_topic", 0, worker_name: :worker)
+      {:ok, _} = KafkaEx.produce(topic_name, 0, "hey", worker_name: worker_name, required_acks: 1)
+      stream = KafkaEx.stream(topic_name, 0, worker_name: worker_name)
       [response] = Enum.take(stream, 1)
 
       assert response.value == "hey"
@@ -333,5 +319,21 @@ defmodule Testcontainers.Container.KafkaContainerTest do
     on_exit(fn -> Testcontainers.stop_container(kafka.container_id) end)
 
     {:ok, kafka}
+  end
+
+  # After creating a topic, we need to wait for a short period of time for the topic to be created and
+  # available for use.
+  defp create_topic(worker_name, topic_name, opts) do
+    request = %KafkaEx.Protocol.CreateTopics.TopicRequest{
+      topic: topic_name,
+      num_partitions: Keyword.get(opts, :num_partitions, 1),
+      replication_factor: Keyword.get(opts, :replication_factor, 1),
+      replica_assignment: Keyword.get(opts, :replica_assignment, [])
+    }
+
+    KafkaEx.create_topics([request], worker_name: worker_name)
+    :timer.sleep(100)
+
+    :ok
   end
 end
