@@ -45,6 +45,38 @@ defmodule Testcontainers.EmqxContainer do
   end
 
   @doc """
+  Overrides the default image used for the Emqx container.
+
+  ## Examples
+
+      iex> config = EmqxContainer.new()
+      iex> new_config = EmqxContainer.with_image(config, "emqx:xyz")
+      iex> new_config.image
+      "emqx:xyz"
+  """
+  def with_image(%__MODULE__{} = config, image) when is_binary(image) do
+    %{config | image: image}
+  end
+
+  def with_ports(
+        %__MODULE__{} = config,
+        mqtt_port \\ @default_mqtt_port,
+        mqtts_port \\ @default_mqtts_port,
+        mqtt_over_ws_port \\ @default_mqtt_over_ws_port,
+        mqtt_over_wss_port \\ @default_mqtt_over_wss_port,
+        dashboard_port \\ @default_dashboard_port
+      ) do
+    %{
+      config
+      | mqtt_port: mqtt_port,
+        mqtts_port: mqtts_port,
+        mqtt_over_ws_port: mqtt_over_ws_port,
+        mqtt_over_wss_port: mqtt_over_wss_port,
+        dashboard_port: dashboard_port
+    }
+  end
+
+  @doc """
   Retrieves the default Docker image for the Emqx container.
   """
   def default_image, do: @default_image
