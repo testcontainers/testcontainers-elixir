@@ -86,9 +86,7 @@ defmodule TestcontainersElixir.MixProject do
       # RabbitMQ
       {:amqp, "~> 3.3", only: [:dev, :test]},
       # EMQX
-      {:exmqtt, github: "ryanwinchester/exmqtt", branch: "master", only: [:dev, :test]},
-      {:gun, "~> 1.3.0", override: true, only: [:dev, :test]},
-      {:cowlib, "~> 2.6.0", override: true, only: [:dev, :test]}
+      {:tortoise311, "~> 0.11.7"}
     ]
   end
 

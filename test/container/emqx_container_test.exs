@@ -2,6 +2,7 @@ defmodule Testcontainers.Container.EmqxContainerTest do
   use ExUnit.Case, async: true
   import Testcontainers.ExUnit
 
+  alias Testcontainers.Container.EmqxContainerTest
   alias Testcontainers.EmqxContainer
 
   @moduletag timeout: 300_000
@@ -12,7 +13,14 @@ defmodule Testcontainers.Container.EmqxContainerTest do
     test "provides a ready-to-use emqx container", %{emqx: emqx} do
       host = EmqxContainer.host()
       port = EmqxContainer.mqtt_port(emqx)
-      {:ok, _pid} = ExMQTT.start_link(host: host, port: port)
+
+      client_config = [
+        client_id: EmqxContainerTest,
+        server: {Tortoise311.Transport.Tcp, host: host, port: port},
+        handler: {Tortoise311.Handler.Logger, []}
+      ]
+
+      {:ok, _pid} = Tortoise311.Connection.start_link(client_config)
     end
   end
 
@@ -27,7 +35,14 @@ defmodule Testcontainers.Container.EmqxContainerTest do
     test "provides a ready-to-use emqx container" do
       host = EmqxContainer.host()
       port = 1884
-      {:ok, _pid} = ExMQTT.start_link(host: host, port: port)
+
+      client_config = [
+        client_id: EmqxContainerTest,
+        server: {Tortoise311.Transport.Tcp, host: host, port: port},
+        handler: {Tortoise311.Handler.Logger, []}
+      ]
+
+      {:ok, _pid} = Tortoise311.Connection.start_link(client_config)
     end
   end
 end
