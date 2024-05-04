@@ -1,6 +1,9 @@
 defmodule Testcontainers.RabbitMQContainer do
   @moduledoc """
   Provides functionality for creating and managing RabbitMQ container configurations.
+
+  NOTE: The default starting command is `chmod 400 /var/lib/rabbitmq/.erlang.cookie; rabbitmq-server`.
+  `chmod 400 /var/lib/rabbitmq/.erlang.cookie` is necessary for the waiting strategy, which calls the command `rabbitmq-diagnostics check_running`; otherwise CLI tools cannot communicate with the RabbitMQ node.
   """
   alias Testcontainers.ContainerBuilder
   alias Testcontainers.Container
