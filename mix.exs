@@ -82,7 +82,9 @@ defmodule TestcontainersElixir.MixProject do
       # kafka
       {:kafka_ex, "~> 0.13", only: [:dev, :test]},
       # Zookeeper
-      {:erlzk, "~> 0.6.2", only: [:dev, :test]}
+      {:erlzk, "~> 0.6.2", only: [:dev, :test]},
+      # RabbitMQ
+      {:amqp, "~> 3.3", only: [:dev, :test]}
     ]
   end
 
