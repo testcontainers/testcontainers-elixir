@@ -57,8 +57,6 @@ defmodule Testcontainers.RabbitMQContainer do
   @doc """
   Overrides the default port used for the RabbitMQ container.
 
-  Note: this will not change what port the docker container is listening to internally.
-
   ## Examples
     
     iex> config = RabbitMQContainer.new() |> RabbitMQContainer.with_port(1111)
@@ -154,7 +152,12 @@ defmodule Testcontainers.RabbitMQContainer do
   @doc """
   Returns the port on the _host machine_ where the RabbitMQ container is listening.
   """
-  def port(%Container{} = container), do: Container.mapped_port(container, @default_port)
+  def port(%Container{} = container),
+    do:
+      Container.mapped_port(
+        container,
+        String.to_integer(container.environment[:RABBITMQ_NODE_PORT])
+      )
 
   @doc """
   Generates the connection URL for accessing the RabbitMQ service running within the container.
@@ -250,6 +253,7 @@ defmodule Testcontainers.RabbitMQContainer do
       |> with_environment(:RABBITMQ_DEFAULT_USER, config.username)
       |> with_environment(:RABBITMQ_DEFAULT_PASS, config.password)
       |> with_environment(:RABBITMQ_DEFAULT_VHOST, config.virtual_host)
+      |> with_environment(:RABBITMQ_NODE_PORT, to_string(config.port))
       |> with_cmd(config.cmd)
       |> with_waiting_strategy(
         CommandWaitStrategy.new(

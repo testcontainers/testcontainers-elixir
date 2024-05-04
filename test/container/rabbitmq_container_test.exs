@@ -33,6 +33,7 @@ defmodule Testcontainers.Container.RabbitMQContainerTest do
   describe "with custom configuration" do
     @custom_rabbitmq RabbitMQContainer.new()
                      |> RabbitMQContainer.with_image("rabbitmq:3-management-alpine")
+                     |> RabbitMQContainer.with_port(5671)
                      |> RabbitMQContainer.with_username("custom-user")
                      |> RabbitMQContainer.with_password("custom_password")
                      |> RabbitMQContainer.with_virtual_host("custom-virtual-host")
