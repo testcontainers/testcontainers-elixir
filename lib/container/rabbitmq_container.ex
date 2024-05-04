@@ -159,7 +159,8 @@ defmodule Testcontainers.RabbitMQContainer do
   @doc """
   Generates the connection URL for accessing the RabbitMQ service running within the container.
 
-  This URL is based on the AMQP 0-9-1.
+  This URI is based on the AMQP 0-9-1, and has the following scheme:
+  amqp://username:password@host:port/vhost
 
   ## Parameters
 
@@ -204,6 +205,9 @@ defmodule Testcontainers.RabbitMQContainer do
     ]
   end
 
+  @doc """
+  Provides the virtual host segment used in the AMQP URI specification defined in the AMQP 0-9-1, and interprets the virtual host for the connection URL based on the default value.
+  """
   defp virtual_host_segment(container) do
     case container.environment[:RABBITMQ_DEFAULT_VHOST] do
       "/" -> ""
