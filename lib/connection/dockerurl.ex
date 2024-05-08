@@ -8,7 +8,7 @@ defmodule Testcontainers.DockerUrl do
   def construct(docker_host) do
     case URI.parse(docker_host) do
       %URI{scheme: "unix", path: path} ->
-        "http+unix://#{:uri_string.quote(path)}/#{@api_version}"
+        "http+unix://#{URI.encode_www_form(path)}/#{@api_version}"
 
       %URI{scheme: "tcp"} = uri ->
         URI.to_string(%{uri | scheme: "http", path: "/#{@api_version}"})
