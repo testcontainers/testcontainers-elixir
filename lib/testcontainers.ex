@@ -211,7 +211,7 @@ defmodule Testcontainers do
       |> Container.with_label(container_lang_label(), container_lang_value())
       |> Container.with_label(container_label(), "#{true}")
 
-    with {:ok, _} <- Api.pull_image(config.image, state.conn),
+    with {:ok, _} <- Api.pull_image(config.image, state.conn, auth: config.auth),
          {:ok, id} <- Api.create_container(config, state.conn),
          :ok <- Api.start_container(id, state.conn),
          {:ok, container} <- Api.get_container(id, state.conn),

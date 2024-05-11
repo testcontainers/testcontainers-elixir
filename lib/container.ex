@@ -11,6 +11,7 @@ defmodule Testcontainers.Container do
     :image,
     cmd: nil,
     environment: %{},
+    auth: nil,
     exposed_ports: [],
     ip_address: nil,
     wait_strategies: [],
@@ -128,6 +129,21 @@ defmodule Testcontainers.Container do
   """
   def with_auto_remove(%__MODULE__{} = config, auto_remove) when is_boolean(auto_remove) do
     %__MODULE__{config | auto_remove: auto_remove}
+  end
+
+  @doc """
+  Adds authentication token for registries that require a login.
+  """
+  def with_auth(%__MODULE__{} = config, username, password)
+      when is_binary(username) and is_binary(password) do
+    registry_auth_token =
+      Jason.encode!(%{
+        username: username,
+        password: password
+      })
+      |> Base.encode64()
+
+    %__MODULE__{config | auth: registry_auth_token}
   end
 
   @doc """
