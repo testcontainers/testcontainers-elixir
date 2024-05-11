@@ -62,13 +62,27 @@ defmodule Testcontainers.Container do
   end
 
   @doc """
+  Adds multiple _ports_ to be exposed on the _container_.
+  """
+  def with_exposed_ports(%__MODULE__{} = config, ports) when is_list(ports) do
+    filtered_ports = config.exposed_ports |> Enum.reject(fn port -> port in ports end)
+
+    %__MODULE__{config | exposed_ports: ports ++ filtered_ports}
+  end
+
+  @doc """
   Adds a fixed _port_ to be exposed on the _container_.
   This approach to managing ports is not recommended by Testcontainers.
   Use at your own risk.
   """
   def with_fixed_port(%__MODULE__{} = config, port, host_port \\ nil)
       when is_integer(port) and (is_nil(host_port) or is_integer(host_port)) do
-    filtered_ports = config.exposed_ports |> Enum.reject(fn p -> p == port end)
+    filtered_ports =
+      config.exposed_ports
+      |> Enum.reject(fn
+        {p, _} -> p == port
+        p -> p == port
+      end)
 
     %__MODULE__{
       config
@@ -76,15 +90,6 @@ defmodule Testcontainers.Container do
           {port, host_port || port} | filtered_ports
         ]
     }
-  end
-
-  @doc """
-  Adds multiple _ports_ to be exposed on the _container_.
-  """
-  def with_exposed_ports(%__MODULE__{} = config, ports) when is_list(ports) do
-    filtered_ports = config.exposed_ports |> Enum.reject(fn port -> port in ports end)
-
-    %__MODULE__{config | exposed_ports: ports ++ filtered_ports}
   end
 
   @doc """
