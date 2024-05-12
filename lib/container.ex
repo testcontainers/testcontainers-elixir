@@ -12,6 +12,7 @@ defmodule Testcontainers.Container do
     cmd: nil,
     environment: %{},
     auth: nil,
+    is_local_image: false,
     exposed_ports: [],
     ip_address: nil,
     wait_strategies: [],
@@ -149,6 +150,13 @@ defmodule Testcontainers.Container do
       |> Base.encode64()
 
     %__MODULE__{config | auth: registry_auth_token}
+  end
+
+  @doc """
+    Marks image as local image to skip pulling it from the registry
+  """
+  def with_local_image(%__MODULE__{} = config) do
+    %__MODULE__{config | is_local_image: true}
   end
 
   @doc """

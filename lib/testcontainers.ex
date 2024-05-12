@@ -43,7 +43,7 @@ defmodule Testcontainers do
       |> Container.with_bind_mount("/var/run/docker.sock", "/var/run/docker.sock", "rw")
       |> Container.with_auto_remove(true)
 
-    with {:ok, _} <- Api.pull_image(ryuk_config.image, conn),
+    with {:ok, _} <- Api.pull_image(ryuk_config, conn),
          {:ok, ryuk_container_id} <- Api.create_container(ryuk_config, conn),
          :ok <- Api.start_container(ryuk_container_id, conn),
          {:ok, container} <- Api.get_container(ryuk_container_id, conn),
@@ -211,7 +211,7 @@ defmodule Testcontainers do
       |> Container.with_label(container_lang_label(), container_lang_value())
       |> Container.with_label(container_label(), "#{true}")
 
-    with {:ok, _} <- Api.pull_image(config.image, state.conn, auth: config.auth),
+    with {:ok, _} <- Api.pull_image(config, state.conn),
          {:ok, id} <- Api.create_container(config, state.conn),
          :ok <- Api.start_container(id, state.conn),
          {:ok, container} <- Api.get_container(id, state.conn),

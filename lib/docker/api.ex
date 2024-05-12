@@ -22,18 +22,24 @@ defmodule Testcontainers.Docker.Api do
     end
   end
 
-  def pull_image(image, conn, opts \\ []) when is_binary(image) do
-    auth = Keyword.get(opts, :auth, nil)
+  def pull_image(config, conn) when is_binary(config.image) do
+    image = config.image
+    auth = Map.get(config, :auth, nil)
+    is_local_image = Map.get(config, :is_local_image, false)
 
-    case Api.Image.image_create(conn, fromImage: image, "X-Registry-Auth": auth) do
-      {:ok, %Tesla.Env{status: 200}} ->
-        {:ok, nil}
+    if is_local_image do
+      {:ok, nil}
+    else
+      case Api.Image.image_create(conn, fromImage: image, "X-Registry-Auth": auth) do
+        {:ok, %Tesla.Env{status: 200}} ->
+          {:ok, nil}
 
-      {:error, %Tesla.Env{status: other}} ->
-        {:error, {:http_error, other}}
+        {:error, %Tesla.Env{status: other}} ->
+          {:error, {:http_error, other}}
 
-      {:ok, %DockerEngineAPI.Model.ErrorResponse{} = error} ->
-        {:error, {:failed_to_pull_image, error}}
+        {:ok, %DockerEngineAPI.Model.ErrorResponse{} = error} ->
+          {:error, {:failed_to_pull_image, error}}
+      end
     end
   end
 
