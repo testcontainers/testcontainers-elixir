@@ -1,7 +1,7 @@
 defmodule Testcontainers.DockerUrl do
   @moduledoc false
 
-  @api_version "v1.41"
+  @api_version "v1.45"
 
   @test_client Tesla.client([], Tesla.Adapter.Hackney)
 
