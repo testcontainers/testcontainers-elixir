@@ -298,15 +298,22 @@ defmodule Testcontainers.Ecto do
     end
   end
 
-  defp run_migrations(repo, migrations_path) do
-    try do
-      Ecto.Migrator.with_repo(
-        repo,
-        &Ecto.Migrator.run(&1, migrations_path, :up, all: true)
-      )
-    rescue
-      e ->
-        {:error, e}
+  if Code.ensure_loaded?(Ecto.Migrator) do
+    defp run_migrations(repo, migrations_path) do
+      try do
+        Ecto.Migrator.with_repo(
+          repo,
+          &Ecto.Migrator.run(&1, migrations_path, :up, all: true)
+        )
+      rescue
+        e ->
+          {:error, e}
+      end
+    end
+  else
+    defp run_migrations(_repo, _migrations_path) do
+      {:error,
+       "Ecto.Migrator is not available. Please ensure the 'ecto' dependency is included in your project."}
     end
   end
 
