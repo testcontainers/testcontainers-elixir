@@ -144,7 +144,7 @@ defmodule Testcontainers.EmqxContainer do
       ]
 
     @impl true
-    # TODO Implement the `is_starting/3` function for the `ContainerBuilder` protocol.
-    def is_starting(_config, _container, _conn), do: :ok
+    # TODO Implement the `after_start/3` function for the `ContainerBuilder` protocol.
+    def after_start(_config, _container, _conn), do: :ok
   end
 end

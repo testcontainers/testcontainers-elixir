@@ -25,6 +25,6 @@ defmodule Test.ZookeeperContainer do
     end
 
     @impl true
-    def is_starting(_config, _container, _conn), do: :ok
+    def after_start(_config, _container, _conn), do: :ok
   end
 end

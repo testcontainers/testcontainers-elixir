@@ -76,7 +76,7 @@ defmodule Testcontainers.MinioContainer do
     end
 
     @impl true
-    @spec is_starting(%MinioContainer{}, %Container{}, %Tesla.Env{}) :: :ok
-    def is_starting(_config, _container, _conn), do: :ok
+    @spec after_start(%MinioContainer{}, %Container{}, %Tesla.Env{}) :: :ok
+    def after_start(_config, _container, _conn), do: :ok
   end
 end
