@@ -2,7 +2,7 @@ defmodule TestcontainersElixir.MixProject do
   use Mix.Project
 
   @app :testcontainers
-  @version "1.7.0"
+  @version "1.7.1"
   @source_url "https://github.com/testcontainers/testcontainers-elixir"
 
   def project do
@@ -84,7 +84,9 @@ defmodule TestcontainersElixir.MixProject do
       # Zookeeper
       {:erlzk, "~> 0.6.2", only: [:dev, :test]},
       # RabbitMQ
-      {:amqp, "~> 3.3", only: [:dev, :test]}
+      {:amqp, "~> 3.3", only: [:dev, :test]},
+      # EMQX
+      {:tortoise311, "~> 0.11.7"}
     ]
   end
 
