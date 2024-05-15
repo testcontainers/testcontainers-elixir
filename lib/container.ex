@@ -171,9 +171,12 @@ defmodule Testcontainers.Container do
       config
     end
 
+    @doc """
+    Do stuff after container has started.
+    """
     @impl true
-    @spec is_starting(%Testcontainers.Container{}, %Testcontainers.Container{}, %Tesla.Env{}) ::
+    @spec after_start(%Testcontainers.Container{}, %Testcontainers.Container{}, %Tesla.Env{}) ::
             :ok
-    def is_starting(_config, _container, _conn), do: :ok
+    def after_start(_config, _container, _conn), do: :ok
   end
 end

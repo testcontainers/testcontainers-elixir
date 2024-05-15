@@ -5,6 +5,9 @@ defprotocol Testcontainers.ContainerBuilder do
   @spec build(t()) :: %Testcontainers.Container{}
   def build(builder)
 
-  @spec is_starting(t(), %Testcontainers.Container{}, %Tesla.Env{}) :: :ok
-  def is_starting(builder, container, connection)
+  @doc """
+  Do stuff after container has started.
+  """
+  @spec after_start(t(), %Testcontainers.Container{}, %Tesla.Env{}) :: :ok
+  def after_start(builder, container, connection)
 end

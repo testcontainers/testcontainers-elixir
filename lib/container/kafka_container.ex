@@ -168,13 +168,13 @@ defmodule Testcontainers.KafkaContainer do
     end
 
     @doc """
-    Checks if the container is starting.
-    If yes, that means that we know both the host and the port of the container and we can
+    Do stuff after container has started.
+    We now know both the host and the port of the container and we can
     assign them to the config.
     """
     @impl true
-    @spec is_starting(%KafkaContainer{}, %Testcontainers.Container{}, %Tesla.Env{}) :: :ok
-    def is_starting(config = %{start_file_path: start_file_path}, container, conn) do
+    @spec after_start(%KafkaContainer{}, %Testcontainers.Container{}, %Tesla.Env{}) :: :ok
+    def after_start(config = %{start_file_path: start_file_path}, container, conn) do
       with script <- build_startup_script(container, config),
            {:ok, _} <-
              Docker.Api.put_file(container.container_id, conn, "/", start_file_path, script) do

@@ -45,7 +45,7 @@ defmodule Testcontainers.RabbitMQContainer do
   Overrides the default image use for the RabbitMQ container.
 
   ## Examples
-   
+
     iex> config = RabbitMQContainer.new() |> RabbitMQContainer.with_image("rabbitmq:xyz")
     iex> config.image
     "rabbitmq:xyz"
@@ -58,7 +58,7 @@ defmodule Testcontainers.RabbitMQContainer do
   Overrides the default port used for the RabbitMQ container.
 
   ## Examples
-    
+
     iex> config = RabbitMQContainer.new() |> RabbitMQContainer.with_port(1111)
     iex> config.port
     1111
@@ -73,7 +73,7 @@ defmodule Testcontainers.RabbitMQContainer do
   Note: this timeout will be used for each individual wait strategy.
 
   ## Examples
-    
+
     iex> config = RabbitMQContainer.new() |> RabbitMQContainer.with_wait_timeout(60000)
     iex> config.wait_timeout
     60000
@@ -86,7 +86,7 @@ defmodule Testcontainers.RabbitMQContainer do
   Overrides the default user used for the RabbitMQ container.
 
   ## Examples
-    
+
     iex> config = RabbitMQContainer.new() |> RabbitMQContainer.with_username("rabbitmq")
     iex> config.username
     "rabbitmq"
@@ -99,7 +99,7 @@ defmodule Testcontainers.RabbitMQContainer do
   Overrides the default password used for the RabbitMQ container.
 
   ## Examples
-    
+
     iex> config = RabbitMQContainer.new() |> RabbitMQContainer.with_password("rabbitmq")
     iex> config.password
     "rabbitmq"
@@ -112,7 +112,7 @@ defmodule Testcontainers.RabbitMQContainer do
   Overrides the default virtual host used for the RabbitMQ container.
 
   ## Examples
-    
+
     iex> config = RabbitMQContainer.new() |> RabbitMQContainer.with_virtual_host("/")
     iex> config.password
     "/"
@@ -125,7 +125,7 @@ defmodule Testcontainers.RabbitMQContainer do
   Overrides the default command used for the RabbitMQ container.
 
   ## Examples
-    
+
     iex> config = RabbitMQContainer.new() |> RabbitMQContainer.with_cmd(["sh", "-c", "rabbitmq-server"])
     iex> config.cmd
     ["sh", "-c", "rabbitmq-server"]
@@ -172,9 +172,9 @@ defmodule Testcontainers.RabbitMQContainer do
   ## Examples
 
       iex> RabbitMQContainer.connection_url(container)
-      "amqp://guest:guest@localhost:32768" 
+      "amqp://guest:guest@localhost:32768"
       iex> RabbitMQContainer.connection_url(container_with_vhost)
-      "amqp://guest:guest@localhost:32768/vhost" 
+      "amqp://guest:guest@localhost:32768/vhost"
   """
   def connection_url(%Container{} = container) do
     "amqp://#{container.environment[:RABBITMQ_DEFAULT_USER]}:#{container.environment[:RABBITMQ_DEFAULT_PASS]}@#{Testcontainers.get_host()}:#{port(container)}#{virtual_host_segment(container)}"
@@ -264,7 +264,7 @@ defmodule Testcontainers.RabbitMQContainer do
     end
 
     @impl true
-    @spec is_starting(%RabbitMQContainer{}, %Container{}, %Tesla.Env{}) :: :ok
-    def is_starting(_config, _container, _conn), do: :ok
+    @spec after_start(%RabbitMQContainer{}, %Container{}, %Tesla.Env{}) :: :ok
+    def after_start(_config, _container, _conn), do: :ok
   end
 end
