@@ -6,13 +6,10 @@ defmodule Testcontainers.Docker.Api do
 
   alias DockerEngineAPI.Api
   alias Testcontainers.Container
-  alias Testcontainers.Constants
 
   def get_container(container_id, conn)
       when is_binary(container_id) do
-    case Api.Container.container_inspect(conn, container_id,
-           "User-Agent": Constants.user_agent()
-         ) do
+    case Api.Container.container_inspect(conn, container_id) do
       {:error, %Tesla.Env{status: other}} ->
         {:error, {:http_error, other}}
 
@@ -29,8 +26,7 @@ defmodule Testcontainers.Docker.Api do
 
     case Api.Image.image_create(conn,
            fromImage: image,
-           "X-Registry-Auth": auth,
-           "User-Agent": Constants.user_agent()
+           "X-Registry-Auth": auth
          ) do
       {:ok, %Tesla.Env{status: 200}} ->
         {:ok, nil}
@@ -44,9 +40,7 @@ defmodule Testcontainers.Docker.Api do
   end
 
   def create_container(%Container{} = container, conn) do
-    case Api.Container.container_create(conn, container_create_request(container),
-           "User-Agent": Constants.user_agent()
-         ) do
+    case Api.Container.container_create(conn, container_create_request(container)) do
       {:error, %Tesla.Env{status: other}} ->
         {:error, {:http_error, other}}
 
@@ -59,9 +53,7 @@ defmodule Testcontainers.Docker.Api do
   end
 
   def start_container(id, conn) when is_binary(id) do
-    case Api.Container.container_start(conn, id,
-           "User-Agent": Constants.user_agent()
-         ) do
+    case Api.Container.container_start(conn, id) do
       {:ok, %Tesla.Env{status: 204}} ->
         :ok
 
@@ -75,22 +67,16 @@ defmodule Testcontainers.Docker.Api do
 
   def stop_container(container_id, conn) when is_binary(container_id) do
     with {:ok, _} <-
-           Api.Container.container_kill(conn, container_id,
-             "User-Agent": Constants.user_agent()
-           ),
+           Api.Container.container_kill(conn, container_id),
          {:ok, _} <-
-           Api.Container.container_delete(conn, container_id,
-             "User-Agent": Constants.user_agent()
-           ) do
+           Api.Container.container_delete(conn, container_id) do
       :ok
     end
   end
 
   def put_file(container_id, connection, path, file_name, file_contents) do
     with {:ok, tar_file_contents} <- create_tar_stream(file_name, file_contents) do
-      Api.Container.put_container_archive(connection, container_id, path, tar_file_contents,
-        "User-Agent": Constants.user_agent()
-      )
+      Api.Container.put_container_archive(connection, container_id, path, tar_file_contents)
     end
   end
 
@@ -113,7 +99,7 @@ defmodule Testcontainers.Docker.Api do
   end
 
   def inspect_exec(exec_id, conn) do
-    case Api.Exec.exec_inspect(conn, exec_id, "User-Agent": Constants.user_agent()) do
+    case Api.Exec.exec_inspect(conn, exec_id) do
       {:ok, %DockerEngineAPI.Model.ExecInspectResponse{} = body} ->
         {:ok, parse_inspect_result(body)}
 
@@ -140,8 +126,7 @@ defmodule Testcontainers.Docker.Api do
            conn,
            container_id,
            stdout: true,
-           stderr: true,
-           "User-Agent": Constants.user_agent()
+           stderr: true
          ) do
       {:ok, %Tesla.Env{body: body}} ->
         {:ok, body}
@@ -155,9 +140,7 @@ defmodule Testcontainers.Docker.Api do
   end
 
   def get_bridge_gateway(conn) do
-    case Api.Network.network_inspect(conn, "bridge",
-           "User-Agent": Constants.user_agent()
-         ) do
+    case Api.Network.network_inspect(conn, "bridge") do
       {:ok, %DockerEngineAPI.Model.Network{IPAM: %DockerEngineAPI.Model.Ipam{Config: config}}} ->
         with_gateway =
           config
@@ -271,9 +254,7 @@ defmodule Testcontainers.Docker.Api do
   defp create_exec(container_id, command, conn) do
     data = %{"Cmd" => command}
 
-    case Api.Exec.container_exec(conn, container_id, data,
-           "User-Agent": Constants.user_agent()
-         ) do
+    case Api.Exec.container_exec(conn, container_id, data) do
       {:ok, %DockerEngineAPI.Model.IdResponse{Id: id}} ->
         {:ok, id}
 
@@ -289,10 +270,7 @@ defmodule Testcontainers.Docker.Api do
   end
 
   defp start_exec(exec_id, conn) do
-    case Api.Exec.exec_start(conn, exec_id,
-           body: %{},
-           "User-Agent": Constants.user_agent()
-         ) do
+    case Api.Exec.exec_start(conn, exec_id, body: %{}) do
       {:ok, %Tesla.Env{status: 200}} ->
         :ok
 

@@ -2,6 +2,7 @@
 defmodule Testcontainers.Connection do
   @moduledoc false
 
+  alias Testcontainers.Constants
   alias Testcontainers.DockerUrl
   alias Testcontainers.Logger
   alias Testcontainers.DockerHostStrategyEvaluator
@@ -17,7 +18,12 @@ defmodule Testcontainers.Connection do
 
     Logger.log("Using docker host url: #{docker_host_url}")
 
-    options = Keyword.merge(options, base_url: docker_host_url, recv_timeout: @timeout)
+    options =
+      Keyword.merge(options,
+        base_url: docker_host_url,
+        recv_timeout: @timeout,
+        user_agent: Constants.user_agent()
+      )
 
     {Connection.new(options), docker_host_url}
   end
