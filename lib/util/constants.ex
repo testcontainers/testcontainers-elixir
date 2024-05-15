@@ -8,5 +8,5 @@ defmodule Testcontainers.Constants do
   def container_lang_value, do: Elixir |> Atom.to_string() |> String.downcase()
   def container_sessionId_label, do: "org.testcontainers.sessionId"
   def container_version_label, do: "org.testcontainers.version"
-  def user_agent, do: "tc-elixir/" <> library_version
+  def user_agent, do: "tc-elixir/" <> __MODULE__.library_version()
 end
