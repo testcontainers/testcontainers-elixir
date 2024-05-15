@@ -22,8 +22,10 @@ defmodule Testcontainers.Docker.Api do
     end
   end
 
-  def pull_image(image, conn) when is_binary(image) do
-    case Api.Image.image_create(conn, fromImage: image) do
+  def pull_image(image, conn, opts \\ []) when is_binary(image) do
+    auth = Keyword.get(opts, :auth, nil)
+
+    case Api.Image.image_create(conn, fromImage: image, "X-Registry-Auth": auth) do
       {:ok, %Tesla.Env{status: 200}} ->
         {:ok, nil}
 

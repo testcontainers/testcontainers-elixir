@@ -11,6 +11,7 @@ defmodule Testcontainers.Container do
     :image,
     cmd: nil,
     environment: %{},
+    auth: nil,
     exposed_ports: [],
     ip_address: nil,
     wait_strategies: [],
@@ -61,13 +62,27 @@ defmodule Testcontainers.Container do
   end
 
   @doc """
+  Adds multiple _ports_ to be exposed on the _container_.
+  """
+  def with_exposed_ports(%__MODULE__{} = config, ports) when is_list(ports) do
+    filtered_ports = config.exposed_ports |> Enum.reject(fn port -> port in ports end)
+
+    %__MODULE__{config | exposed_ports: ports ++ filtered_ports}
+  end
+
+  @doc """
   Adds a fixed _port_ to be exposed on the _container_.
   This approach to managing ports is not recommended by Testcontainers.
   Use at your own risk.
   """
   def with_fixed_port(%__MODULE__{} = config, port, host_port \\ nil)
       when is_integer(port) and (is_nil(host_port) or is_integer(host_port)) do
-    filtered_ports = config.exposed_ports |> Enum.reject(fn p -> p == port end)
+    filtered_ports =
+      config.exposed_ports
+      |> Enum.reject(fn
+        {p, _} -> p == port
+        p -> p == port
+      end)
 
     %__MODULE__{
       config
@@ -75,15 +90,6 @@ defmodule Testcontainers.Container do
           {port, host_port || port} | filtered_ports
         ]
     }
-  end
-
-  @doc """
-  Adds multiple _ports_ to be exposed on the _container_.
-  """
-  def with_exposed_ports(%__MODULE__{} = config, ports) when is_list(ports) do
-    filtered_ports = config.exposed_ports |> Enum.reject(fn port -> port in ports end)
-
-    %__MODULE__{config | exposed_ports: ports ++ filtered_ports}
   end
 
   @doc """
@@ -128,6 +134,21 @@ defmodule Testcontainers.Container do
   """
   def with_auto_remove(%__MODULE__{} = config, auto_remove) when is_boolean(auto_remove) do
     %__MODULE__{config | auto_remove: auto_remove}
+  end
+
+  @doc """
+  Adds authentication token for registries that require a login.
+  """
+  def with_auth(%__MODULE__{} = config, username, password)
+      when is_binary(username) and is_binary(password) do
+    registry_auth_token =
+      Jason.encode!(%{
+        username: username,
+        password: password
+      })
+      |> Base.encode64()
+
+    %__MODULE__{config | auth: registry_auth_token}
   end
 
   @doc """
