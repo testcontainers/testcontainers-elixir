@@ -189,6 +189,7 @@ defmodule Testcontainers do
         {:ok, connected}
 
       {:error, :econnrefused} ->
+        Logger.warn("Connection refused. Retrying... Attempt #{reattempt_count + 1}/3")
         :timer.sleep(5000)
         create_ryuk_socket(container, reattempt_count + 1)
 
