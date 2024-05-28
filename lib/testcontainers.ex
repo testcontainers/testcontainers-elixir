@@ -175,14 +175,31 @@ defmodule Testcontainers do
     GenServer.call(name, call, @timeout)
   end
 
-  defp create_ryuk_socket(%Container{} = container) do
+  defp create_ryuk_socket(%Container{} = container, reattempt_count \\ 0)
+       when reattempt_count < 3 do
     host_port = Container.mapped_port(container, 8080)
 
-    :gen_tcp.connect(~c"localhost", host_port, [
-      :binary,
-      active: false,
-      packet: :line
-    ])
+    with {:ok, connected} <-
+           :gen_tcp.connect(~c"localhost", host_port, [
+             :binary,
+             active: false,
+             packet: :line,
+             send_timeout: 10000
+           ]) do
+      {:ok, connected}
+    else
+      {:error, :econnrefused} ->
+        :timer.sleep(5000)
+        create_ryuk_socket(container, reattempt_count + 1)
+
+      {:error, error} ->
+        {:error, error}
+    end
+  end
+
+  defp create_ryuk_socket(%Container{} = _container, _reattempt_count) do
+    Logger.log("Ryuk host refused to connect")
+    {:error, :econnrefused}
   end
 
   defp register_ryuk_filter(value, socket) do
