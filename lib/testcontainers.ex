@@ -179,16 +179,17 @@ defmodule Testcontainers do
        when reattempt_count < 3 do
     host_port = Container.mapped_port(container, 8080)
 
-    with {:ok, connected} <-
-           :gen_tcp.connect(~c"localhost", host_port, [
-             :binary,
-             active: false,
-             packet: :line,
-             send_timeout: 10000
-           ]) do
-      {:ok, connected}
-    else
+    case :gen_tcp.connect(~c"localhost", host_port, [
+           :binary,
+           active: false,
+           packet: :line,
+           send_timeout: 10000
+         ]) do
+      {:ok, connected} ->
+        {:ok, connected}
+
       {:error, :econnrefused} ->
+        Logger.warn("Connection refused. Retrying... Attempt #{reattempt_count + 1}/3")
         :timer.sleep(5000)
         create_ryuk_socket(container, reattempt_count + 1)
 
