@@ -59,7 +59,7 @@ defmodule TestcontainersElixir.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:uuid, "~> 1.1"},
+      {:elixir_uuid, "~> 1.2"},
       {:dialyxir, "~> 1.3", only: [:dev], runtime: false},
       {:ex_doc, "~> 0.30", only: :dev, runtime: false},
       # docker api
