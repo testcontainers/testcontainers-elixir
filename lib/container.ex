@@ -20,7 +20,8 @@ defmodule Testcontainers.Container do
     bind_volumes: [],
     labels: %{},
     auto_remove: false,
-    container_id: nil
+    container_id: nil,
+    network_mode: nil
   ]
 
   @doc """
@@ -149,6 +150,13 @@ defmodule Testcontainers.Container do
       |> Base.encode64()
 
     %__MODULE__{config | auth: registry_auth_token}
+  end
+
+  @doc """
+  Sets a network mode to apply to the container object in docker.
+  """
+  def with_network_mode(%__MODULE__{} = config, mode) when is_binary(mode) do
+    %__MODULE__{config | network_mode: mode}
   end
 
   @doc """
