@@ -72,8 +72,8 @@ defmodule TestHelper do
   @doc """
   test if specific tcp port is open on localhost host address.
   """
-  def port_open?(port) do
-    case :gen_tcp.connect(to_charlist("127.0.0.1"), port, [:binary, active: false], 1000) do
+  def port_open?(address, port) when is_binary(address) do
+    case :gen_tcp.connect(to_charlist(address), port, [:binary, active: false], 1000) do
       {:ok, socket} ->
         :gen_tcp.close(socket)
         :ok
