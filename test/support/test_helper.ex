@@ -68,4 +68,18 @@ defmodule TestHelper do
         do_wait_for_lambda(lambda, retries - 1, interval, counter + 1)
     end
   end
+
+  @doc """
+  test if specific tcp port is open on localhost host address.
+  """
+  def port_open?(address, port) when is_binary(address) do
+    case :gen_tcp.connect(to_charlist(address), port, [:binary, active: false], 1000) do
+      {:ok, socket} ->
+        :gen_tcp.close(socket)
+        :ok
+
+      _ ->
+        :error
+    end
+  end
 end

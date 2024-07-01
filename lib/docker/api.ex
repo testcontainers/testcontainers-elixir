@@ -174,7 +174,8 @@ defmodule Testcontainers.Docker.Api do
         PortBindings: map_port_bindings(container_config),
         Privileged: container_config.privileged,
         Binds: map_binds(container_config),
-        Mounts: map_volumes(container_config)
+        Mounts: map_volumes(container_config),
+        NetworkMode: container_config.network_mode
       }
     }
   end
