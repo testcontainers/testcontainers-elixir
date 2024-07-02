@@ -22,7 +22,16 @@ defmodule Testcontainers.PostgresContainer do
   @default_wait_timeout 60_000
 
   @enforce_keys [:image, :user, :password, :database, :port, :wait_timeout, :persistent_volume]
-  defstruct [:image, :user, :password, :database, :port, :wait_timeout, :persistent_volume]
+  defstruct [
+    :image,
+    :user,
+    :password,
+    :database,
+    :port,
+    :wait_timeout,
+    :persistent_volume,
+    check_image?: true
+  ]
 
   @doc """
   Creates a new `PostgresContainer` struct with default configurations.
@@ -132,6 +141,13 @@ defmodule Testcontainers.PostgresContainer do
   end
 
   @doc """
+  Should enable image validation.
+  """
+  def with_check_image(%__MODULE__{} = config, check_image) when is_boolean(check_image) do
+    %__MODULE__{config | check_image?: check_image}
+  end
+
+  @doc """
   Retrieves the default exposed port for the Postgres container.
   """
   def default_port, do: @default_port
@@ -204,7 +220,7 @@ defmodule Testcontainers.PostgresContainer do
           config.wait_timeout
         )
       )
-      |> with_check_image(true)
+      |> with_check_image(config.check_image?)
       |> with_default_image(PostgresContainer.default_image())
       |> valid_image!()
     end

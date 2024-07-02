@@ -25,7 +25,16 @@ defmodule Testcontainers.RabbitMQContainer do
   @default_wait_timeout 60_000
 
   @enforce_keys [:image, :port, :wait_timeout]
-  defstruct [:image, :port, :username, :password, :virtual_host, :cmd, :wait_timeout]
+  defstruct [
+    :image,
+    :port,
+    :username,
+    :password,
+    :virtual_host,
+    :cmd,
+    :wait_timeout,
+    check_image?: true
+  ]
 
   @doc """
   Creates a new `RabbitMQContainer` struct with default configurations.
@@ -132,6 +141,13 @@ defmodule Testcontainers.RabbitMQContainer do
   """
   def with_cmd(%__MODULE__{} = config, cmd) when is_list(cmd) do
     %{config | cmd: cmd}
+  end
+
+  @doc """
+  Should enable image validation.
+  """
+  def with_check_image(%__MODULE__{} = config, check_image) when is_boolean(check_image) do
+    %__MODULE__{config | check_image?: check_image}
   end
 
   @doc """
@@ -255,7 +271,7 @@ defmodule Testcontainers.RabbitMQContainer do
           config.wait_timeout
         )
       )
-      |> with_check_image(true)
+      |> with_check_image(config.check_image?)
       |> with_default_image(RabbitMQContainer.default_image())
       |> valid_image!()
     end

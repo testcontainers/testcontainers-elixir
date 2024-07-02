@@ -26,7 +26,8 @@ defmodule Testcontainers.EmqxContainer do
     :mqtt_over_ws_port,
     :mqtt_over_wss_port,
     :dashboard_port,
-    :wait_timeout
+    :wait_timeout,
+    check_image?: true
   ]
 
   @doc """
@@ -77,6 +78,13 @@ defmodule Testcontainers.EmqxContainer do
   end
 
   @doc """
+  Should enable image validation.
+  """
+  def with_check_image(%__MODULE__{} = config, check_image) when is_boolean(check_image) do
+    %__MODULE__{config | check_image?: check_image}
+  end
+
+  @doc """
   Retrieves the default Docker image for the Emqx container.
   """
   def default_image, do: @default_image
@@ -103,7 +111,7 @@ defmodule Testcontainers.EmqxContainer do
       new(config.image)
       |> with_exposed_ports(exposed_ports(config))
       |> with_waiting_strategies(waiting_strategies(config))
-      |> with_check_image(true)
+      |> with_check_image(config.check_image?)
       |> with_default_image(EmqxContainer.default_image())
       |> valid_image!()
     end
