@@ -21,8 +21,7 @@ defmodule Testcontainers.Container do
     labels: %{},
     auto_remove: false,
     container_id: nil,
-    check_image?: true,
-    default_image: nil
+    check_image: nil
   ]
 
   @doc """
@@ -154,17 +153,10 @@ defmodule Testcontainers.Container do
   end
 
   @doc """
-  Should check if provided image matches the default one.
+  Set the method to check the image compliance.
   """
-  def with_check_image(%__MODULE__{} = config, check_image) when is_boolean(check_image) do
-    %__MODULE__{config | check_image?: check_image}
-  end
-
-  @doc """
-  Adds the expected default image for this container.
-  """
-  def with_default_image(%__MODULE__{} = config, default_image) when is_binary(default_image) do
-    %__MODULE__{config | default_image: default_image}
+  def with_check_image(%__MODULE__{} = config, check_image) when is_function(check_image) do
+    %__MODULE__{config | check_image: check_image}
   end
 
   @doc """
@@ -201,26 +193,23 @@ defmodule Testcontainers.Container do
   @doc """
   Check if the provided image is compatible with the expected default image.
   """
-  def valid_image(%__MODULE__{check_image?: false} = config) do
+  def valid_image(%__MODULE__{check_image: nil} = config) do
     {:ok, config}
   end
 
-  def valid_image(%__MODULE__{default_image: nil} = config) do
-    {:ok, config}
-  end
-
-  def valid_image(%__MODULE__{image: image, default_image: default_image} = config) do
-    if String.starts_with?(image, default_image) do
+  def valid_image(%__MODULE__{image: image, check_image: check_image} = config) do
+    if check_image.(image) do
       {:ok, config}
     else
-      {:error, "Image #{image} is not compatible with #{default_image}"}
+      {:error,
+       "Unexpected image #{config.image}. If this is a valid image, provide a broader `check_image` function to the container configuration."}
     end
   end
 
   defimpl Testcontainers.ContainerBuilder do
     @impl true
     def build(%Testcontainers.Container{} = config) do
-      config
+      Testcontainers.Container.valid_image!(config)
     end
 
     @doc """

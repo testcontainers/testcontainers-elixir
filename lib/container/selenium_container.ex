@@ -18,7 +18,13 @@ defmodule Testcontainers.SeleniumContainer do
   @default_wait_timeout 120_000
 
   @enforce_keys [:image, :port1, :port2, :wait_timeout]
-  defstruct [:image, :port1, :port2, :wait_timeout, check_image?: true]
+  defstruct [
+    :image,
+    :port1,
+    :port2,
+    :wait_timeout,
+    check_image: &__MODULE__.default_image_checker/1
+  ]
 
   def new,
     do: %__MODULE__{
@@ -45,11 +51,13 @@ defmodule Testcontainers.SeleniumContainer do
   end
 
   @doc """
-  Should enable image validation.
+  Set the method to check the image compliance.
   """
-  def with_check_image(%__MODULE__{} = config, check_image) when is_boolean(check_image) do
-    %__MODULE__{config | check_image?: check_image}
+  def with_check_image(%__MODULE__{} = config, check_image) when is_function(check_image) do
+    %__MODULE__{config | check_image: check_image}
   end
+
+  def default_image_checker(image), do: String.starts_with?(image, @default_image)
 
   def default_image, do: @default_image
 
@@ -68,8 +76,7 @@ defmodule Testcontainers.SeleniumContainer do
         PortWaitStrategy.new("127.0.0.1", config.port1, config.wait_timeout, 1000),
         PortWaitStrategy.new("127.0.0.1", config.port2, config.wait_timeout, 1000)
       ])
-      |> with_check_image(config.check_image?)
-      |> with_default_image(SeleniumContainer.default_image())
+      |> with_check_image(config.check_image)
       |> valid_image!()
     end
 

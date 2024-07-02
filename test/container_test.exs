@@ -86,19 +86,8 @@ defmodule Testcontainers.ContainerTest do
   end
 
   describe "valid_image/1" do
-    test "return config when check is disabled" do
-      container =
-        Container.new("invalid-image")
-        |> Container.with_default_image("valid-image")
-        |> Container.with_check_image(false)
-
-      assert {:ok, container} == Container.valid_image(container)
-    end
-
-    test "return config when default image isn't set" do
-      container =
-        Container.new("invalid-image")
-        |> Container.with_check_image(true)
+    test "return config when check image isn't set" do
+      container = Container.new("invalid-image")
 
       assert {:ok, container} == Container.valid_image(container)
     end
@@ -106,8 +95,7 @@ defmodule Testcontainers.ContainerTest do
     test "return config when image matches default one" do
       container =
         Container.new("valid-image")
-        |> Container.with_default_image("valid")
-        |> Container.with_check_image(true)
+        |> Container.with_check_image(&String.starts_with?(&1, "valid"))
 
       assert {:ok, container} == Container.valid_image(container)
     end
@@ -115,10 +103,10 @@ defmodule Testcontainers.ContainerTest do
     test "return error when image doesn't match default one" do
       container =
         Container.new("invalid-image")
-        |> Container.with_default_image("valid")
-        |> Container.with_check_image(true)
+        |> Container.with_check_image(&String.starts_with?(&1, "valid"))
 
-      assert {:error, "Image invalid-image is not compatible with valid"} ==
+      assert {:error,
+              "Unexpected image invalid-image. If this is a valid image, provide a broader `check_image` function to the container configuration."} ==
                Container.valid_image(container)
     end
   end
@@ -127,12 +115,13 @@ defmodule Testcontainers.ContainerTest do
     test "raises error when image isn't valid" do
       container =
         Container.new("invalid-image")
-        |> Container.with_default_image("valid")
-        |> Container.with_check_image(true)
+        |> Container.with_check_image(&String.starts_with?(&1, "valid"))
 
-      assert_raise ArgumentError, "Image invalid-image is not compatible with valid", fn ->
-        Container.valid_image!(container)
-      end
+      assert_raise ArgumentError,
+                   "Unexpected image invalid-image. If this is a valid image, provide a broader `check_image` function to the container configuration.",
+                   fn ->
+                     Container.valid_image!(container)
+                   end
     end
   end
 end

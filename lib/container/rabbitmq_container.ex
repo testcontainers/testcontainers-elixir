@@ -33,7 +33,7 @@ defmodule Testcontainers.RabbitMQContainer do
     :virtual_host,
     :cmd,
     :wait_timeout,
-    check_image?: true
+    check_image: &__MODULE__.default_image_checker/1
   ]
 
   @doc """
@@ -144,11 +144,13 @@ defmodule Testcontainers.RabbitMQContainer do
   end
 
   @doc """
-  Should enable image validation.
+  Set the method to check the image compliance.
   """
-  def with_check_image(%__MODULE__{} = config, check_image) when is_boolean(check_image) do
-    %__MODULE__{config | check_image?: check_image}
+  def with_check_image(%__MODULE__{} = config, check_image) when is_function(check_image) do
+    %__MODULE__{config | check_image: check_image}
   end
+
+  def default_image_checker(image), do: String.starts_with?(image, @default_image)
 
   @doc """
   Retrieves the default Docker image for the RabbitMQ container
@@ -271,8 +273,7 @@ defmodule Testcontainers.RabbitMQContainer do
           config.wait_timeout
         )
       )
-      |> with_check_image(config.check_image?)
-      |> with_default_image(RabbitMQContainer.default_image())
+      |> with_check_image(config.check_image)
       |> valid_image!()
     end
 

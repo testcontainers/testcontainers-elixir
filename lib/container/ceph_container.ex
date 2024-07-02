@@ -19,7 +19,15 @@ defmodule Testcontainers.CephContainer do
   @default_wait_timeout 300_000
 
   @enforce_keys [:image, :access_key, :secret_key, :bucket, :port, :wait_timeout]
-  defstruct [:image, :access_key, :secret_key, :bucket, :port, :wait_timeout, check_image?: true]
+  defstruct [
+    :image,
+    :access_key,
+    :secret_key,
+    :bucket,
+    :port,
+    :wait_timeout,
+    check_image: &__MODULE__.default_image_checker/1
+  ]
 
   @doc """
   Creates a new `CephContainer` struct with default attributes.
@@ -129,11 +137,13 @@ defmodule Testcontainers.CephContainer do
   end
 
   @doc """
-  Should enable image validation.
+  Set the method to check the image compliance.
   """
-  def with_check_image(%__MODULE__{} = config, check_image) when is_boolean(check_image) do
-    %__MODULE__{config | check_image?: check_image}
+  def with_check_image(%__MODULE__{} = config, check_image) when is_function(check_image) do
+    %__MODULE__{config | check_image: check_image}
   end
+
+  def default_image_checker(image), do: String.starts_with?(image, @default_image)
 
   @doc """
   Retrieves the default Docker image used for the Ceph container.
@@ -231,8 +241,7 @@ defmodule Testcontainers.CephContainer do
           5000
         )
       )
-      |> with_check_image(config.check_image?)
-      |> with_default_image(CephContainer.default_image())
+      |> with_check_image(config.check_image)
       |> valid_image!()
     end
 

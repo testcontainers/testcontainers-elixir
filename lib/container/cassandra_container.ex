@@ -18,7 +18,7 @@ defmodule Testcontainers.CassandraContainer do
   @default_wait_timeout 60_000
 
   @enforce_keys [:image, :wait_timeout]
-  defstruct [:image, :wait_timeout, check_image?: true]
+  defstruct [:image, :wait_timeout, check_image: &__MODULE__.default_image_checker/1]
 
   def new,
     do: %__MODULE__{
@@ -31,11 +31,13 @@ defmodule Testcontainers.CassandraContainer do
   end
 
   @doc """
-  Should enable image validation.
+  Set the method to check the image compliance.
   """
-  def with_check_image(%__MODULE__{} = config, check_image) when is_boolean(check_image) do
-    %__MODULE__{config | check_image?: check_image}
+  def with_check_image(%__MODULE__{} = config, check_image) when is_function(check_image) do
+    %__MODULE__{config | check_image: check_image}
   end
+
+  def default_image_checker(image), do: String.starts_with?(image, @default_image)
 
   def default_image, do: @default_image
 
@@ -80,8 +82,7 @@ defmodule Testcontainers.CassandraContainer do
           config.wait_timeout
         )
       )
-      |> with_check_image(config.check_image?)
-      |> with_default_image(CassandraContainer.default_image())
+      |> with_check_image(config.check_image)
       |> valid_image!()
     end
 
