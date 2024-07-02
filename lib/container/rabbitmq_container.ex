@@ -25,7 +25,16 @@ defmodule Testcontainers.RabbitMQContainer do
   @default_wait_timeout 60_000
 
   @enforce_keys [:image, :port, :wait_timeout]
-  defstruct [:image, :port, :username, :password, :virtual_host, :cmd, :wait_timeout]
+  defstruct [
+    :image,
+    :port,
+    :username,
+    :password,
+    :virtual_host,
+    :cmd,
+    :wait_timeout,
+    check_image?: true
+  ]
 
   @doc """
   Creates a new `RabbitMQContainer` struct with default configurations.
@@ -132,6 +141,13 @@ defmodule Testcontainers.RabbitMQContainer do
   """
   def with_cmd(%__MODULE__{} = config, cmd) when is_list(cmd) do
     %{config | cmd: cmd}
+  end
+
+  @doc """
+  Should enable image validation.
+  """
+  def with_check_image(%__MODULE__{} = config, check_image) when is_boolean(check_image) do
+    %__MODULE__{config | check_image?: check_image}
   end
 
   @doc """
@@ -242,12 +258,6 @@ defmodule Testcontainers.RabbitMQContainer do
     @impl true
     @spec build(%RabbitMQContainer{}) :: %Container{}
     def build(%RabbitMQContainer{} = config) do
-      if not String.starts_with?(config.image, RabbitMQContainer.default_image()) do
-        raise ArgumentError,
-          message:
-            "Image #{config.image} is not compatible with #{RabbitMQContainer.default_image()}"
-      end
-
       new(config.image)
       |> with_exposed_port(config.port)
       |> with_environment(:RABBITMQ_DEFAULT_USER, config.username)
@@ -261,6 +271,9 @@ defmodule Testcontainers.RabbitMQContainer do
           config.wait_timeout
         )
       )
+      |> with_check_image(config.check_image?)
+      |> with_default_image(RabbitMQContainer.default_image())
+      |> valid_image!()
     end
 
     @impl true

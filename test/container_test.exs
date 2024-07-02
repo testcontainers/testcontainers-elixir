@@ -84,4 +84,55 @@ defmodule Testcontainers.ContainerTest do
                "eyJwYXNzd29yZCI6InBhc3N3b3JkIiwidXNlcm5hbWUiOiJ1c2VybmFtZSJ9"
     end
   end
+
+  describe "valid_image/1" do
+    test "return config when check is disabled" do
+      container =
+        Container.new("invalid-image")
+        |> Container.with_default_image("valid-image")
+        |> Container.with_check_image(false)
+
+      assert {:ok, container} == Container.valid_image(container)
+    end
+
+    test "return config when default image isn't set" do
+      container =
+        Container.new("invalid-image")
+        |> Container.with_check_image(true)
+
+      assert {:ok, container} == Container.valid_image(container)
+    end
+
+    test "return config when image matches default one" do
+      container =
+        Container.new("valid-image")
+        |> Container.with_default_image("valid")
+        |> Container.with_check_image(true)
+
+      assert {:ok, container} == Container.valid_image(container)
+    end
+
+    test "return error when image doesn't match default one" do
+      container =
+        Container.new("invalid-image")
+        |> Container.with_default_image("valid")
+        |> Container.with_check_image(true)
+
+      assert {:error, "Image invalid-image is not compatible with valid"} ==
+               Container.valid_image(container)
+    end
+  end
+
+  describe "valid_image!/1" do
+    test "raises error when image isn't valid" do
+      container =
+        Container.new("invalid-image")
+        |> Container.with_default_image("valid")
+        |> Container.with_check_image(true)
+
+      assert_raise ArgumentError, "Image invalid-image is not compatible with valid", fn ->
+        Container.valid_image!(container)
+      end
+    end
+  end
 end

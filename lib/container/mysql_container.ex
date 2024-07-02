@@ -22,7 +22,16 @@ defmodule Testcontainers.MySqlContainer do
   @default_wait_timeout 180_000
 
   @enforce_keys [:image, :user, :password, :database, :port, :wait_timeout, :persistent_volume]
-  defstruct [:image, :user, :password, :database, :port, :wait_timeout, :persistent_volume]
+  defstruct [
+    :image,
+    :user,
+    :password,
+    :database,
+    :port,
+    :wait_timeout,
+    :persistent_volume,
+    check_image?: true
+  ]
 
   @doc """
   Creates a new `MySqlContainer` struct with default configurations.
@@ -132,6 +141,13 @@ defmodule Testcontainers.MySqlContainer do
   end
 
   @doc """
+  Should enable image validation.
+  """
+  def with_check_image(%__MODULE__{} = config, check_image) when is_boolean(check_image) do
+    %__MODULE__{config | check_image?: check_image}
+  end
+
+  @doc """
   Retrieves the default exposed port for the MySQL container.
   """
   def default_port, do: @default_port
@@ -188,12 +204,6 @@ defmodule Testcontainers.MySqlContainer do
     @spec build(%MySqlContainer{}) :: %Container{}
     @impl true
     def build(%MySqlContainer{} = config) do
-      if not String.starts_with?(config.image, MySqlContainer.default_image()) do
-        raise ArgumentError,
-          message:
-            "Image #{config.image} is not compatible with #{MySqlContainer.default_image()}"
-      end
-
       new(config.image)
       |> then(MySqlContainer.container_port_fun(config.port))
       |> with_environment(:MYSQL_USER, config.user)
@@ -204,6 +214,9 @@ defmodule Testcontainers.MySqlContainer do
       |> with_waiting_strategy(
         LogWaitStrategy.new(~r/.*port: 3306  MySQL Community Server.*/, config.wait_timeout)
       )
+      |> with_check_image(config.check_image?)
+      |> with_default_image(MySqlContainer.default_image())
+      |> valid_image!()
     end
 
     @impl true
