@@ -208,11 +208,6 @@ defmodule Testcontainers.CephContainer do
     @spec build(%CephContainer{}) :: %Container{}
     @impl true
     def build(%CephContainer{} = config) do
-      if not String.starts_with?(config.image, CephContainer.default_image()) do
-        raise ArgumentError,
-          message: "Image #{config.image} is not compatible with #{CephContainer.default_image()}"
-      end
-
       new(config.image)
       |> with_exposed_port(config.port)
       |> with_environment(:CEPH_DEMO_UID, "demo")
@@ -229,6 +224,9 @@ defmodule Testcontainers.CephContainer do
           5000
         )
       )
+      |> with_check_image(true)
+      |> with_default_image(CephContainer.default_image())
+      |> valid_image!()
     end
 
     @impl true

@@ -188,12 +188,6 @@ defmodule Testcontainers.MySqlContainer do
     @spec build(%MySqlContainer{}) :: %Container{}
     @impl true
     def build(%MySqlContainer{} = config) do
-      if not String.starts_with?(config.image, MySqlContainer.default_image()) do
-        raise ArgumentError,
-          message:
-            "Image #{config.image} is not compatible with #{MySqlContainer.default_image()}"
-      end
-
       new(config.image)
       |> then(MySqlContainer.container_port_fun(config.port))
       |> with_environment(:MYSQL_USER, config.user)
@@ -204,6 +198,9 @@ defmodule Testcontainers.MySqlContainer do
       |> with_waiting_strategy(
         LogWaitStrategy.new(~r/.*port: 3306  MySQL Community Server.*/, config.wait_timeout)
       )
+      |> with_check_image(true)
+      |> with_default_image(MySqlContainer.default_image())
+      |> valid_image!()
     end
 
     @impl true

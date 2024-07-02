@@ -54,12 +54,6 @@ defmodule Testcontainers.SeleniumContainer do
     @spec build(%SeleniumContainer{}) :: %Container{}
     @impl true
     def build(%SeleniumContainer{} = config) do
-      if not String.starts_with?(config.image, SeleniumContainer.default_image()) do
-        raise ArgumentError,
-          message:
-            "Image #{config.image} is not compatible with #{SeleniumContainer.default_image()}"
-      end
-
       new(config.image)
       |> with_exposed_ports([config.port1, config.port2])
       |> with_waiting_strategies([
@@ -67,6 +61,9 @@ defmodule Testcontainers.SeleniumContainer do
         PortWaitStrategy.new("127.0.0.1", config.port1, config.wait_timeout, 1000),
         PortWaitStrategy.new("127.0.0.1", config.port2, config.wait_timeout, 1000)
       ])
+      |> with_check_image(true)
+      |> with_default_image(SeleniumContainer.default_image())
+      |> valid_image!()
     end
 
     @impl true

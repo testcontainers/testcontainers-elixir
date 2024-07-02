@@ -242,12 +242,6 @@ defmodule Testcontainers.RabbitMQContainer do
     @impl true
     @spec build(%RabbitMQContainer{}) :: %Container{}
     def build(%RabbitMQContainer{} = config) do
-      if not String.starts_with?(config.image, RabbitMQContainer.default_image()) do
-        raise ArgumentError,
-          message:
-            "Image #{config.image} is not compatible with #{RabbitMQContainer.default_image()}"
-      end
-
       new(config.image)
       |> with_exposed_port(config.port)
       |> with_environment(:RABBITMQ_DEFAULT_USER, config.username)
@@ -261,6 +255,9 @@ defmodule Testcontainers.RabbitMQContainer do
           config.wait_timeout
         )
       )
+      |> with_check_image(true)
+      |> with_default_image(RabbitMQContainer.default_image())
+      |> valid_image!()
     end
 
     @impl true

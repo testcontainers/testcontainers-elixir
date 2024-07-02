@@ -188,12 +188,6 @@ defmodule Testcontainers.PostgresContainer do
     @spec build(%PostgresContainer{}) :: %Container{}
     @impl true
     def build(%PostgresContainer{} = config) do
-      if not String.starts_with?(config.image, PostgresContainer.default_image()) do
-        raise ArgumentError,
-          message:
-            "Image #{config.image} is not compatible with #{PostgresContainer.default_image()}"
-      end
-
       new(config.image)
       |> then(PostgresContainer.container_port_fun(config.port))
       |> with_environment(:POSTGRES_USER, config.user)
@@ -210,6 +204,9 @@ defmodule Testcontainers.PostgresContainer do
           config.wait_timeout
         )
       )
+      |> with_check_image(true)
+      |> with_default_image(PostgresContainer.default_image())
+      |> valid_image!()
     end
 
     @impl true

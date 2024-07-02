@@ -56,12 +56,6 @@ defmodule Testcontainers.CassandraContainer do
     @impl true
     @spec build(%CassandraContainer{}) :: %Container{}
     def build(%CassandraContainer{} = config) do
-      if not String.starts_with?(config.image, CassandraContainer.default_image()) do
-        raise ArgumentError,
-          message:
-            "Image #{config.image} is not compatible with #{CassandraContainer.default_image()}"
-      end
-
       new(config.image)
       |> with_exposed_port(CassandraContainer.default_port())
       |> with_environment(:CASSANDRA_SNITCH, "GossipingPropertyFileSnitch")
@@ -79,6 +73,9 @@ defmodule Testcontainers.CassandraContainer do
           config.wait_timeout
         )
       )
+      |> with_check_image(true)
+      |> with_default_image(CassandraContainer.default_image())
+      |> valid_image!()
     end
 
     @impl true

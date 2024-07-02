@@ -20,7 +20,9 @@ defmodule Testcontainers.Container do
     bind_volumes: [],
     labels: %{},
     auto_remove: false,
-    container_id: nil
+    container_id: nil,
+    check_image?: true,
+    default_image: nil
   ]
 
   @doc """
@@ -152,6 +154,20 @@ defmodule Testcontainers.Container do
   end
 
   @doc """
+  Should check if provided image matches the default one.
+  """
+  def with_check_image(%__MODULE__{} = config, check_image) when is_boolean(check_image) do
+    %__MODULE__{config | check_image?: check_image}
+  end
+
+  @doc """
+  Adds the expected default image for this container.
+  """
+  def with_default_image(%__MODULE__{} = config, default_image) when is_binary(default_image) do
+    %__MODULE__{config | default_image: default_image}
+  end
+
+  @doc """
   Gets the host port on the container for the given exposed port.
   """
   def mapped_port(%__MODULE__{} = container, port) when is_number(port) do
@@ -163,6 +179,42 @@ defmodule Testcontainers.Container do
     |> List.first({})
     |> Tuple.to_list()
     |> List.last()
+  end
+
+  @doc """
+  Check if the provided image is compatible with the expected default image.
+
+  Raises:
+
+  ArgumentError when image isn't compatible.
+  """
+  def valid_image!(%__MODULE__{} = config) do
+    case valid_image(config) do
+      {:ok, config} ->
+        config
+
+      {:error, message} ->
+        raise ArgumentError, message: message
+    end
+  end
+
+  @doc """
+  Check if the provided image is compatible with the expected default image.
+  """
+  def valid_image(%__MODULE__{check_image?: false} = config) do
+    {:ok, config}
+  end
+
+  def valid_image(%__MODULE__{default_image: nil} = config) do
+    {:ok, config}
+  end
+
+  def valid_image(%__MODULE__{image: image, default_image: default_image} = config) do
+    if String.starts_with?(image, default_image) do
+      {:ok, config}
+    else
+      {:error, "Image #{image} is not compatible with #{default_image}"}
+    end
   end
 
   defimpl Testcontainers.ContainerBuilder do

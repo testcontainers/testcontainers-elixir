@@ -100,14 +100,12 @@ defmodule Testcontainers.EmqxContainer do
     """
     @impl true
     def build(%EmqxContainer{} = config) do
-      if not String.starts_with?(config.image, EmqxContainer.default_image()) do
-        raise ArgumentError,
-          message: "Image #{config.image} is not compatible with #{EmqxContainer.default_image()}"
-      end
-
       new(config.image)
       |> with_exposed_ports(exposed_ports(config))
       |> with_waiting_strategies(waiting_strategies(config))
+      |> with_check_image(true)
+      |> with_default_image(EmqxContainer.default_image())
+      |> valid_image!()
     end
 
     defp exposed_ports(config),
