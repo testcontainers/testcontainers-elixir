@@ -85,6 +85,34 @@ defmodule Testcontainers.ContainerTest do
     end
   end
 
+  describe "with_check_image/2" do
+    test "compiles a string into a valid regex" do
+      container =
+        "registry.io/my-user/my-image:latest"
+        |> Container.new()
+        |> Container.with_check_image("my-image")
+
+      assert container.check_image == ~r/.*\bmy-image\b.*/
+    end
+
+    test "raises Regex.CompileError when string can't be compiled to a valid regex" do
+      assert_raise Regex.CompileError, fn ->
+        "registry.io/my-user/my-image:latest"
+        |> Container.new()
+        |> Container.with_check_image("*my-image")
+      end
+    end
+
+    test "accepts a regex" do
+      container =
+        "registry.io/my-user/my-image:latest"
+        |> Container.new()
+        |> Container.with_check_image(~r/.*my-image.*/)
+
+      assert container.check_image == ~r/.*my-image.*/
+    end
+  end
+
   describe "valid_image/1" do
     test "return config when check image isn't set" do
       container = Container.new("invalid-image")

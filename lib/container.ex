@@ -155,16 +155,11 @@ defmodule Testcontainers.Container do
   @doc """
   Set the regular expression to check the image validity.
 
-  When using a string, it will compile it to a regular expression matching the beginning and end boundary of the word. If the compilation fails, it will match any string.
+  When using a string, it will compile it to a regular expression matching the beginning and end boundary of the word. If the compilation fails, it will raise a `Regex.CompileError`.
   """
   def with_check_image(%__MODULE__{} = config, check_image) when is_binary(check_image) do
-    case Regex.compile(".*\\b#{check_image}\\b.*") do
-      {:ok, regex} ->
-        with_check_image(config, regex)
-
-      _ ->
-        config
-    end
+    regex = Regex.compile!(".*\\b#{check_image}\\b.*")
+    with_check_image(config, regex)
   end
 
   def with_check_image(%__MODULE__{} = config, %Regex{} = check_image) do
