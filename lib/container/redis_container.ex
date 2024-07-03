@@ -18,7 +18,7 @@ defmodule Testcontainers.RedisContainer do
   @default_wait_timeout 60_000
 
   @enforce_keys [:image, :port, :wait_timeout]
-  defstruct [:image, :port, :wait_timeout, check_image: &__MODULE__.default_image_checker/1]
+  defstruct [:image, :port, :wait_timeout, check_image: @default_image]
 
   @doc """
   Creates a new `RedisContainer` struct with default configurations.
@@ -77,13 +77,12 @@ defmodule Testcontainers.RedisContainer do
   end
 
   @doc """
-  Should enable image validation.
+  Set the regular expression to check the image validity.
   """
-  def with_check_image(%__MODULE__{} = config, check_image) when is_function(check_image) do
+  def with_check_image(%__MODULE__{} = config, check_image)
+      when is_binary(check_image) or is_struct(check_image, Regex) do
     %__MODULE__{config | check_image: check_image}
   end
-
-  def default_image_checker(image), do: String.starts_with?(image, @default_image)
 
   @doc """
   Retrieves the default Docker image for the Redis container.

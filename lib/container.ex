@@ -21,7 +21,7 @@ defmodule Testcontainers.Container do
     labels: %{},
     auto_remove: false,
     container_id: nil,
-    check_image: nil
+    check_image: ~r/.*/
   ]
 
   @doc """
@@ -153,9 +153,21 @@ defmodule Testcontainers.Container do
   end
 
   @doc """
-  Set the method to check the image compliance.
+  Set the regular expression to check the image validity.
+
+  When using a string, it will compile it to a regular expression matching the beginning and end boundary of the word. If the compilation fails, it will match any string.
   """
-  def with_check_image(%__MODULE__{} = config, check_image) when is_function(check_image) do
+  def with_check_image(%__MODULE__{} = config, check_image) when is_binary(check_image) do
+    case Regex.compile(".*\\b#{check_image}\\b.*") do
+      {:ok, regex} ->
+        with_check_image(config, regex)
+
+      _ ->
+        config
+    end
+  end
+
+  def with_check_image(%__MODULE__{} = config, %Regex{} = check_image) do
     %__MODULE__{config | check_image: check_image}
   end
 
@@ -193,16 +205,12 @@ defmodule Testcontainers.Container do
   @doc """
   Check if the provided image is compatible with the expected default image.
   """
-  def valid_image(%__MODULE__{check_image: nil} = config) do
-    {:ok, config}
-  end
-
   def valid_image(%__MODULE__{image: image, check_image: check_image} = config) do
-    if check_image.(image) do
+    if Regex.match?(check_image, image) do
       {:ok, config}
     else
       {:error,
-       "Unexpected image #{config.image}. If this is a valid image, provide a broader `check_image` function to the container configuration."}
+       "Unexpected image #{image}. If this is a valid image, provide a broader `check_image` regex to the container configuration."}
     end
   end
 

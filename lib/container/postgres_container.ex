@@ -30,7 +30,7 @@ defmodule Testcontainers.PostgresContainer do
     :port,
     :wait_timeout,
     :persistent_volume,
-    check_image: &__MODULE__.default_image_checker/1
+    check_image: @default_image
   ]
 
   @doc """
@@ -141,9 +141,10 @@ defmodule Testcontainers.PostgresContainer do
   end
 
   @doc """
-  Set the method to check the image compliance.
+  Set the regular expression to check the image validity.
   """
-  def with_check_image(%__MODULE__{} = config, check_image) when is_function(check_image) do
+  def with_check_image(%__MODULE__{} = config, check_image)
+      when is_binary(check_image) or is_struct(check_image, Regex) do
     %__MODULE__{config | check_image: check_image}
   end
 
@@ -151,8 +152,6 @@ defmodule Testcontainers.PostgresContainer do
   Retrieves the default exposed port for the Postgres container.
   """
   def default_port, do: @default_port
-
-  def default_image_checker(image), do: String.starts_with?(image, @default_image)
 
   @doc """
   Retrieves the default Docker image for the Postgres container.

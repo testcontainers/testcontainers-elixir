@@ -92,10 +92,26 @@ defmodule Testcontainers.ContainerTest do
       assert {:ok, container} == Container.valid_image(container)
     end
 
-    test "return config when image matches default one" do
+    test "return config when image matches default string" do
       container =
         Container.new("valid-image")
-        |> Container.with_check_image(&String.starts_with?(&1, "valid"))
+        |> Container.with_check_image("valid")
+
+      assert {:ok, container} == Container.valid_image(container)
+    end
+
+    test "return config when image contains the prefix" do
+      container =
+        Container.new("custom-hub.io/for-user/valid-image:tagged")
+        |> Container.with_check_image("valid")
+
+      assert {:ok, container} == Container.valid_image(container)
+    end
+
+    test "return config when image matches a custom regular expression" do
+      container =
+        Container.new("valid-image")
+        |> Container.with_check_image(~r/.*valid-image.*/)
 
       assert {:ok, container} == Container.valid_image(container)
     end
@@ -103,10 +119,10 @@ defmodule Testcontainers.ContainerTest do
     test "return error when image doesn't match default one" do
       container =
         Container.new("invalid-image")
-        |> Container.with_check_image(&String.starts_with?(&1, "valid"))
+        |> Container.with_check_image("valid")
 
       assert {:error,
-              "Unexpected image invalid-image. If this is a valid image, provide a broader `check_image` function to the container configuration."} ==
+              "Unexpected image invalid-image. If this is a valid image, provide a broader `check_image` regex to the container configuration."} ==
                Container.valid_image(container)
     end
   end
@@ -115,10 +131,10 @@ defmodule Testcontainers.ContainerTest do
     test "raises error when image isn't valid" do
       container =
         Container.new("invalid-image")
-        |> Container.with_check_image(&String.starts_with?(&1, "valid"))
+        |> Container.with_check_image("valid")
 
       assert_raise ArgumentError,
-                   "Unexpected image invalid-image. If this is a valid image, provide a broader `check_image` function to the container configuration.",
+                   "Unexpected image invalid-image. If this is a valid image, provide a broader `check_image` regex to the container configuration.",
                    fn ->
                      Container.valid_image!(container)
                    end

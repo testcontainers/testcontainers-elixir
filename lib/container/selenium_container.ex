@@ -18,13 +18,7 @@ defmodule Testcontainers.SeleniumContainer do
   @default_wait_timeout 120_000
 
   @enforce_keys [:image, :port1, :port2, :wait_timeout]
-  defstruct [
-    :image,
-    :port1,
-    :port2,
-    :wait_timeout,
-    check_image: &__MODULE__.default_image_checker/1
-  ]
+  defstruct [:image, :port1, :port2, :wait_timeout, check_image: @default_image]
 
   def new,
     do: %__MODULE__{
@@ -51,13 +45,12 @@ defmodule Testcontainers.SeleniumContainer do
   end
 
   @doc """
-  Set the method to check the image compliance.
+  Set the regular expression to check the image validity.
   """
-  def with_check_image(%__MODULE__{} = config, check_image) when is_function(check_image) do
+  def with_check_image(%__MODULE__{} = config, check_image)
+      when is_binary(check_image) or is_struct(check_image, Regex) do
     %__MODULE__{config | check_image: check_image}
   end
-
-  def default_image_checker(image), do: String.starts_with?(image, @default_image)
 
   def default_image, do: @default_image
 

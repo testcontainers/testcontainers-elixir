@@ -27,7 +27,7 @@ defmodule Testcontainers.EmqxContainer do
     :mqtt_over_wss_port,
     :dashboard_port,
     :wait_timeout,
-    check_image: &__MODULE__.default_image_checker/1
+    check_image: @default_image
   ]
 
   @doc """
@@ -78,13 +78,12 @@ defmodule Testcontainers.EmqxContainer do
   end
 
   @doc """
-  Set the method to check the image compliance.
+  Set the regular expression to check the image validity.
   """
-  def with_check_image(%__MODULE__{} = config, check_image) when is_function(check_image) do
+  def with_check_image(%__MODULE__{} = config, check_image)
+      when is_binary(check_image) or is_struct(check_image, Regex) do
     %__MODULE__{config | check_image: check_image}
   end
-
-  def default_image_checker(image), do: String.starts_with?(image, @default_image)
 
   @doc """
   Retrieves the default Docker image for the Emqx container.
