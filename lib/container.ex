@@ -25,6 +25,13 @@ defmodule Testcontainers.Container do
   ]
 
   @doc """
+  Returns `true` if `term` is a valid `check_image`, otherwise returns `false`.
+  """
+  @doc guard: true
+  defguard is_valid_image(check_image)
+           when is_binary(check_image) or is_struct(check_image, Regex)
+
+  @doc """
   A constructor function to make it easier to construct a container
   """
   def new(image) when is_binary(image) do

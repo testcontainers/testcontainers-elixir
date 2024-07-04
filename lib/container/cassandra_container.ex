@@ -9,6 +9,8 @@ defmodule Testcontainers.CassandraContainer do
   alias Testcontainers.ContainerBuilder
   alias Testcontainers.Container
 
+  import Testcontainers.Container, only: [is_valid_image: 1]
+
   @default_image "cassandra"
   @default_tag "3.11.2"
   @default_image_with_tag "#{@default_image}:#{@default_tag}"
@@ -33,8 +35,7 @@ defmodule Testcontainers.CassandraContainer do
   @doc """
   Set the regular expression to check the image validity.
   """
-  def with_check_image(%__MODULE__{} = config, check_image)
-      when is_binary(check_image) or is_struct(check_image, Regex) do
+  def with_check_image(%__MODULE__{} = config, check_image) when is_valid_image(check_image) do
     %__MODULE__{config | check_image: check_image}
   end
 

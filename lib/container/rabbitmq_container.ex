@@ -10,6 +10,8 @@ defmodule Testcontainers.RabbitMQContainer do
   alias Testcontainers.CommandWaitStrategy
   alias Testcontainers.RabbitMQContainer
 
+  import Testcontainers.Container, only: [is_valid_image: 1]
+
   @default_image "rabbitmq"
   @default_tag "3-alpine"
   @default_image_with_tag "#{@default_image}:#{@default_tag}"
@@ -146,8 +148,7 @@ defmodule Testcontainers.RabbitMQContainer do
   @doc """
   Set the regular expression to check the image validity.
   """
-  def with_check_image(%__MODULE__{} = config, check_image)
-      when is_binary(check_image) or is_struct(check_image, Regex) do
+  def with_check_image(%__MODULE__{} = config, check_image) when is_valid_image(check_image) do
     %__MODULE__{config | check_image: check_image}
   end
 
