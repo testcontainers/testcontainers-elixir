@@ -92,7 +92,7 @@ defmodule Testcontainers.ContainerTest do
         |> Container.new()
         |> Container.with_check_image("my-image")
 
-      assert container.check_image == ~r/.*\bmy-image\b.*/
+      assert container.check_image == ~r/my-image/
     end
 
     test "raises Regex.CompileError when string can't be compiled to a valid regex" do
@@ -147,7 +147,7 @@ defmodule Testcontainers.ContainerTest do
     test "return error when image doesn't match default one" do
       container =
         Container.new("invalid-image")
-        |> Container.with_check_image("valid")
+        |> Container.with_check_image("validated")
 
       assert {:error,
               "Unexpected image invalid-image. If this is a valid image, provide a broader `check_image` regex to the container configuration."} ==
@@ -159,7 +159,7 @@ defmodule Testcontainers.ContainerTest do
     test "raises error when image isn't valid" do
       container =
         Container.new("invalid-image")
-        |> Container.with_check_image("valid")
+        |> Container.with_check_image("validated")
 
       assert_raise ArgumentError,
                    "Unexpected image invalid-image. If this is a valid image, provide a broader `check_image` regex to the container configuration.",
