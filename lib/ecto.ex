@@ -23,6 +23,7 @@ defmodule Testcontainers.Ecto do
     - `:database` (optional) - Specifies the name of the database to be created within the Postgres instance. If not provided, the default behavior is to create a database with the name derived from the application's atom, appended with "_test".
     - `:migrations_path` (optional) - Indicates the path to the migrations folder (defaults to "priv/repo/migrations").
     - `:persistent_volume_name` (optional, EXPERIMENTAL) - Sets a named volume for the data in the database. This is an experimental option, and changes in database container image or other things that could invalidate the data, would make the container not start properly.
+    - `:check_image` (optional) - Defines a custom regular expression that is used to validate the Docker image.
 
   ## Database Lifecycle in Testing
 
@@ -119,6 +120,7 @@ defmodule Testcontainers.Ecto do
     - `:database` (optional) - Specifies the name of the database to be created within the Mysql instance. If not provided, the default behavior is to create a database with the name derived from the application's atom, appended with "_test".
     - `:migrations_path` (optional) - Indicates the path to the migrations folder (defaults to "priv/repo/migrations").
     - `:persistent_volume_name` (optional, EXPERIMENTAL) - Sets a named volume for the data in the database. This is an experimental option, and changes in database container image or other things that could invalidate the data, would make the container not start properly.
+    - `:check_image` (optional) - Defines a custom regular expression that is used to validate the Docker image.
 
   ## Database Lifecycle in Testing
 
@@ -202,7 +204,7 @@ defmodule Testcontainers.Ecto do
 
   ## Note
 
-  This utility is intended for testing environments requiring a genuine database instance. It is not suitable for production use. It mandates a valid Postgres Docker image to maintain consistent and reliable testing conditions.
+  This utility is intended for testing environments requiring a genuine database instance. It is not suitable for production use. It mandates a valid Mysql Docker image to maintain consistent and reliable testing conditions.
   """
   def mysql_container(options \\ []) do
     database_container(:mysql, options)
@@ -236,6 +238,7 @@ defmodule Testcontainers.Ecto do
     database = Keyword.get(options, :database, "#{Atom.to_string(app)}_test")
     migrations_path = Keyword.get(options, :migrations_path, "priv/repo/migrations")
     persistent_volume_name = Keyword.get(options, :persistent_volume_name, nil)
+    check_image = Keyword.get(options, :check_image, nil)
 
     container_module =
       case type do
@@ -245,12 +248,6 @@ defmodule Testcontainers.Ecto do
 
     image = Keyword.get(options, :image, container_module.default_image_with_tag())
 
-    maybe_persistent_volume_name_fn =
-      case persistent_volume_name do
-        nil -> fn config -> config end
-        name -> fn config -> config |> container_module.with_persistent_volume(name) end
-      end
-
     config =
       container_module.new()
       |> container_module.with_image(image)
@@ -258,7 +255,8 @@ defmodule Testcontainers.Ecto do
       |> container_module.with_user(user)
       |> container_module.with_database(database)
       |> container_module.with_password(password)
-      |> Kernel.then(maybe_persistent_volume_name_fn)
+      |> maybe_with_call(persistent_volume_name, &container_module.with_persistent_volume/2)
+      |> maybe_with_call(check_image, &container_module.with_check_image/2)
 
     case Testcontainers.start_container(config) do
       {:ok, container} ->
@@ -315,5 +313,13 @@ defmodule Testcontainers.Ecto do
     |> String.split("_")
     |> Enum.map(&String.capitalize/1)
     |> Enum.join()
+  end
+
+  defp maybe_with_call(config, nil, _function) do
+    config
+  end
+
+  defp maybe_with_call(config, value, function) do
+    function.(config, value)
   end
 end

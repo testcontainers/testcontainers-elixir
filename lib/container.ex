@@ -21,8 +21,16 @@ defmodule Testcontainers.Container do
     labels: %{},
     auto_remove: false,
     container_id: nil,
+    check_image: ~r/.*/,
     network_mode: nil
   ]
+
+  @doc """
+  Returns `true` if `term` is a valid `check_image`, otherwise returns `false`.
+  """
+  @doc guard: true
+  defguard is_valid_image(check_image)
+           when is_binary(check_image) or is_struct(check_image, Regex)
 
   @doc """
   A constructor function to make it easier to construct a container
@@ -153,6 +161,20 @@ defmodule Testcontainers.Container do
   end
 
   @doc """
+  Set the regular expression to check the image validity.
+
+  When using a string, it will compile it to a regular expression. If the compilation fails, it will raise a `Regex.CompileError`.
+  """
+  def with_check_image(%__MODULE__{} = config, check_image) when is_binary(check_image) do
+    regex = Regex.compile!(check_image)
+    with_check_image(config, regex)
+  end
+
+  def with_check_image(%__MODULE__{} = config, %Regex{} = check_image) do
+    %__MODULE__{config | check_image: check_image}
+  end
+
+  @doc """
   Sets a network mode to apply to the container object in docker.
   """
   def with_network_mode(%__MODULE__{} = config, mode) when is_binary(mode) do
@@ -173,10 +195,39 @@ defmodule Testcontainers.Container do
     |> List.last()
   end
 
+  @doc """
+  Check if the provided image is compatible with the expected default image.
+
+  Raises:
+
+  ArgumentError when image isn't compatible.
+  """
+  def valid_image!(%__MODULE__{} = config) do
+    case valid_image(config) do
+      {:ok, config} ->
+        config
+
+      {:error, message} ->
+        raise ArgumentError, message: message
+    end
+  end
+
+  @doc """
+  Check if the provided image is compatible with the expected default image.
+  """
+  def valid_image(%__MODULE__{image: image, check_image: check_image} = config) do
+    if Regex.match?(check_image, image) do
+      {:ok, config}
+    else
+      {:error,
+       "Unexpected image #{image}. If this is a valid image, provide a broader `check_image` regex to the container configuration."}
+    end
+  end
+
   defimpl Testcontainers.ContainerBuilder do
     @impl true
     def build(%Testcontainers.Container{} = config) do
-      config
+      Testcontainers.Container.valid_image!(config)
     end
 
     @doc """

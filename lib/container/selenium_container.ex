@@ -10,6 +10,8 @@ defmodule Testcontainers.SeleniumContainer do
   alias Testcontainers.PortWaitStrategy
   alias Testcontainers.LogWaitStrategy
 
+  import Testcontainers.Container, only: [is_valid_image: 1]
+
   @default_image "selenium/standalone-chrome"
   @default_tag "118.0"
   @default_image_with_tag "#{@default_image}:#{@default_tag}"
@@ -18,7 +20,7 @@ defmodule Testcontainers.SeleniumContainer do
   @default_wait_timeout 120_000
 
   @enforce_keys [:image, :port1, :port2, :wait_timeout]
-  defstruct [:image, :port1, :port2, :wait_timeout]
+  defstruct [:image, :port1, :port2, :wait_timeout, check_image: @default_image]
 
   def new,
     do: %__MODULE__{
@@ -44,6 +46,13 @@ defmodule Testcontainers.SeleniumContainer do
     %{config | wait_timeout: wait_timeout}
   end
 
+  @doc """
+  Set the regular expression to check the image validity.
+  """
+  def with_check_image(%__MODULE__{} = config, check_image) when is_valid_image(check_image) do
+    %__MODULE__{config | check_image: check_image}
+  end
+
   def default_image, do: @default_image
 
   defimpl ContainerBuilder do
@@ -54,12 +63,6 @@ defmodule Testcontainers.SeleniumContainer do
     @spec build(%SeleniumContainer{}) :: %Container{}
     @impl true
     def build(%SeleniumContainer{} = config) do
-      if not String.starts_with?(config.image, SeleniumContainer.default_image()) do
-        raise ArgumentError,
-          message:
-            "Image #{config.image} is not compatible with #{SeleniumContainer.default_image()}"
-      end
-
       new(config.image)
       |> with_exposed_ports([config.port1, config.port2])
       |> with_waiting_strategies([
@@ -67,6 +70,8 @@ defmodule Testcontainers.SeleniumContainer do
         PortWaitStrategy.new("127.0.0.1", config.port1, config.wait_timeout, 1000),
         PortWaitStrategy.new("127.0.0.1", config.port2, config.wait_timeout, 1000)
       ])
+      |> with_check_image(config.check_image)
+      |> valid_image!()
     end
 
     @impl true

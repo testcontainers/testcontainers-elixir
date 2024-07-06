@@ -9,6 +9,8 @@ defmodule Testcontainers.CassandraContainer do
   alias Testcontainers.ContainerBuilder
   alias Testcontainers.Container
 
+  import Testcontainers.Container, only: [is_valid_image: 1]
+
   @default_image "cassandra"
   @default_tag "3.11.2"
   @default_image_with_tag "#{@default_image}:#{@default_tag}"
@@ -18,7 +20,7 @@ defmodule Testcontainers.CassandraContainer do
   @default_wait_timeout 60_000
 
   @enforce_keys [:image, :wait_timeout]
-  defstruct [:image, :wait_timeout]
+  defstruct [:image, :wait_timeout, check_image: @default_image]
 
   def new,
     do: %__MODULE__{
@@ -28,6 +30,13 @@ defmodule Testcontainers.CassandraContainer do
 
   def with_image(%__MODULE__{} = config, image) when is_binary(image) do
     %{config | image: image}
+  end
+
+  @doc """
+  Set the regular expression to check the image validity.
+  """
+  def with_check_image(%__MODULE__{} = config, check_image) when is_valid_image(check_image) do
+    %__MODULE__{config | check_image: check_image}
   end
 
   def default_image, do: @default_image
@@ -56,12 +65,6 @@ defmodule Testcontainers.CassandraContainer do
     @impl true
     @spec build(%CassandraContainer{}) :: %Container{}
     def build(%CassandraContainer{} = config) do
-      if not String.starts_with?(config.image, CassandraContainer.default_image()) do
-        raise ArgumentError,
-          message:
-            "Image #{config.image} is not compatible with #{CassandraContainer.default_image()}"
-      end
-
       new(config.image)
       |> with_exposed_port(CassandraContainer.default_port())
       |> with_environment(:CASSANDRA_SNITCH, "GossipingPropertyFileSnitch")
@@ -79,6 +82,8 @@ defmodule Testcontainers.CassandraContainer do
           config.wait_timeout
         )
       )
+      |> with_check_image(config.check_image)
+      |> valid_image!()
     end
 
     @impl true

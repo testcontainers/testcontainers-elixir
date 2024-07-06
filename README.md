@@ -64,6 +64,17 @@ config = Testcontainers.RedisContainer.new()
 {:ok, container} = Testcontainers.start_container(config)
 ```
 
+If you want to use a predefined container, such as `RedisContainer`, with an alternative image, for example, `valkey/valkey`, it's possible:
+
+```elixir
+{:ok, _} = Testcontainers.start_link()
+config =
+  Testcontainers.RedisContainer.new()
+  |> Testcontainers.RedisContainer.with_image("valkey/valkey:latest")
+  |> Testcontainers.RedisContainer.with_check_image("valkey/valkey")
+{:ok, container} = Testcontainers.start_container(config)
+```
+
 ### ExUnit tests
 
 Given you have added Testcontainers.start_link() to test_helper.exs:

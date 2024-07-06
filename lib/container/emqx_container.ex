@@ -8,6 +8,8 @@ defmodule Testcontainers.EmqxContainer do
   alias Testcontainers.PortWaitStrategy
   alias Testcontainers.EmqxContainer
 
+  import Testcontainers.Container, only: [is_valid_image: 1]
+
   @default_image "emqx"
   @default_tag "5.6.0"
   @default_image_with_tag "#{@default_image}:#{@default_tag}"
@@ -26,7 +28,8 @@ defmodule Testcontainers.EmqxContainer do
     :mqtt_over_ws_port,
     :mqtt_over_wss_port,
     :dashboard_port,
-    :wait_timeout
+    :wait_timeout,
+    check_image: @default_image
   ]
 
   @doc """
@@ -77,6 +80,13 @@ defmodule Testcontainers.EmqxContainer do
   end
 
   @doc """
+  Set the regular expression to check the image validity.
+  """
+  def with_check_image(%__MODULE__{} = config, check_image) when is_valid_image(check_image) do
+    %__MODULE__{config | check_image: check_image}
+  end
+
+  @doc """
   Retrieves the default Docker image for the Emqx container.
   """
   def default_image, do: @default_image
@@ -100,14 +110,11 @@ defmodule Testcontainers.EmqxContainer do
     """
     @impl true
     def build(%EmqxContainer{} = config) do
-      if not String.starts_with?(config.image, EmqxContainer.default_image()) do
-        raise ArgumentError,
-          message: "Image #{config.image} is not compatible with #{EmqxContainer.default_image()}"
-      end
-
       new(config.image)
       |> with_exposed_ports(exposed_ports(config))
       |> with_waiting_strategies(waiting_strategies(config))
+      |> with_check_image(config.check_image)
+      |> valid_image!()
     end
 
     defp exposed_ports(config),

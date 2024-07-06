@@ -12,6 +12,8 @@ defmodule Testcontainers.PostgresContainer do
   alias Testcontainers.Container
   alias Testcontainers.ContainerBuilder
 
+  import Testcontainers.Container, only: [is_valid_image: 1]
+
   @default_image "postgres"
   @default_tag "15-alpine"
   @default_image_with_tag "#{@default_image}:#{@default_tag}"
@@ -22,7 +24,16 @@ defmodule Testcontainers.PostgresContainer do
   @default_wait_timeout 60_000
 
   @enforce_keys [:image, :user, :password, :database, :port, :wait_timeout, :persistent_volume]
-  defstruct [:image, :user, :password, :database, :port, :wait_timeout, :persistent_volume]
+  defstruct [
+    :image,
+    :user,
+    :password,
+    :database,
+    :port,
+    :wait_timeout,
+    :persistent_volume,
+    check_image: @default_image
+  ]
 
   @doc """
   Creates a new `PostgresContainer` struct with default configurations.
@@ -132,6 +143,13 @@ defmodule Testcontainers.PostgresContainer do
   end
 
   @doc """
+  Set the regular expression to check the image validity.
+  """
+  def with_check_image(%__MODULE__{} = config, check_image) when is_valid_image(check_image) do
+    %__MODULE__{config | check_image: check_image}
+  end
+
+  @doc """
   Retrieves the default exposed port for the Postgres container.
   """
   def default_port, do: @default_port
@@ -188,12 +206,6 @@ defmodule Testcontainers.PostgresContainer do
     @spec build(%PostgresContainer{}) :: %Container{}
     @impl true
     def build(%PostgresContainer{} = config) do
-      if not String.starts_with?(config.image, PostgresContainer.default_image()) do
-        raise ArgumentError,
-          message:
-            "Image #{config.image} is not compatible with #{PostgresContainer.default_image()}"
-      end
-
       new(config.image)
       |> then(PostgresContainer.container_port_fun(config.port))
       |> with_environment(:POSTGRES_USER, config.user)
@@ -210,6 +222,8 @@ defmodule Testcontainers.PostgresContainer do
           config.wait_timeout
         )
       )
+      |> with_check_image(config.check_image)
+      |> valid_image!()
     end
 
     @impl true

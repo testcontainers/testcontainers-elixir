@@ -11,6 +11,8 @@ defmodule Testcontainers.RedisContainer do
   alias Testcontainers.CommandWaitStrategy
   alias Testcontainers.RedisContainer
 
+  import Testcontainers.Container, only: [is_valid_image: 1]
+
   @default_image "redis"
   @default_tag "7.2-alpine"
   @default_image_with_tag "#{@default_image}:#{@default_tag}"
@@ -18,7 +20,7 @@ defmodule Testcontainers.RedisContainer do
   @default_wait_timeout 60_000
 
   @enforce_keys [:image, :port, :wait_timeout]
-  defstruct [:image, :port, :wait_timeout]
+  defstruct [:image, :port, :wait_timeout, check_image: @default_image]
 
   @doc """
   Creates a new `RedisContainer` struct with default configurations.
@@ -77,6 +79,13 @@ defmodule Testcontainers.RedisContainer do
   end
 
   @doc """
+  Set the regular expression to check the image validity.
+  """
+  def with_check_image(%__MODULE__{} = config, check_image) when is_valid_image(check_image) do
+    %__MODULE__{config | check_image: check_image}
+  end
+
+  @doc """
   Retrieves the default Docker image for the Redis container.
   """
   def default_image, do: @default_image
@@ -127,17 +136,13 @@ defmodule Testcontainers.RedisContainer do
     @spec build(%RedisContainer{}) :: %Container{}
     @impl true
     def build(%RedisContainer{} = config) do
-      if not String.starts_with?(config.image, RedisContainer.default_image()) do
-        raise ArgumentError,
-          message:
-            "Image #{config.image} is not compatible with #{RedisContainer.default_image()}"
-      end
-
       new(config.image)
       |> with_exposed_port(config.port)
       |> with_waiting_strategy(
         CommandWaitStrategy.new(["redis-cli", "PING"], config.wait_timeout)
       )
+      |> with_check_image(config.check_image)
+      |> valid_image!()
     end
 
     @impl true

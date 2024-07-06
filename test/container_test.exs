@@ -96,4 +96,88 @@ defmodule Testcontainers.ContainerTest do
                "eyJwYXNzd29yZCI6InBhc3N3b3JkIiwidXNlcm5hbWUiOiJ1c2VybmFtZSJ9"
     end
   end
+
+  describe "with_check_image/2" do
+    test "compiles a string into a valid regex" do
+      container =
+        "registry.io/my-user/my-image:latest"
+        |> Container.new()
+        |> Container.with_check_image("my-image")
+
+      assert container.check_image == ~r/my-image/
+    end
+
+    test "raises Regex.CompileError when string can't be compiled to a valid regex" do
+      assert_raise Regex.CompileError, fn ->
+        "registry.io/my-user/my-image:latest"
+        |> Container.new()
+        |> Container.with_check_image("*my-image")
+      end
+    end
+
+    test "accepts a regex" do
+      container =
+        "registry.io/my-user/my-image:latest"
+        |> Container.new()
+        |> Container.with_check_image(~r/.*my-image.*/)
+
+      assert container.check_image == ~r/.*my-image.*/
+    end
+  end
+
+  describe "valid_image/1" do
+    test "return config when check image isn't set" do
+      container = Container.new("invalid-image")
+
+      assert {:ok, container} == Container.valid_image(container)
+    end
+
+    test "return config when image matches default string" do
+      container =
+        Container.new("valid-image")
+        |> Container.with_check_image("valid")
+
+      assert {:ok, container} == Container.valid_image(container)
+    end
+
+    test "return config when image contains the prefix" do
+      container =
+        Container.new("custom-hub.io/for-user/valid-image:tagged")
+        |> Container.with_check_image("valid")
+
+      assert {:ok, container} == Container.valid_image(container)
+    end
+
+    test "return config when image matches a custom regular expression" do
+      container =
+        Container.new("valid-image")
+        |> Container.with_check_image(~r/.*valid-image.*/)
+
+      assert {:ok, container} == Container.valid_image(container)
+    end
+
+    test "return error when image doesn't match default one" do
+      container =
+        Container.new("invalid-image")
+        |> Container.with_check_image("validated")
+
+      assert {:error,
+              "Unexpected image invalid-image. If this is a valid image, provide a broader `check_image` regex to the container configuration."} ==
+               Container.valid_image(container)
+    end
+  end
+
+  describe "valid_image!/1" do
+    test "raises error when image isn't valid" do
+      container =
+        Container.new("invalid-image")
+        |> Container.with_check_image("validated")
+
+      assert_raise ArgumentError,
+                   "Unexpected image invalid-image. If this is a valid image, provide a broader `check_image` regex to the container configuration.",
+                   fn ->
+                     Container.valid_image!(container)
+                   end
+    end
+  end
 end
