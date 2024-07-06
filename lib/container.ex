@@ -21,7 +21,8 @@ defmodule Testcontainers.Container do
     labels: %{},
     auto_remove: false,
     container_id: nil,
-    check_image: ~r/.*/
+    check_image: ~r/.*/,
+    network_mode: nil
   ]
 
   @doc """
@@ -171,6 +172,13 @@ defmodule Testcontainers.Container do
 
   def with_check_image(%__MODULE__{} = config, %Regex{} = check_image) do
     %__MODULE__{config | check_image: check_image}
+  end
+
+  @doc """
+  Sets a network mode to apply to the container object in docker.
+  """
+  def with_network_mode(%__MODULE__{} = config, mode) when is_binary(mode) do
+    %__MODULE__{config | network_mode: mode}
   end
 
   @doc """

@@ -73,6 +73,18 @@ defmodule Testcontainers.ContainerTest do
     end
   end
 
+  describe "with_network_mode/2" do
+    test "returns the network host type" do
+      container = Container.new("my-image") |> Container.with_network_mode("host")
+      assert container.network_mode == "host"
+    end
+
+    test "returns nil if the network mode is not set" do
+      container = Container.new("my-image")
+      assert container.network_mode == nil
+    end
+  end
+
   describe "with_auth/3" do
     test "sets the authentication token for the container" do
       container = Container.new("my-image")
