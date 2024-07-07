@@ -32,6 +32,16 @@ defmodule Testcontainers.Container do
   defguard is_valid_image(check_image)
            when is_binary(check_image) or is_struct(check_image, Regex)
 
+  @os_type (case :os.type() do
+    {:win32, _} -> :windows
+    {:unix, :darwin} -> :macos
+    {:unix, _} -> :linux
+  end)
+
+  @doc guard: true
+  defguard is_os(name)
+           when is_atom(name) and name == @os_type
+
   @doc """
   A constructor function to make it easier to construct a container
   """
@@ -177,6 +187,15 @@ defmodule Testcontainers.Container do
   @doc """
   Sets a network mode to apply to the container object in docker.
   """
+  def with_network_mode(%__MODULE__{} = config, mode) when is_binary(mode) and not is_os(:linux) do
+    with mode <- String.downcase(mode) do
+      if mode == "host" do
+        Testcontainers.Logger.log("To use host network mode on non-linux hosts, please see https://docs.docker.com/network/drivers/host")
+      end
+    end
+    %__MODULE__{config | network_mode: mode}
+  end
+
   def with_network_mode(%__MODULE__{} = config, mode) when is_binary(mode) do
     %__MODULE__{config | network_mode: mode}
   end
