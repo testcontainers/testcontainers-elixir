@@ -86,7 +86,7 @@ defmodule TestcontainersElixir.MixProject do
       # RabbitMQ
       {:amqp, "~> 3.3", only: [:dev, :test]},
       # EMQX
-      {:tortoise311, "~> 0.11.7", only: [:dev, :test]}
+      {:tortoise311, "~> 0.12.0", only: [:dev, :test]}
     ]
   end
 
