@@ -96,71 +96,28 @@ import Testcontainers.ExUnit
 container(:redis, Testcontainers.RedisContainer.new())
 ```
 
-### In a Phoenix project:
+### Run tests in a Phoenix project (or any project for that matter)
 
-To start a postgres container when running tests, that also enables testing of application initialization with database calls at startup, add this in application.ex:
+To run/wrap testcontainers around a project use the testcontainers.test task.
 
-```elixir
-  # in config/dev.exs:
-  config :testcontainers, 
-    enabled: true
-    database: "hello_dev"
+`mix testcontainers.test [--database postgres|mysql]`
 
-  # in config/test.exs:
-  config :testcontainers, 
-    enabled: true
+to use postgres you can just run
 
-  # in lib/hello/application.ex:
-  @impl true
-  def start(_type, _args) do
-    if Application.get_env(:testcontainers, :enabled, false) do
-      {:ok, _container} =
-        case Application.get_env(:testcontainers, :database) do
-          nil ->
-            Testcontainers.Ecto.postgres_container(app: :hello)
+`mix testcontainers.test` since postgres is default.
 
-          database ->
-            Testcontainers.Ecto.postgres_container(
-              app: :hello,
-              persistent_volume_name: "#{database}_data"
-            )
-        end
-    end
+in your config/test.exs you can then change the repo config to this:
 
-    # .. other setup code
-  end
-
-  # in mix.exs
-  # comment out test alias and setup aliases for ecto
-  defp aliases do
-    [
-      setup: [
-        "deps.get", 
-        # "ecto.setup",
-        "assets.setup", 
-        "assets.build"
-      ],
-      # "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
-      # "ecto.reset": ["ecto.drop", "ecto.setup"],
-      # test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
-      # ... SNIP
-    ]
-  end
 ```
-
-This will start a postgres container that will be terminated when the test process ends.
-
-The database config in config/test.exs will be temporarily updated in-memory with the random host port on the container, and other properties like username, password and database. In most cases these will default to "test" unless overridden.
-
-See documentation on [Testcontainers.Ecto](https://hexdocs.pm/testcontainers/Testcontainers.Ecto.html) for more information about the options it can take.
-
-There is an example repo here with a bare bones phoenix application, where the only changes are the use of the ecto function and removing the test alias that interferes with it:
-
-[Phoenix example](./examples/phoenix_project)
-
-There is also another example repo without Phoenix, just a bare mix project, which show cases that the ecto dependencies are in fact optional:
-
-[Mix project](./examples/mix_project)
+config :my_app, MyApp.Repo,
+  username: System.get_env("DB_USER") || "postgres",
+  password: System.get_env("DB_PASSWORD") || "postgres",
+  hostname: System.get_env("DB_HOST") || "localhost",
+  port: System.get_env("DB_PORT") || "5432",
+  database: "my_app_test#{System.get_env("MIX_TEST_PARTITION")}",
+  pool: Ecto.Adapters.SQL.Sandbox,
+  pool_size: System.schedulers_online() * 2
+```
 
 ### Logging
 

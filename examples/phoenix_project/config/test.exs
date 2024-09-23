@@ -8,9 +8,10 @@ config :testcontainers, enabled: true
 # to provide built-in test partitioning in CI environment.
 # Run `mix help test` for more information.
 config :hello, Hello.Repo,
-  username: "postgres",
-  password: "postgres",
-  hostname: "localhost",
+  username: System.get_env("DB_USER") || "postgres",
+  password: System.get_env("DB_PASSWORD") || "postgres",
+  hostname: System.get_env("DB_HOST") || "localhost",
+  port: System.get_env("DB_PORT") || "5432",
   database: "hello_test#{System.get_env("MIX_TEST_PARTITION")}",
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: 10

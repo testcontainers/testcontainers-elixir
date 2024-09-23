@@ -1,4 +1,6 @@
 defmodule Testcontainers.Ecto do
+  @deprecated "This feature is deprecated and will be removed in a future release. Please call `mix testcontainers.test` instead."
+
   @moduledoc """
   Facilitates the creation of a Postgres or MySql container for testing with Ecto.
 
