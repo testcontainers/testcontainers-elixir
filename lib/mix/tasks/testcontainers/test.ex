@@ -1,4 +1,3 @@
-# lib/mix/tasks/custom_test.ex
 defmodule Mix.Tasks.Testcontainers.Test do
   use Mix.Task
   alias Testcontainers.PostgresContainer
