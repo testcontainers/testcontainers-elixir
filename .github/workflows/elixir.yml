@@ -72,7 +72,7 @@ jobs:
       run: |
        cd examples/phoenix_project
        mix deps.get
-       mix test
+       mix testcontainers.test
        MIX_ENV=prod mix release
     - name: Run example mix project tests
       run: |

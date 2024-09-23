@@ -2,9 +2,10 @@ import Config
 
 # Configure your database
 config :hello, Hello.Repo,
-  username: "postgres",
-  password: "postgres",
-  hostname: "localhost",
+  username: System.get_env("DB_USER") || "postgres",
+  password: System.get_env("DB_PASSWORD") || "postgres",
+  hostname: System.get_env("DB_HOST") || "localhost",
+  port: System.get_env("DB_PORT") || "5432",
   database: "hello_dev",
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
