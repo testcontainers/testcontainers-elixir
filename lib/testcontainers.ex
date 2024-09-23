@@ -231,13 +231,31 @@ defmodule Testcontainers do
       |> Container.with_label(container_lang_label(), container_lang_value())
       |> Container.with_label(container_label(), "#{true}")
 
-    with {:ok, _} <- Api.pull_image(config.image, state.conn, auth: config.auth),
-         {:ok, id} <- Api.create_container(config, state.conn),
-         :ok <- Api.start_container(id, state.conn),
-         {:ok, container} <- Api.get_container(id, state.conn),
-         :ok <- ContainerBuilder.after_start(config_builder, container, state.conn),
-         :ok <- wait_for_container(container, config.wait_strategies || [], state.conn) do
-      {:ok, container}
+    hash = :crypto.hash(:sha256, :erlang.term_to_binary(Map.from_struct(config))) |> Base.encode16()
+
+    config = Container.with_label(config, container_hash_label(), hash)
+
+    existing_container = Api.get_container_by_hash(hash, state.conn)
+
+    case existing_container do
+      {:error, :no_container} ->
+        Logger.log("Container does not exist with hash: #{hash}")
+        with {:ok, _} <- Api.pull_image(config.image, state.conn, auth: config.auth),
+             {:ok, id} <- Api.create_container(config, state.conn),
+             :ok <- Api.start_container(id, state.conn),
+             {:ok, container} <- Api.get_container(id, state.conn),
+             :ok <- ContainerBuilder.after_start(config_builder, container, state.conn),
+             :ok <- wait_for_container(container, config.wait_strategies || [], state.conn) do
+          {:ok, container}
+        end
+
+      {:error, error} ->
+        Logger.log("Failed to get container by hash: #{inspect(error)}")
+        {:error, error}
+
+      {:ok, container} ->
+        Logger.log("Container already exists with hash: #{hash}")
+        {:ok, container}
     end
   end
 

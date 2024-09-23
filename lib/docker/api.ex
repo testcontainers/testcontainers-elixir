@@ -21,6 +21,34 @@ defmodule Testcontainers.Docker.Api do
     end
   end
 
+  def get_container_by_hash(hash, conn) do
+    filters_json = %{
+      "label" => ["#{Testcontainers.Constants.container_hash_label}=#{hash}"]
+    } |> Jason.encode!()
+    case Api.Container.container_list(conn, filters: filters_json) do
+      {:ok, containers} ->
+        case containers do
+          [] ->
+            {:error, :no_container}
+
+          [container | _] ->
+            get_container(container."Id", conn)
+        end
+
+      {:error, %Tesla.Env{status: other}} ->
+        {:error, {:http_error, other}}
+
+      {:ok, %DockerEngineAPI.Model.ErrorResponse{} = error} ->
+        {:error, {:failed_to_get_container, error}}
+
+      {:error, %Tesla.Env{status: other}} ->
+        {:error, {:http_error, other}}
+
+      {:ok, %DockerEngineAPI.Model.ErrorResponse{} = error} ->
+        {:error, {:failed_to_get_container, error}}
+    end
+  end
+
   def pull_image(image, conn, opts \\ []) when is_binary(image) do
     auth = Keyword.get(opts, :auth, nil)
 
