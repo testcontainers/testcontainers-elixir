@@ -96,6 +96,29 @@ import Testcontainers.ExUnit
 container(:redis, Testcontainers.RedisContainer.new())
 ```
 
+### Run tests in a Phoenix project (or any project for that matter)
+
+To run/wrap testcontainers around a project use the testcontainers.test task.
+
+`mix testcontainers.test [--database postgres|mysql]`
+
+to use postgres you can just run
+
+`mix testcontainers.test` since postgres is default.
+
+in your config/test.exs you can then change the repo config to this:
+
+```
+config :my_app, MyApp.Repo,
+  username: System.get_env("DB_USER") || "postgres",
+  password: System.get_env("DB_PASSWORD") || "postgres",
+  hostname: System.get_env("DB_HOST") || "localhost",
+  port: System.get_env("DB_PORT") || "5432",
+  database: "my_app_test#{System.get_env("MIX_TEST_PARTITION")}",
+  pool: Ecto.Adapters.SQL.Sandbox,
+  pool_size: System.schedulers_online() * 2
+```
+
 ### Logging
 
 By default, Testcontainers doesn't log anything. If you want Testcontainers to log, set the desired log level in config/test.exs:
