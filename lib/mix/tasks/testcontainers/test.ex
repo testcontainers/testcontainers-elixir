@@ -18,11 +18,19 @@ defmodule Mix.Tasks.Testcontainers.Test do
 
     {container, port} = case database do
       "postgres" ->
-        {:ok, container} = Testcontainers.start_container(PostgresContainer.new() |> PostgresContainer.with_user("test") |> PostgresContainer.with_password("test"))
+        {:ok, container} = Testcontainers.start_container(
+          PostgresContainer.new()
+          |> PostgresContainer.with_user("test")
+          |> PostgresContainer.with_password("test")
+        )
         port = PostgresContainer.port(container)
         {container, port}
       "mysql" ->
-        {:ok, container} = Testcontainers.start_container(MySqlContainer.new() |> MySqlContainer.with_user("test") |> MySqlContainer.with_password("test"))
+        {:ok, container} = Testcontainers.start_container(
+          MySqlContainer.new()
+          |> MySqlContainer.with_user("test")
+          |> MySqlContainer.with_password("test")
+        )
         port = MySqlContainer.port(container)
         {container, port}
       _ -> Mix.raise("Unsupported database: #{database}")
