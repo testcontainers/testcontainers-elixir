@@ -234,9 +234,8 @@ defmodule Testcontainers do
 
     hash = Hash.struct_to_hash(config)
     config = Container.with_label(config, container_hash_label(), hash)
-    existing_container = Api.get_container_by_hash(hash, state.conn)
 
-    case existing_container do
+    case Api.get_container_by_hash(hash, state.conn) do
       {:error, :no_container} ->
         Logger.log("Container does not exist with hash: #{hash}")
         with {:ok, _} <- Api.pull_image(config.image, state.conn, auth: config.auth),
