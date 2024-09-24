@@ -94,19 +94,3 @@ defmodule Testcontainers.SeleniumContainer do
     def after_start(_config, _container, _conn), do: :ok
   end
 end
-
-defmodule Testcontainers.Container.SeleniumContainer do
-  @moduledoc """
-  Deprecated. Use `Testcontainers.SeleniumContainer` instead.
-
-  This module is kept for backward compatibility and will be removed in future releases.
-  """
-
-  @deprecated "Use Testcontainers.SeleniumContainer instead"
-
-  defdelegate new, to: Testcontainers.SeleniumContainer
-  defdelegate with_image(self, image), to: Testcontainers.SeleniumContainer
-  defdelegate with_port1(self, port), to: Testcontainers.SeleniumContainer
-  defdelegate with_port2(self, port), to: Testcontainers.SeleniumContainer
-  defdelegate with_wait_timeout(self, wait_timeout), to: Testcontainers.SeleniumContainer
-end

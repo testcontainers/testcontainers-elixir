@@ -252,25 +252,3 @@ defmodule Testcontainers.MySqlContainer do
     fn container -> Container.with_bind_volume(container, volume, "/var/lib/mysql") end
   end
 end
-
-defmodule Testcontainers.Container.MySqlContainer do
-  @moduledoc """
-  Deprecated. Use `Testcontainers.MySqlContainer` instead.
-
-  This module is kept for backward compatibility and will be removed in future releases.
-  """
-
-  @deprecated "Use Testcontainers.MySqlContainer instead"
-
-  defdelegate new, to: Testcontainers.MySqlContainer
-  defdelegate with_image(self, image), to: Testcontainers.MySqlContainer
-  defdelegate with_user(self, user), to: Testcontainers.MySqlContainer
-  defdelegate with_password(self, password), to: Testcontainers.MySqlContainer
-  defdelegate with_database(self, database), to: Testcontainers.MySqlContainer
-  defdelegate with_port(self, port), to: Testcontainers.MySqlContainer
-  defdelegate with_wait_timeout(self, wait_timeout), to: Testcontainers.MySqlContainer
-  defdelegate port(self), to: Testcontainers.MySqlContainer
-  defdelegate connection_parameters(self), to: Testcontainers.MySqlContainer
-  defdelegate default_image_with_tag, to: Testcontainers.MySqlContainer
-  defdelegate default_port, to: Testcontainers.PostgresContainer
-end

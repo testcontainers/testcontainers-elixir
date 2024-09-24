@@ -259,23 +259,3 @@ defmodule Testcontainers.CephContainer do
     def after_start(_config, _container, _conn), do: :ok
   end
 end
-
-defmodule Testcontainers.Container.CephContainer do
-  @moduledoc """
-  Deprecated. Use `Testcontainers.CephContainer` instead.
-
-  This module is kept for backward compatibility and will be removed in future releases.
-  """
-
-  @deprecated "Use Testcontainers.CephContainer instead"
-
-  defdelegate new, to: Testcontainers.CephContainer
-  defdelegate with_image(self, image), to: Testcontainers.CephContainer
-  defdelegate with_access_key(self, user), to: Testcontainers.CephContainer
-  defdelegate with_secret_key(self, password), to: Testcontainers.CephContainer
-  defdelegate with_bucket(self, database), to: Testcontainers.CephContainer
-  defdelegate with_port(self, port), to: Testcontainers.CephContainer
-  defdelegate with_wait_timeout(self, wait_timeout), to: Testcontainers.CephContainer
-  defdelegate port(self), to: Testcontainers.CephContainer
-  defdelegate connection_url(self), to: Testcontainers.CephContainer
-end

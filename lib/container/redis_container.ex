@@ -164,20 +164,3 @@ defmodule Testcontainers.RedisContainer do
     def after_start(_config, _container, _conn), do: :ok
   end
 end
-
-defmodule Testcontainers.Container.RedisContainer do
-  @moduledoc """
-  Deprecated. Use `Testcontainers.RedisContainer` instead.
-
-  This module is kept for backward compatibility and will be removed in future releases.
-  """
-
-  @deprecated "Use Testcontainers.RedisContainer instead"
-
-  defdelegate new, to: Testcontainers.RedisContainer
-  defdelegate with_image(self, image), to: Testcontainers.RedisContainer
-  defdelegate with_port(self, port), to: Testcontainers.RedisContainer
-  defdelegate with_wait_timeout(self, wait_timeout), to: Testcontainers.RedisContainer
-  defdelegate port(self), to: Testcontainers.RedisContainer
-  defdelegate connection_url(self), to: Testcontainers.RedisContainer
-end
