@@ -13,6 +13,7 @@ defmodule Testcontainers do
   alias Testcontainers.Connection
   alias Testcontainers.Container
   alias Testcontainers.ContainerBuilder
+  alias Testcontainers.Util.Hash
 
   import Testcontainers.Constants
 
@@ -231,10 +232,8 @@ defmodule Testcontainers do
       |> Container.with_label(container_lang_label(), container_lang_value())
       |> Container.with_label(container_label(), "#{true}")
 
-    hash = :crypto.hash(:sha256, :erlang.term_to_binary(Map.from_struct(config))) |> Base.encode16()
-
+    hash = Hash.struct_to_hash(config)
     config = Container.with_label(config, container_hash_label(), hash)
-
     existing_container = Api.get_container_by_hash(hash, state.conn)
 
     case existing_container do
