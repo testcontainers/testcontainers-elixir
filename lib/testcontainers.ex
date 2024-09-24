@@ -228,7 +228,6 @@ defmodule Testcontainers do
   defp start_and_wait(config_builder, state) do
     config =
       ContainerBuilder.build(config_builder)
-      |> Container.with_label(container_sessionId_label(), state.session_id)
       |> Container.with_label(container_version_label(), library_version())
       |> Container.with_label(container_lang_label(), container_lang_value())
       |> Container.with_label(container_label(), "#{true}")
@@ -238,6 +237,7 @@ defmodule Testcontainers do
     config = config
       |> Container.with_label(container_reuse_hash_label(), hash)
       |> Container.with_label(container_reuse(), "#{config.reuse}")
+      |> Container.with_label(container_sessionId_label(), state.session_id)
 
     if config.reuse do
       case Api.get_container_by_hash(hash, state.conn) do
