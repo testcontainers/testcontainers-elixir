@@ -5,7 +5,6 @@ defmodule Testcontainers.LogWaitStrategy do
   """
 
   @retry_delay 500
-  @derive Nestru.Encoder
   defstruct [:log_regex, :timeout, retry_delay: @retry_delay]
 
   # Public interface

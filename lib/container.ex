@@ -7,7 +7,6 @@ defmodule Testcontainers.Container do
   """
 
   @enforce_keys [:image]
-  @derive Nestru.Encoder
   defstruct [
     :image,
     cmd: nil,

@@ -7,7 +7,6 @@ defmodule Testcontainers.CommandWaitStrategy do
   """
 
   @retry_delay 200
-  @derive Nestru.Encoder
   defstruct [:command, :timeout, retry_delay: @retry_delay]
 
   # Public interface
