@@ -14,6 +14,7 @@ defmodule Testcontainers do
   alias Testcontainers.Container
   alias Testcontainers.ContainerBuilder
   alias Testcontainers.Util.Hash
+  alias Testcontainers.Util.PropertiesParser
 
   import Testcontainers.Constants
 
@@ -50,7 +51,8 @@ defmodule Testcontainers do
          {:ok, container} <- Api.get_container(ryuk_container_id, conn),
          {:ok, socket} <- create_ryuk_socket(container),
          :ok <- register_ryuk_filter(session_id, socket),
-         {:ok, docker_host} <- get_docker_host(docker_host_url, conn) do
+         {:ok, docker_host} <- get_docker_host(docker_host_url, conn),
+         {:ok, properties} <- PropertiesParser.read_property_file() do
       Logger.log("Testcontainers initialized")
 
       {:ok,
@@ -58,7 +60,8 @@ defmodule Testcontainers do
          socket: socket,
          conn: conn,
          docker_host: docker_host,
-         session_id: session_id
+         session_id: session_id,
+         properties: properties
        }}
     else
       error ->
@@ -239,7 +242,7 @@ defmodule Testcontainers do
       |> Container.with_label(container_reuse(), "#{config.reuse}")
       |> Container.with_label(container_sessionId_label(), state.session_id)
 
-    if config.reuse do
+    if Map.get(state.properties, "testcontainers.reuse.enable", false) == true && config.reuse do
       case Api.get_container_by_hash(hash, state.conn) do
         {:error, :no_container} ->
           Logger.log("Container does not exist with hash: #{hash}")

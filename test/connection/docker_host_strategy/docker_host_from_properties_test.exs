@@ -17,7 +17,7 @@ defmodule Testcontainers.Connection.DockerHostStrategy.DockerHostFromPropertiesT
         DockerHostStrategyEvaluator.run_strategies([strategy], [])
     end
 
-    test "should return file not found if property file doesn't exist" do
+    test "should return property not found if property file doesn't exist" do
       properties_path = "/some/nonexistent/place/.testcontainers.properties"
 
       strategy = %DockerHostFromPropertiesStrategy{
@@ -25,7 +25,7 @@ defmodule Testcontainers.Connection.DockerHostStrategy.DockerHostFromPropertiesT
         filename: properties_path
       }
 
-      {:error, testcontainer_host_from_properties: :file_does_not_exist} =
+      {:error, testcontainer_host_from_properties: :property_not_found} =
         DockerHostStrategyEvaluator.run_strategies([strategy], [])
     end
 
