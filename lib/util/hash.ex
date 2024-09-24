@@ -1,21 +1,11 @@
 defmodule Testcontainers.Util.Hash do
+  alias Testcontainers.Util.ListFromDeepStruct
+
   def struct_to_hash(struct) when is_struct(struct) do
     struct
-    |> Nestru.encode!()
-    |> Jason.encode!()
+    |> ListFromDeepStruct.from_deep_struct()
+    |> Kernel.then(&inspect(&1))
     |> (&:crypto.hash(:sha256, &1)).()
     |> Base.encode16(case: :lower)
-  end
-end
-
-defimpl Nestru.Encoder, for: Regex do
-  def gather_fields_from_struct(regex, _context) do
-    {:ok, Regex.source(regex)}
-  end
-end
-
-defimpl Jason.Encoder, for: Tuple do
-  def encode(tuple, opts) do
-    Jason.Encode.string(inspect(tuple), opts)
   end
 end
