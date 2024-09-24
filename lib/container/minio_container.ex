@@ -18,7 +18,13 @@ defmodule Testcontainers.MinioContainer do
   @default_wait_timeout 60_000
 
   @enforce_keys [:image, :username, :password, :wait_timeout]
-  defstruct [:image, :username, :password, :wait_timeout]
+  defstruct [
+    :image,
+    :username,
+    :password,
+    :wait_timeout,
+    reuse: false
+  ]
 
   def new,
     do: %__MODULE__{
@@ -27,6 +33,13 @@ defmodule Testcontainers.MinioContainer do
       password: @default_password,
       wait_timeout: @default_wait_timeout
     }
+
+  @doc """
+  Set the reuse flag to reuse the container if it is already running.
+  """
+  def with_reuse(%__MODULE__{} = config, reuse) when is_boolean(reuse) do
+    %__MODULE__{config | reuse: reuse}
+  end
 
   def get_username, do: @default_username
   def get_password, do: @default_password
@@ -69,6 +82,7 @@ defmodule Testcontainers.MinioContainer do
       |> with_exposed_ports([MinioContainer.default_s3_port(), MinioContainer.default_ui_port()])
       |> with_environment(:MINIO_ROOT_USER, config.username)
       |> with_environment(:MINIO_ROOT_PASSWORD, config.password)
+      |> with_reuse(config.reuse)
       |> with_cmd(["server", "--console-address", ":#{MinioContainer.default_ui_port()}", "/data"])
       |> with_waiting_strategy(
         LogWaitStrategy.new(~r/.*Status:         1 Online, 0 Offline..*/, config.wait_timeout)

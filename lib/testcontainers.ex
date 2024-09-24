@@ -13,6 +13,8 @@ defmodule Testcontainers do
   alias Testcontainers.Connection
   alias Testcontainers.Container
   alias Testcontainers.ContainerBuilder
+  alias Testcontainers.Util.Hash
+  alias Testcontainers.Util.PropertiesParser
 
   import Testcontainers.Constants
 
@@ -49,7 +51,8 @@ defmodule Testcontainers do
          {:ok, container} <- Api.get_container(ryuk_container_id, conn),
          {:ok, socket} <- create_ryuk_socket(container),
          :ok <- register_ryuk_filter(session_id, socket),
-         {:ok, docker_host} <- get_docker_host(docker_host_url, conn) do
+         {:ok, docker_host} <- get_docker_host(docker_host_url, conn),
+         {:ok, properties} <- PropertiesParser.read_property_file() do
       Logger.log("Testcontainers initialized")
 
       {:ok,
@@ -57,7 +60,8 @@ defmodule Testcontainers do
          socket: socket,
          conn: conn,
          docker_host: docker_host,
-         session_id: session_id
+         session_id: session_id,
+         properties: properties
        }}
     else
       error ->
@@ -211,7 +215,8 @@ defmodule Testcontainers do
       "label=#{container_sessionId_label()}=#{value}&" <>
         "label=#{container_version_label()}=#{library_version()}&" <>
         "label=#{container_lang_label()}=#{container_lang_value()}&" <>
-        "label=#{container_label()}=#{true}\n"
+        "label=#{container_label()}=#{true}&" <>
+        "label=#{container_reuse()}=#{false}\n"
     )
 
     case :gen_tcp.recv(socket, 0, 2_000) do
@@ -226,11 +231,37 @@ defmodule Testcontainers do
   defp start_and_wait(config_builder, state) do
     config =
       ContainerBuilder.build(config_builder)
-      |> Container.with_label(container_sessionId_label(), state.session_id)
       |> Container.with_label(container_version_label(), library_version())
       |> Container.with_label(container_lang_label(), container_lang_value())
       |> Container.with_label(container_label(), "#{true}")
 
+    hash = Hash.struct_to_hash(config)
+
+    config = config
+      |> Container.with_label(container_reuse_hash_label(), hash)
+      |> Container.with_label(container_reuse(), "#{config.reuse}")
+      |> Container.with_label(container_sessionId_label(), state.session_id)
+
+    if Map.get(state.properties, "testcontainers.reuse.enable", false) == true && config.reuse do
+      case Api.get_container_by_hash(hash, state.conn) do
+        {:error, :no_container} ->
+          Logger.log("Container does not exist with hash: #{hash}")
+          create_and_start_container(config, config_builder, state)
+
+        {:error, error} ->
+          Logger.log("Failed to get container by hash: #{inspect(error)}")
+          {:error, error}
+
+        {:ok, container} ->
+          Logger.log("Container already exists with hash: #{hash}")
+          {:ok, container}
+      end
+    else
+      create_and_start_container(config, config_builder, state)
+    end
+  end
+
+  defp create_and_start_container(config, config_builder, state) do
     with {:ok, _} <- Api.pull_image(config.image, state.conn, auth: config.auth),
          {:ok, id} <- Api.create_container(config, state.conn),
          :ok <- Api.start_container(id, state.conn),

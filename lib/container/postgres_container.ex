@@ -32,7 +32,8 @@ defmodule Testcontainers.PostgresContainer do
     :port,
     :wait_timeout,
     :persistent_volume,
-    check_image: @default_image
+    check_image: @default_image,
+    reuse: false
   ]
 
   @doc """
@@ -150,6 +151,13 @@ defmodule Testcontainers.PostgresContainer do
   end
 
   @doc """
+  Set the reuse flag to reuse the container if it is already running.
+  """
+  def with_reuse(%__MODULE__{} = config, reuse) when is_boolean(reuse) do
+    %__MODULE__{config | reuse: reuse}
+  end
+
+  @doc """
   Retrieves the default exposed port for the Postgres container.
   """
   def default_port, do: @default_port
@@ -223,6 +231,7 @@ defmodule Testcontainers.PostgresContainer do
         )
       )
       |> with_check_image(config.check_image)
+      |> with_reuse(config.reuse)
       |> valid_image!()
     end
 

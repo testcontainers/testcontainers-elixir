@@ -20,7 +20,12 @@ defmodule Testcontainers.CassandraContainer do
   @default_wait_timeout 60_000
 
   @enforce_keys [:image, :wait_timeout]
-  defstruct [:image, :wait_timeout, check_image: @default_image]
+  defstruct [
+    :image,
+    :wait_timeout,
+    check_image: @default_image,
+    reuse: false
+  ]
 
   def new,
     do: %__MODULE__{
@@ -37,6 +42,13 @@ defmodule Testcontainers.CassandraContainer do
   """
   def with_check_image(%__MODULE__{} = config, check_image) when is_valid_image(check_image) do
     %__MODULE__{config | check_image: check_image}
+  end
+
+  @doc """
+  Set the reuse flag to reuse the container if it is already running.
+  """
+  def with_reuse(%__MODULE__{} = config, reuse) when is_boolean(reuse) do
+    %__MODULE__{config | reuse: reuse}
   end
 
   def default_image, do: @default_image
@@ -83,6 +95,7 @@ defmodule Testcontainers.CassandraContainer do
         )
       )
       |> with_check_image(config.check_image)
+      |> with_reuse(config.reuse)
       |> valid_image!()
     end
 
