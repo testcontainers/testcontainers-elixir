@@ -21,6 +21,7 @@ defmodule Mix.Tasks.Testcontainers.Test do
           PostgresContainer.new()
           |> PostgresContainer.with_user("test")
           |> PostgresContainer.with_password("test")
+          |> PostgresContainer.with_reuse(true)
         )
         port = PostgresContainer.port(container)
         {container, port}
@@ -29,6 +30,7 @@ defmodule Mix.Tasks.Testcontainers.Test do
           MySqlContainer.new()
           |> MySqlContainer.with_user("test")
           |> MySqlContainer.with_password("test")
+          |> MySqlContainer.with_reuse(true)
         )
         port = MySqlContainer.port(container)
         {container, port}
