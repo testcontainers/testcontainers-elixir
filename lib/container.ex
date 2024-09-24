@@ -269,3 +269,44 @@ defmodule Testcontainers.Container do
     def after_start(_config, _container, _conn), do: :ok
   end
 end
+
+alias Testcontainers.Container
+alias Testcontainers.CommandWaitStrategy
+alias Testcontainers.LogWaitStrategy
+alias Testcontainers.PortWaitStrategy
+
+defimpl Jason.Encoder, for: Container do
+  def encode(value, opts) do
+    Jason.Encode.map(value, opts)
+  end
+end
+
+defimpl Jason.Encoder, for: CommandWaitStrategy do
+  def encode(value, opts) do
+    Jason.Encode.map(value, opts)
+  end
+end
+
+defimpl Jason.Encoder, for: LogWaitStrategy do
+  def encode(value, opts) do
+    Jason.Encode.map(value, opts)
+  end
+end
+
+defimpl Jason.Encoder, for: PortWaitStrategy do
+  def encode(value, opts) do
+    Jason.Encode.map(value, opts)
+  end
+end
+
+defimpl Jason.Encoder, for: Regex do
+  def encode(value, opts) do
+    Jason.Encode.string(Regex.source(value), opts)
+  end
+end
+
+defimpl Jason.Encoder, for: Tuple do
+  def encode(value, opts) do
+    Jason.Encode.string(inspect(value), opts)
+  end
+end
