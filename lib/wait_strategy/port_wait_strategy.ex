@@ -5,6 +5,7 @@ defmodule Testcontainers.PortWaitStrategy do
   """
 
   @retry_delay 200
+  @derive Nestru.Encoder
   defstruct [:ip, :port, :timeout, retry_delay: @retry_delay]
 
   # Public interface
