@@ -14,13 +14,6 @@ defimpl Nestru.Encoder, for: Regex do
   end
 end
 
-defimpl Nestru.Encoder, for: Tuple do
-  @spec gather_fields_from_struct(tuple(), any()) :: {:ok, binary()}
-  def gather_fields_from_struct(tuple, _context) do
-    {:ok, inspect(tuple)}
-  end
-end
-
 defimpl Jason.Encoder, for: Tuple do
   def encode(tuple, opts) do
     Jason.Encode.string(inspect(tuple), opts)
