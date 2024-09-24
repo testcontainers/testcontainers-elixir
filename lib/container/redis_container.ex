@@ -20,7 +20,13 @@ defmodule Testcontainers.RedisContainer do
   @default_wait_timeout 60_000
 
   @enforce_keys [:image, :port, :wait_timeout]
-  defstruct [:image, :port, :wait_timeout, check_image: @default_image]
+  defstruct [
+    :image,
+    :port,
+    :wait_timeout,
+    check_image: @default_image,
+    reuse: false
+  ]
 
   @doc """
   Creates a new `RedisContainer` struct with default configurations.
@@ -86,6 +92,13 @@ defmodule Testcontainers.RedisContainer do
   end
 
   @doc """
+  Set the reuse flag to reuse the container if it is already running.
+  """
+  def with_reuse(%__MODULE__{} = config, reuse) when is_boolean(reuse) do
+    %__MODULE__{config | reuse: reuse}
+  end
+
+  @doc """
   Retrieves the default Docker image for the Redis container.
   """
   def default_image, do: @default_image
@@ -142,6 +155,7 @@ defmodule Testcontainers.RedisContainer do
         CommandWaitStrategy.new(["redis-cli", "PING"], config.wait_timeout)
       )
       |> with_check_image(config.check_image)
+      |> with_reuse(config.reuse)
       |> valid_image!()
     end
 

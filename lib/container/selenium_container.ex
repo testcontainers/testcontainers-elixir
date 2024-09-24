@@ -20,7 +20,14 @@ defmodule Testcontainers.SeleniumContainer do
   @default_wait_timeout 120_000
 
   @enforce_keys [:image, :port1, :port2, :wait_timeout]
-  defstruct [:image, :port1, :port2, :wait_timeout, check_image: @default_image]
+  defstruct [
+    :image,
+    :port1,
+    :port2,
+    :wait_timeout,
+    check_image: @default_image,
+    reuse: false
+  ]
 
   def new,
     do: %__MODULE__{
@@ -53,6 +60,13 @@ defmodule Testcontainers.SeleniumContainer do
     %__MODULE__{config | check_image: check_image}
   end
 
+  @doc """
+  Set the reuse flag to reuse the container if it is already running.
+  """
+  def with_reuse(%__MODULE__{} = config, reuse) when is_boolean(reuse) do
+    %__MODULE__{config | reuse: reuse}
+  end
+
   def default_image, do: @default_image
 
   defimpl ContainerBuilder do
@@ -71,6 +85,7 @@ defmodule Testcontainers.SeleniumContainer do
         PortWaitStrategy.new("127.0.0.1", config.port2, config.wait_timeout, 1000)
       ])
       |> with_check_image(config.check_image)
+      |> with_reuse(config.reuse)
       |> valid_image!()
     end
 

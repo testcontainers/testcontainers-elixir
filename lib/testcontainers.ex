@@ -212,7 +212,8 @@ defmodule Testcontainers do
       "label=#{container_sessionId_label()}=#{value}&" <>
         "label=#{container_version_label()}=#{library_version()}&" <>
         "label=#{container_lang_label()}=#{container_lang_value()}&" <>
-        "label=#{container_label()}=#{true}\n"
+        "label=#{container_label()}=#{true}&" <>
+        "label=#{container_reuse()}=#{false}\n"
     )
 
     case :gen_tcp.recv(socket, 0, 2_000) do
@@ -233,27 +234,38 @@ defmodule Testcontainers do
       |> Container.with_label(container_label(), "#{true}")
 
     hash = Hash.struct_to_hash(config)
-    config = Container.with_label(config, container_hash_label(), hash)
 
-    case Api.get_container_by_hash(hash, state.conn) do
-      {:error, :no_container} ->
-        Logger.log("Container does not exist with hash: #{hash}")
-        with {:ok, _} <- Api.pull_image(config.image, state.conn, auth: config.auth),
-             {:ok, id} <- Api.create_container(config, state.conn),
-             :ok <- Api.start_container(id, state.conn),
-             {:ok, container} <- Api.get_container(id, state.conn),
-             :ok <- ContainerBuilder.after_start(config_builder, container, state.conn),
-             :ok <- wait_for_container(container, config.wait_strategies || [], state.conn) do
+    config = config
+      |> Container.with_label(container_reuse_hash_label(), hash)
+      |> Container.with_label(container_reuse(), "#{config.reuse}")
+
+    if config.reuse do
+      case Api.get_container_by_hash(hash, state.conn) do
+        {:error, :no_container} ->
+          Logger.log("Container does not exist with hash: #{hash}")
+          create_and_start_container(config, config_builder, state)
+
+        {:error, error} ->
+          Logger.log("Failed to get container by hash: #{inspect(error)}")
+          {:error, error}
+
+        {:ok, container} ->
+          Logger.log("Container already exists with hash: #{hash}")
           {:ok, container}
-        end
+      end
+    else
+      create_and_start_container(config, config_builder, state)
+    end
+  end
 
-      {:error, error} ->
-        Logger.log("Failed to get container by hash: #{inspect(error)}")
-        {:error, error}
-
-      {:ok, container} ->
-        Logger.log("Container already exists with hash: #{hash}")
-        {:ok, container}
+  defp create_and_start_container(config, config_builder, state) do
+    with {:ok, _} <- Api.pull_image(config.image, state.conn, auth: config.auth),
+         {:ok, id} <- Api.create_container(config, state.conn),
+         :ok <- Api.start_container(id, state.conn),
+         {:ok, container} <- Api.get_container(id, state.conn),
+         :ok <- ContainerBuilder.after_start(config_builder, container, state.conn),
+         :ok <- wait_for_container(container, config.wait_strategies || [], state.conn) do
+      {:ok, container}
     end
   end
 

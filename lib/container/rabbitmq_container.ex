@@ -35,7 +35,8 @@ defmodule Testcontainers.RabbitMQContainer do
     :virtual_host,
     :cmd,
     :wait_timeout,
-    check_image: @default_image
+    check_image: @default_image,
+    reuse: false
   ]
 
   @doc """
@@ -153,6 +154,13 @@ defmodule Testcontainers.RabbitMQContainer do
   end
 
   @doc """
+  Set the reuse flag to reuse the container if it is already running.
+  """
+  def with_reuse(%__MODULE__{} = config, reuse) when is_boolean(reuse) do
+    %__MODULE__{config | reuse: reuse}
+  end
+
+  @doc """
   Retrieves the default Docker image for the RabbitMQ container
   """
   def default_image, do: @default_image
@@ -226,9 +234,7 @@ defmodule Testcontainers.RabbitMQContainer do
     ]
   end
 
-  @doc """
-  Provides the virtual host segment used in the AMQP URI specification defined in the AMQP 0-9-1, and interprets the virtual host for the connection URL based on the default value.
-  """
+  # Provides the virtual host segment used in the AMQP URI specification defined in the AMQP 0-9-1, and interprets the virtual host for the connection URL based on the default value.
   defp virtual_host_segment(container) do
     case container.environment[:RABBITMQ_DEFAULT_VHOST] do
       "/" -> ""
@@ -274,6 +280,7 @@ defmodule Testcontainers.RabbitMQContainer do
         )
       )
       |> with_check_image(config.check_image)
+      |> with_reuse(config.reuse)
       |> valid_image!()
     end
 

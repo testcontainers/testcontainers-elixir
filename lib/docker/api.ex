@@ -23,7 +23,7 @@ defmodule Testcontainers.Docker.Api do
 
   def get_container_by_hash(hash, conn) do
     filters_json = %{
-      "label" => ["#{Testcontainers.Constants.container_hash_label}=#{hash}"]
+      "label" => ["#{Testcontainers.Constants.container_reuse_hash_label}=#{hash}"]
     } |> Jason.encode!()
     case Api.Container.container_list(conn, filters: filters_json) do
       {:ok, containers} ->

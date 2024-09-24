@@ -1,7 +1,28 @@
 defmodule Testcontainers.ContainerTest do
   use ExUnit.Case, async: true
 
+  alias Testcontainers.ContainerBuilder
   alias Testcontainers.Container
+
+  describe "with reuse" do
+    test "sets reuse to true" do
+      container = Container.new("my-image")
+      assert container.reuse == false
+
+      updated_container = Container.with_reuse(container, true)
+
+      assert updated_container.reuse == true
+    end
+  end
+
+  describe "hash" do
+    test "returns the same hash for the same container" do
+      container1 = ContainerBuilder.build(Testcontainers.PostgresContainer.new())
+      container2 = ContainerBuilder.build(Testcontainers.PostgresContainer.new())
+      assert Testcontainers.Util.Hash.struct_to_hash(container1) == "48eb6f7a969bf14d270caf14b2d0ed7d78a940119edb2366c4a1b67ae67924f1"
+      assert Testcontainers.Util.Hash.struct_to_hash(container2) == "48eb6f7a969bf14d270caf14b2d0ed7d78a940119edb2366c4a1b67ae67924f1"
+    end
+  end
 
   describe "with_exposed_port/2" do
     test "adds an exposed port to the container" do

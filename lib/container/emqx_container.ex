@@ -29,7 +29,8 @@ defmodule Testcontainers.EmqxContainer do
     :mqtt_over_wss_port,
     :dashboard_port,
     :wait_timeout,
-    check_image: @default_image
+    check_image: @default_image,
+    reuse: false
   ]
 
   @doc """
@@ -87,6 +88,13 @@ defmodule Testcontainers.EmqxContainer do
   end
 
   @doc """
+  Set the reuse flag to reuse the container if it is already running.
+  """
+  def with_reuse(%__MODULE__{} = config, reuse) when is_boolean(reuse) do
+    %__MODULE__{config | reuse: reuse}
+  end
+
+  @doc """
   Retrieves the default Docker image for the Emqx container.
   """
   def default_image, do: @default_image
@@ -114,6 +122,7 @@ defmodule Testcontainers.EmqxContainer do
       |> with_exposed_ports(exposed_ports(config))
       |> with_waiting_strategies(waiting_strategies(config))
       |> with_check_image(config.check_image)
+      |> with_reuse(config.reuse)
       |> valid_image!()
     end
 

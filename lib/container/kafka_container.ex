@@ -44,7 +44,8 @@ defmodule Testcontainers.KafkaContainer do
     :wait_timeout,
     :consensus_strategy,
     :default_topic_partitions,
-    :start_file_path
+    :start_file_path,
+    reuse: false
   ]
 
   @doc """
@@ -147,6 +148,13 @@ defmodule Testcontainers.KafkaContainer do
     %{config | default_topic_partitions: topic_partitions}
   end
 
+  @doc """
+  Set the reuse flag to reuse the container if it is already running.
+  """
+  def with_reuse(%__MODULE__{} = config, reuse) when is_boolean(reuse) do
+    %__MODULE__{config | reuse: reuse}
+  end
+
   defimpl Testcontainers.ContainerBuilder do
     import Container
 
@@ -158,6 +166,7 @@ defmodule Testcontainers.KafkaContainer do
       |> with_listener_config(config)
       |> with_topic_config(config)
       |> with_startup_script(config)
+      |> with_reuse(config.reuse)
       |> with_waiting_strategy(
         CommandWaitStrategy.new(
           ["kafka-broker-api-versions", "--bootstrap-server", "localhost:#{config.kafka_port}"],
