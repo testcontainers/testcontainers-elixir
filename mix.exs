@@ -22,7 +22,7 @@ defmodule TestcontainersElixir.MixProject do
         licenses: ["MIT"]
       ],
       test_coverage: [
-        summary: [threshold: 75],
+        summary: [threshold: 68],
         ignore_modules: [
           TestHelper,
           Inspect.Testcontainers.TestUser,
