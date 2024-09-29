@@ -238,15 +238,19 @@ defmodule Testcontainers do
     hash = Hash.struct_to_hash(config)
 
     config = config
-      |> Container.with_label(container_reuse_hash_label(), hash)
-      |> Container.with_label(container_reuse(), "#{config.reuse}")
       |> Container.with_label(container_sessionId_label(), state.session_id)
 
-    if Map.get(state.properties, "testcontainers.reuse.enable", false) == true && config.reuse do
+    if config.reuse && true == Map.get(state.properties, "testcontainers.reuse.enable", false) do
       case Api.get_container_by_hash(hash, state.conn) do
         {:error, :no_container} ->
           Logger.log("Container does not exist with hash: #{hash}")
-          create_and_start_container(config, config_builder, state)
+          create_and_start_container(
+            config
+            |> Container.with_label(container_reuse(), "true")
+            |> Container.with_label(container_reuse_hash_label(), hash),
+            config_builder,
+            state
+          )
 
         {:error, error} ->
           Logger.log("Failed to get container by hash: #{inspect(error)}")
@@ -257,7 +261,11 @@ defmodule Testcontainers do
           {:ok, container}
       end
     else
-      create_and_start_container(config, config_builder, state)
+      create_and_start_container(
+        config |> Container.with_label(container_reuse(), "false"),
+        config_builder,
+        state
+      )
     end
   end
 
