@@ -119,6 +119,8 @@ config :my_app, MyApp.Repo,
   pool_size: System.schedulers_online() * 2
 ```
 
+Activate reuse of database containers started by mix task with adding `testcontainers.reuse.enable=true` in `~/.testcontainers.properties`. This is experimental.
+
 ### Logging
 
 By default, Testcontainers doesn't log anything. If you want Testcontainers to log, set the desired log level in config/test.exs:
