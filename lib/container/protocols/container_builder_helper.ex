@@ -19,12 +19,12 @@ defmodule Testcontainers.ContainerBuilderHelper do
       |> Container.with_label(container_reuse(), "true")
       |> Container.with_label(container_reuse_hash_label(), hash)
       |> Container.with_label(container_sessionId_label(), state.session_id)
-      |> Kernel.then(&{true, &1, hash})
+      |> Kernel.then(&{:reuse, &1, hash})
     else
       config
       |> Container.with_label(container_reuse(), "false")
       |> Container.with_label(container_sessionId_label(), state.session_id)
-      |> Kernel.then(&{false, &1, nil})
+      |> Kernel.then(&{:noreuse, &1, nil})
     end
   end
 end

@@ -230,7 +230,7 @@ defmodule Testcontainers do
 
   defp start_and_wait(config_builder, state) do
     case Testcontainers.ContainerBuilderHelper.build(config_builder, state) do
-      {true, config, hash} ->
+      {:reuse, config, hash} ->
         case Api.get_container_by_hash(hash, state.conn) do
           {:error, :no_container} ->
             Logger.log("Container does not exist with hash: #{hash}")
@@ -248,7 +248,7 @@ defmodule Testcontainers do
             Logger.log("Container already exists with hash: #{hash}")
             {:ok, container}
         end
-      {_, config, _} ->
+      {:noreuse, config, _} ->
         create_and_start_container(
           config,
           config_builder,
