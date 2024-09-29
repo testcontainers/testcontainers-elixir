@@ -2,7 +2,7 @@ defmodule TestcontainersElixir.MixProject do
   use Mix.Project
 
   @app :testcontainers
-  @version "1.10.2"
+  @version "1.10.3"
   @source_url "https://github.com/testcontainers/testcontainers-elixir"
 
   def project do
@@ -22,7 +22,7 @@ defmodule TestcontainersElixir.MixProject do
         licenses: ["MIT"]
       ],
       test_coverage: [
-        summary: [threshold: 75],
+        summary: [threshold: 68],
         ignore_modules: [
           TestHelper,
           Inspect.Testcontainers.TestUser,

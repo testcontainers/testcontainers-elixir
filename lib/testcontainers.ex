@@ -229,35 +229,31 @@ defmodule Testcontainers do
   end
 
   defp start_and_wait(config_builder, state) do
-    config =
-      ContainerBuilder.build(config_builder)
-      |> Container.with_label(container_version_label(), library_version())
-      |> Container.with_label(container_lang_label(), container_lang_value())
-      |> Container.with_label(container_label(), "#{true}")
+    case Testcontainers.ContainerBuilderHelper.build(config_builder, state) do
+      {:reuse, config, hash} ->
+        case Api.get_container_by_hash(hash, state.conn) do
+          {:error, :no_container} ->
+            Logger.log("Container does not exist with hash: #{hash}")
+            create_and_start_container(
+              config,
+              config_builder,
+              state
+            )
 
-    hash = Hash.struct_to_hash(config)
+          {:error, error} ->
+            Logger.log("Failed to get container by hash: #{inspect(error)}")
+            {:error, error}
 
-    config = config
-      |> Container.with_label(container_reuse_hash_label(), hash)
-      |> Container.with_label(container_reuse(), "#{config.reuse}")
-      |> Container.with_label(container_sessionId_label(), state.session_id)
-
-    if Map.get(state.properties, "testcontainers.reuse.enable", false) == true && config.reuse do
-      case Api.get_container_by_hash(hash, state.conn) do
-        {:error, :no_container} ->
-          Logger.log("Container does not exist with hash: #{hash}")
-          create_and_start_container(config, config_builder, state)
-
-        {:error, error} ->
-          Logger.log("Failed to get container by hash: #{inspect(error)}")
-          {:error, error}
-
-        {:ok, container} ->
-          Logger.log("Container already exists with hash: #{hash}")
-          {:ok, container}
-      end
-    else
-      create_and_start_container(config, config_builder, state)
+          {:ok, container} ->
+            Logger.log("Container already exists with hash: #{hash}")
+            {:ok, container}
+        end
+      {:noreuse, config, _} ->
+        create_and_start_container(
+          config,
+          config_builder,
+          state
+        )
     end
   end
 
