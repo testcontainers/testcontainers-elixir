@@ -13,7 +13,6 @@ defmodule Testcontainers do
   alias Testcontainers.Connection
   alias Testcontainers.Container
   alias Testcontainers.ContainerBuilder
-  alias Testcontainers.Util.Hash
   alias Testcontainers.Util.PropertiesParser
 
   import Testcontainers.Constants
