@@ -63,7 +63,7 @@ defmodule TestcontainersElixir.MixProject do
       {:dialyxir, "~> 1.3", only: [:dev], runtime: false},
       {:ex_doc, "~> 0.30", only: :dev, runtime: false},
       # docker api
-      {:ex_docker_engine_api, "~> 1.43.1"},
+      {:ex_docker_engine_api, "~> 1.43.2"},
       # ecto module
       {:ecto_sql, "~> 3.3", optional: true},
       {:ecto, "~> 3.3", optional: true},
