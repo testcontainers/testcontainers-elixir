@@ -41,7 +41,7 @@ defmodule Mix.Tasks.Testcontainers.Test do
   defp run_tests_and_exit(database) do
     {container, env} = setup_container(database)
     run_tests(env)
-    Testcontainers.stop_container(container)
+    Testcontainers.stop_container(container.container_id)
   end
 
   defp run_tests_and_watch(database, folders) do
