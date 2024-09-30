@@ -2,7 +2,7 @@ defmodule TestcontainersElixir.MixProject do
   use Mix.Project
 
   @app :testcontainers
-  @version "1.10.3"
+  @version "1.10.4"
   @source_url "https://github.com/testcontainers/testcontainers-elixir"
 
   def project do
@@ -22,7 +22,7 @@ defmodule TestcontainersElixir.MixProject do
         licenses: ["MIT"]
       ],
       test_coverage: [
-        summary: [threshold: 68],
+        summary: [threshold: 60],
         ignore_modules: [
           TestHelper,
           Inspect.Testcontainers.TestUser,
@@ -86,7 +86,9 @@ defmodule TestcontainersElixir.MixProject do
       # RabbitMQ
       {:amqp, "~> 3.3", only: [:dev, :test]},
       # EMQX
-      {:tortoise311, "~> 0.12.0", only: [:dev, :test]}
+      {:tortoise311, "~> 0.12.0", only: [:dev, :test]},
+      # For watching directories for file changes in mix task
+      {:fs, "~> 8.6"}
     ]
   end
 

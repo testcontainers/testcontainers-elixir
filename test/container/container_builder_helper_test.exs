@@ -18,7 +18,7 @@ defmodule Testcontainers.ContainerBuilderHelperTest do
 
   test "build/2 returns a tuple with true, built config with correct labels and a non nil hash" do
     builder = Testcontainers.PostgresContainer.new() |> Testcontainers.PostgresContainer.with_reuse(true)
-    state = %{ properties: %{ "testcontainers.reuse.enable" => true }, session_id: "123" }
+    state = %{ properties: %{ "testcontainers.reuse.enable" => "true" }, session_id: "123" }
     {:reuse, built, hash} = ContainerBuilderHelper.build(builder, state)
     assert hash != nil
     assert Map.get(built.labels, container_reuse())  == "true"
