@@ -87,7 +87,8 @@ defmodule TestcontainersElixir.MixProject do
       {:amqp, "~> 3.3", only: [:dev, :test]},
       # EMQX
       {:tortoise311, "~> 0.12.0", only: [:dev, :test]},
-      {:fs, github: "synrc/fs"}
+      # For watching directories for file changes in mix task
+      {:fs, "~> 8.6"}
     ]
   end
 
