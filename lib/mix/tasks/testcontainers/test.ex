@@ -40,8 +40,9 @@ defmodule Mix.Tasks.Testcontainers.Test do
 
   defp run_tests_and_exit(database) do
     {container, env} = setup_container(database)
-    run_tests(env)
+    exit_code = run_tests(env)
     Testcontainers.stop_container(container.container_id)
+    System.halt(exit_code)
   end
 
   defp run_tests_and_watch(database, folders) do
@@ -92,15 +93,14 @@ defmodule Mix.Tasks.Testcontainers.Test do
   end
 
   defp run_tests(env) do
-    test_pid = spawn(fn ->
-      System.cmd("mix", ["test"], env: env, into: IO.stream(:stdio, :line))
-    end)
-
-    Process.monitor(test_pid)
-
-    receive do
-      {:DOWN, _ref, :process, ^test_pid, _reason} ->
-        IO.puts("Test process completed.")
+    case System.cmd("mix", ["test"], env: env, into: IO.stream(:stdio, :line)) do
+      {_, exit_code} ->
+        if exit_code == 0 do
+          IO.puts("Test process completed successfully")
+        else
+          IO.puts(:stderr, "Test process failed with exit code: #{exit_code}")
+        end
+        exit_code
     end
   end
 
