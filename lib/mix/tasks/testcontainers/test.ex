@@ -53,8 +53,6 @@ defmodule Mix.Tasks.Testcontainers.Test do
       :fs.subscribe(String.to_atom("watcher_" <> folder))
     end)
 
-    Process.flag(:trap_exit, true)
-
     run_tests(env)
     loop(env, container)
   end
