@@ -22,9 +22,12 @@ defmodule Testcontainers.Docker.Api do
   end
 
   def get_container_by_hash(hash, conn) do
-    filters_json = %{
-      "label" => ["#{Testcontainers.Constants.container_reuse_hash_label}=#{hash}"]
-    } |> Jason.encode!()
+    filters_json =
+      %{
+        "label" => ["#{Testcontainers.Constants.container_reuse_hash_label()}=#{hash}"]
+      }
+      |> Jason.encode!()
+
     case Api.Container.container_list(conn, filters: filters_json) do
       {:ok, containers} when is_list(containers) ->
         case containers do
@@ -162,7 +165,7 @@ defmodule Testcontainers.Docker.Api do
   end
 
   def get_bridge_gateway(conn) do
-    case Api.Network.network_inspect(conn, "bridge") do
+    case Testcontainers.Docker.Impl.network_inspect(conn, "bridge") do
       {:ok, %DockerEngineAPI.Model.Network{IPAM: %DockerEngineAPI.Model.Ipam{Config: config}}} ->
         with_gateway =
           config
