@@ -9,7 +9,7 @@ defmodule Testcontainers.Docker.Api do
 
   def get_container(container_id, conn)
       when is_binary(container_id) do
-    case Api.Container.container_inspect(conn, container_id) do
+    case Testcontainers.Docker.Impl.container_inspect(conn, container_id) do
       {:error, %Tesla.Env{status: other}} ->
         {:error, {:http_error, other}}
 
