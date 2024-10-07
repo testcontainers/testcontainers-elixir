@@ -13,7 +13,8 @@ defmodule Testcontainers.Util.PropertiesParser do
           {:error, properties: error}
       end
     else
-      {:ok, %{}} # return empty map if file does not exist
+      # return empty map if file does not exist
+      {:ok, %{}}
     end
   end
 

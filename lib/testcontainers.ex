@@ -50,7 +50,7 @@ defmodule Testcontainers do
          {:ok, container} <- Api.get_container(ryuk_container_id, conn),
          {:ok, socket} <- create_ryuk_socket(container),
          :ok <- register_ryuk_filter(session_id, socket),
-         {:ok, docker_host} <- get_docker_host(docker_host_url, conn),
+         {:ok, docker_host} <- Testcontainers.GatewayUtil.get_docker_host(docker_host_url, conn),
          {:ok, properties} <- PropertiesParser.read_property_file() do
       Logger.log("Testcontainers initialized")
 
@@ -151,29 +151,6 @@ defmodule Testcontainers do
 
   # private functions
 
-  defp get_docker_host(docker_host_url, conn) do
-    case URI.parse(docker_host_url) do
-      uri when uri.scheme == "http" or uri.scheme == "https" ->
-        {:ok, uri.host}
-
-      uri when uri.scheme == "http+unix" ->
-        if File.exists?("/.dockerenv") do
-          Logger.log("Running in docker environment, trying to get bridge network gateway")
-
-          with {:ok, gateway} <- Api.get_bridge_gateway(conn) do
-            {:ok, gateway}
-          else
-            {:error, reason} ->
-              Logger.log("Failed to get bridge gateway: #{inspect(reason)}. Using localhost")
-              {:ok, "localhost"}
-          end
-        else
-          Logger.log("Not running in docker environment, using localhost")
-          {:ok, "localhost"}
-        end
-    end
-  end
-
   defp wait_for_call(call, name) do
     GenServer.call(name, call, @timeout)
   end
@@ -233,6 +210,7 @@ defmodule Testcontainers do
         case Api.get_container_by_hash(hash, state.conn) do
           {:error, :no_container} ->
             Logger.log("Container does not exist with hash: #{hash}")
+
             create_and_start_container(
               config,
               config_builder,
@@ -247,6 +225,7 @@ defmodule Testcontainers do
             Logger.log("Container already exists with hash: #{hash}")
             {:ok, container}
         end
+
       {:noreuse, config, _} ->
         create_and_start_container(
           config,

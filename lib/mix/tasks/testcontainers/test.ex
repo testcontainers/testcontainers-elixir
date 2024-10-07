@@ -11,12 +11,13 @@ defmodule Mix.Tasks.Testcontainers.Test do
 
     {:ok, _} = Testcontainers.start_link()
 
-    {opts, _, _} = OptionParser.parse(args,
-      switches: [
-        database: :string,
-        watch: [:string, :keep]
-      ]
-    )
+    {opts, _, _} =
+      OptionParser.parse(args,
+        switches: [
+          database: :string,
+          watch: [:string, :keep]
+        ]
+      )
 
     database = opts[:database] || "postgres"
     folder_to_watch = Keyword.get_values(opts, :watch)
@@ -60,24 +61,31 @@ defmodule Mix.Tasks.Testcontainers.Test do
   defp setup_container(database) do
     case database do
       "postgres" ->
-        {:ok, container} = Testcontainers.start_container(
-          PostgresContainer.new()
-          |> PostgresContainer.with_user("test")
-          |> PostgresContainer.with_password("test")
-          |> PostgresContainer.with_reuse(true)
-        )
+        {:ok, container} =
+          Testcontainers.start_container(
+            PostgresContainer.new()
+            |> PostgresContainer.with_user("test")
+            |> PostgresContainer.with_password("test")
+            |> PostgresContainer.with_reuse(true)
+          )
+
         port = PostgresContainer.port(container)
         {container, create_env(port)}
+
       "mysql" ->
-        {:ok, container} = Testcontainers.start_container(
-          MySqlContainer.new()
-          |> MySqlContainer.with_user("test")
-          |> MySqlContainer.with_password("test")
-          |> MySqlContainer.with_reuse(true)
-        )
+        {:ok, container} =
+          Testcontainers.start_container(
+            MySqlContainer.new()
+            |> MySqlContainer.with_user("test")
+            |> MySqlContainer.with_password("test")
+            |> MySqlContainer.with_reuse(true)
+          )
+
         port = MySqlContainer.port(container)
         {container, create_env(port)}
-      _ -> Mix.raise("Unsupported database: #{database}")
+
+      _ ->
+        Mix.raise("Unsupported database: #{database}")
     end
   end
 
@@ -98,6 +106,7 @@ defmodule Mix.Tasks.Testcontainers.Test do
         else
           IO.puts(:stderr, "Test process failed with exit code: #{exit_code}")
         end
+
         exit_code
     end
   end
@@ -107,8 +116,8 @@ defmodule Mix.Tasks.Testcontainers.Test do
       {_watcher_process, {:fs, :file_event}, {changed_file, _type}} ->
         IO.puts("#{changed_file} was updated, waiting for more changes...")
         wait_for_changes(env, container)
-
-      after 5000 ->
+    after
+      5000 ->
         loop(env, container)
     end
   end
@@ -118,11 +127,11 @@ defmodule Mix.Tasks.Testcontainers.Test do
       {_watcher_process, {:fs, :file_event}, {changed_file, _type}} ->
         IO.puts("#{changed_file} was updated, waiting for more changes...")
         wait_for_changes(env, container)
-
-    after 1000 ->
-      IO.ANSI.clear()
-      run_tests(env)
-      loop(env, container)
+    after
+      1000 ->
+        IO.ANSI.clear()
+        run_tests(env)
+        loop(env, container)
     end
   end
 end
