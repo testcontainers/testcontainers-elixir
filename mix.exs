@@ -26,7 +26,7 @@ defmodule TestcontainersElixir.MixProject do
         ignore_modules: [
           TestHelper,
           Inspect.Testcontainers.TestUser,
-          DockerEngineAPI
+          ~r/DockerEngineAPI/
         ]
       ],
       elixirc_paths: elixirc_paths(Mix.env())
