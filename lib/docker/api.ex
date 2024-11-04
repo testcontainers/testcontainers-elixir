@@ -156,8 +156,8 @@ defmodule Testcontainers.Docker.Api do
       {:ok, %DockerEngineAPI.Model.ErrorResponse{message: message}} ->
         {:error, message}
 
-      {:error, message} ->
-        {:error, message}
+      {:error, error} ->
+        {:error, :unknown, error}
     end
   end
 
