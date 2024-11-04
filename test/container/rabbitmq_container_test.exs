@@ -51,6 +51,30 @@ defmodule Testcontainers.Container.RabbitMQContainerTest do
     end
   end
 
+  describe "with force_reuse custom configuration" do
+    @custom_rabbitmq RabbitMQContainer.new()
+                     |> RabbitMQContainer.with_image("rabbitmq:3-management-alpine")
+                     |> RabbitMQContainer.with_port(5671)
+                     |> RabbitMQContainer.with_username("custom-user")
+                     |> RabbitMQContainer.with_password("custom_password")
+                     |> RabbitMQContainer.with_virtual_host("custom-virtual-host")
+                     |> RabbitMQContainer.with_force_reuse()
+
+    container(:rabbitmq, @custom_rabbitmq)
+
+    test "provides a rabbitmq container compliant with specified configuration", %{
+      rabbitmq: rabbitmq
+    } do
+      {:ok, connection} =
+        RabbitMQContainer.connection_parameters(rabbitmq)
+        |> AMQP.Connection.open()
+
+      do_assertion(connection)
+
+      :ok = Testcontainers.stop_container(rabbitmq.container_id)
+    end
+  end
+
   defp do_assertion(connection) do
     {:ok, channel} = AMQP.Channel.open(connection)
     AMQP.Queue.declare(channel, "channel")

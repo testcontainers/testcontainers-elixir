@@ -157,7 +157,7 @@ defmodule DockerEngineAPI.RequestBuilder do
   - `result` (Tesla.Env.result()): The Tesla response.
   - `mapping` ([{http_status, struct}]): Status-to-struct mapping for decoding.
   """
-  @spec evaluate_response(Tesla.Env.result(), response_mapping) :: {:ok, struct() | Tesla.Env.t} | {:error, Tesla.Env.t}
+  @spec evaluate_response(Tesla.Env.result(), response_mapping) :: {:ok, struct() | list(struct()) | Tesla.Env.t} | {:error, term()}
   def evaluate_response({:ok, %Tesla.Env{} = env}, mapping) do
     status = env.status
     mapping
@@ -172,6 +172,7 @@ defmodule DockerEngineAPI.RequestBuilder do
   defp decode(%Tesla.Env{body: body} = env, struct) do
     case struct do
       false -> {:ok, env}
+      %{} -> DockerEngineAPI.Deserializer.jason_decode(body)
       module -> DockerEngineAPI.Deserializer.jason_decode(body, module)
     end
   end

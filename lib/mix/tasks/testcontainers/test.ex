@@ -33,7 +33,7 @@ defmodule Mix.Tasks.Testcontainers.Test do
   defp check_folders_exist(folders) do
     Enum.each(folders, fn folder ->
       unless File.dir?(folder) do
-        Mix.raise("Folder does not exist: #{folder}")
+        raise("Folder does not exist: #{folder}")
       end
     end)
   end
@@ -77,7 +77,7 @@ defmodule Mix.Tasks.Testcontainers.Test do
         )
         port = MySqlContainer.port(container)
         {container, create_env(port)}
-      _ -> Mix.raise("Unsupported database: #{database}")
+      _ -> raise("Unsupported database: #{database}")
     end
   end
 

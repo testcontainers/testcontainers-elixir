@@ -19,8 +19,8 @@ defmodule Testcontainers.ContainerTest do
     test "returns the same hash for the same container" do
       container1 = ContainerBuilder.build(Testcontainers.PostgresContainer.new())
       container2 = ContainerBuilder.build(Testcontainers.PostgresContainer.new())
-      assert Testcontainers.Util.Hash.struct_to_hash(container1) == "005c9be32d1a1d2f74f5cdaaf534be3e039a016473906bad8d91186c47346f41"
-      assert Testcontainers.Util.Hash.struct_to_hash(container2) == "005c9be32d1a1d2f74f5cdaaf534be3e039a016473906bad8d91186c47346f41"
+      assert Testcontainers.Util.Hash.struct_to_hash(container1) == "7ecc623f446ebc9bd11be895960ef64964055d68262cbd8073754f926f048bcf"
+      assert Testcontainers.Util.Hash.struct_to_hash(container2) == "7ecc623f446ebc9bd11be895960ef64964055d68262cbd8073754f926f048bcf"
     end
   end
 

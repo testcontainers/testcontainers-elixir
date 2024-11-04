@@ -418,13 +418,8 @@ defmodule DockerEngineAPI.Api.Container do
     - `:limit` (integer()): Return this number of most recently created containers, including non-running ones.
     - `:size` (boolean()): Return the size of container as fields `SizeRw` and `SizeRootFs`.
     - `:filters` (String.t): Filters to process on the container list, encoded as JSON (a `map[string][]string`). For example, `{\"status\": [\"paused\"]}` will only return paused containers.  Available filters:  - `ancestor`=(`<image-name>[:<tag>]`, `<image id>`, or `<image@digest>`) - `before`=(`<container id>` or `<container name>`) - `expose`=(`<port>[/<proto>]`|`<startport-endport>/[<proto>]`) - `exited=<int>` containers with exit code of `<int>` - `health`=(`starting`|`healthy`|`unhealthy`|`none`) - `id=<ID>` a container's ID - `isolation=`(`default`|`process`|`hyperv`) (Windows daemon only) - `is-task=`(`true`|`false`) - `label=key` or `label=\"key=value\"` of a container label - `name=<name>` a container's name - `network`=(`<network id>` or `<network name>`) - `publish`=(`<port>[/<proto>]`|`<startport-endport>/[<proto>]`) - `since`=(`<container id>` or `<container name>`) - `status=`(`created`|`restarting`|`running`|`removing`|`paused`|`exited`|`dead`) - `volume`=(`<volume name>` or `<mount point destination>`)
-
-  ### Returns
-
-  - `{:ok, [%ContainerSummary{}, ...]}` on success
-  - `{:error, Tesla.Env.t}` on failure
   """
-  @spec container_list(Tesla.Env.client, keyword()) :: {:ok, DockerEngineAPI.Model.ErrorResponse.t} | {:ok, list(DockerEngineAPI.Model.ContainerSummary.t)} | {:error, Tesla.Env.t}
+  @spec container_list(Tesla.Env.client, keyword()) :: {:ok, DockerEngineAPI.Model.ErrorResponse.t() | list(DockerEngineAPI.Model.ContainerSummary.t())} | {:error, term()}
   def container_list(connection, opts \\ []) do
     optional_params = %{
       :all => :query,
@@ -466,7 +461,7 @@ defmodule DockerEngineAPI.Api.Container do
     - `:timestamps` (boolean()): Add timestamps to every log line
     - `:tail` (String.t): Only return this number of log lines from the end of the logs. Specify as an integer or `all` to output all log lines.
   """
-  @spec container_logs(Tesla.Env.client, String.t, keyword()) :: {:ok, DockerEngineAPI.Model.ErrorResponse.t | Tesla.Env.t} | {:error, Tesla.Env.t}
+  @spec container_logs(Tesla.Env.client, String.t, keyword()) :: {:ok, DockerEngineAPI.Model.ErrorResponse.t() | Tesla.Env.t()} | {:error, term()}
   def container_logs(connection, id, opts \\ []) do
     optional_params = %{
       :follow => :query,
@@ -509,7 +504,7 @@ defmodule DockerEngineAPI.Api.Container do
   - `{:ok, nil}` on success
   - `{:error, Tesla.Env.t}` on failure
   """
-  @spec container_pause(Tesla.Env.client, String.t, keyword()) :: {:ok, nil} | {:ok, DockerEngineAPI.Model.ErrorResponse.t} | {:error, Tesla.Env.t}
+  @spec container_pause(Tesla.Env.client, String.t, keyword()) :: {:ok, DockerEngineAPI.Model.ErrorResponse.t() | Tesla.Env.t()} | {:error, term()}
   def container_pause(connection, id, _opts \\ []) do
     request =
       %{}
@@ -541,7 +536,7 @@ defmodule DockerEngineAPI.Api.Container do
   - `{:ok, DockerEngineAPI.Model.ContainerPruneResponse.t}` on success
   - `{:error, Tesla.Env.t}` on failure
   """
-  @spec container_prune(Tesla.Env.client, keyword()) :: {:ok, DockerEngineAPI.Model.ErrorResponse.t} | {:ok, DockerEngineAPI.Model.ContainerPruneResponse.t} | {:error, Tesla.Env.t}
+  @spec container_prune(Tesla.Env.client, keyword()) :: {:ok, DockerEngineAPI.Model.ErrorResponse.t() | DockerEngineAPI.Model.ContainerPruneResponse.t()} | {:error, term()}
   def container_prune(connection, opts \\ []) do
     optional_params = %{
       :filters => :query
@@ -578,7 +573,7 @@ defmodule DockerEngineAPI.Api.Container do
   - `{:ok, nil}` on success
   - `{:error, Tesla.Env.t}` on failure
   """
-  @spec container_rename(Tesla.Env.client, String.t, String.t, keyword()) :: {:ok, nil} | {:ok, DockerEngineAPI.Model.ErrorResponse.t} | {:error, Tesla.Env.t}
+  @spec container_rename(Tesla.Env.client, String.t, String.t, keyword()) :: {:ok, DockerEngineAPI.Model.ErrorResponse.t() | Tesla.Env.t()} | {:error, term()}
   def container_rename(connection, id, name, _opts \\ []) do
     request =
       %{}
@@ -615,7 +610,7 @@ defmodule DockerEngineAPI.Api.Container do
   - `{:ok, nil}` on success
   - `{:error, Tesla.Env.t}` on failure
   """
-  @spec container_resize(Tesla.Env.client, String.t, keyword()) :: {:ok, nil} | {:ok, DockerEngineAPI.Model.ErrorResponse.t} | {:error, Tesla.Env.t}
+  @spec container_resize(Tesla.Env.client, String.t, keyword()) :: {:ok, DockerEngineAPI.Model.ErrorResponse.t() | Tesla.Env.t()} | {:error, term()}
   def container_resize(connection, id, opts \\ []) do
     optional_params = %{
       :h => :query,
@@ -655,7 +650,7 @@ defmodule DockerEngineAPI.Api.Container do
   - `{:ok, nil}` on success
   - `{:error, Tesla.Env.t}` on failure
   """
-  @spec container_restart(Tesla.Env.client, String.t, keyword()) :: {:ok, nil} | {:ok, DockerEngineAPI.Model.ErrorResponse.t} | {:error, Tesla.Env.t}
+  @spec container_restart(Tesla.Env.client, String.t, keyword()) :: {:ok, DockerEngineAPI.Model.ErrorResponse.t() | Tesla.Env.t()} | {:error, term()}
   def container_restart(connection, id, opts \\ []) do
     optional_params = %{
       :signal => :query,
@@ -694,7 +689,7 @@ defmodule DockerEngineAPI.Api.Container do
   - `{:ok, nil}` on success
   - `{:error, Tesla.Env.t}` on failure
   """
-  @spec container_start(Tesla.Env.client, String.t, keyword()) :: {:ok, nil} | {:ok, DockerEngineAPI.Model.ErrorResponse.t} | {:error, Tesla.Env.t}
+  @spec container_start(Tesla.Env.client, String.t, keyword()) :: {:ok, DockerEngineAPI.Model.ErrorResponse.t() | Tesla.Env.t()} | {:error, term()}
   def container_start(connection, id, opts \\ []) do
     optional_params = %{
       :detachKeys => :query
@@ -735,7 +730,7 @@ defmodule DockerEngineAPI.Api.Container do
   - `{:ok, map()}` on success
   - `{:error, Tesla.Env.t}` on failure
   """
-  @spec container_stats(Tesla.Env.client, String.t, keyword()) :: {:ok, Map.t} | {:ok, DockerEngineAPI.Model.ErrorResponse.t} | {:error, Tesla.Env.t}
+  @spec container_stats(Tesla.Env.client, String.t, keyword()) :: {:ok, DockerEngineAPI.Model.ErrorResponse.t() | %{}} | {:error, term()}
   def container_stats(connection, id, opts \\ []) do
     optional_params = %{
       :stream => :query,
@@ -774,7 +769,7 @@ defmodule DockerEngineAPI.Api.Container do
   - `{:ok, nil}` on success
   - `{:error, Tesla.Env.t}` on failure
   """
-  @spec container_stop(Tesla.Env.client, String.t, keyword()) :: {:ok, nil} | {:ok, DockerEngineAPI.Model.ErrorResponse.t} | {:error, Tesla.Env.t}
+  @spec container_stop(Tesla.Env.client, String.t, keyword()) :: {:ok, DockerEngineAPI.Model.ErrorResponse.t() | Tesla.Env.t()} | {:error, term()}
   def container_stop(connection, id, opts \\ []) do
     optional_params = %{
       :signal => :query,
@@ -815,7 +810,7 @@ defmodule DockerEngineAPI.Api.Container do
   - `{:ok, DockerEngineAPI.Model.ContainerTopResponse.t}` on success
   - `{:error, Tesla.Env.t}` on failure
   """
-  @spec container_top(Tesla.Env.client, String.t, keyword()) :: {:ok, DockerEngineAPI.Model.ContainerTopResponse.t} | {:ok, DockerEngineAPI.Model.ErrorResponse.t} | {:error, Tesla.Env.t}
+  @spec container_top(Tesla.Env.client, String.t, keyword()) :: {:ok, DockerEngineAPI.Model.ContainerTopResponse.t() | DockerEngineAPI.Model.ErrorResponse.t()} | {:error, term()}
   def container_top(connection, id, opts \\ []) do
     optional_params = %{
       :ps_args => :query
@@ -963,7 +958,7 @@ defmodule DockerEngineAPI.Api.Container do
   - `{:ok, nil}` on success
   - `{:error, Tesla.Env.t}` on failure
   """
-  @spec put_container_archive(Tesla.Env.client, String.t, String.t, String.t, keyword()) :: {:ok, nil} | {:ok, DockerEngineAPI.Model.ErrorResponse.t} | {:error, Tesla.Env.t}
+  @spec put_container_archive(Tesla.Env.client, String.t, String.t, String.t, keyword()) :: {:ok, DockerEngineAPI.Model.ErrorResponse.t() | Tesla.Env.t()} | {:error, term()}
   def put_container_archive(connection, id, path, input_stream, opts \\ []) do
     optional_params = %{
       :noOverwriteDirNonDir => :query,
