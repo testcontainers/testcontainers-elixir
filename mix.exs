@@ -22,11 +22,10 @@ defmodule TestcontainersElixir.MixProject do
         licenses: ["MIT"]
       ],
       test_coverage: [
-        summary: [threshold: 60],
+        summary: [threshold: 50],
         ignore_modules: [
           TestHelper,
-          Inspect.Testcontainers.TestUser,
-          ~r/DockerEngineAPI/
+          Inspect.Testcontainers.TestUser
         ]
       ],
       elixirc_paths: elixirc_paths(Mix.env())

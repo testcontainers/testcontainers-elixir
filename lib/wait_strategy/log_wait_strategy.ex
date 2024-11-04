@@ -42,7 +42,7 @@ defmodule Testcontainers.LogWaitStrategy do
         true ->
           :ok
 
-        false ->
+        _ ->
           log_retry_message(container_id, wait_strategy.log_regex, wait_strategy.retry_delay)
           :timer.sleep(wait_strategy.retry_delay)
           wait_for_log_message(wait_strategy, container_id, conn, start_time)
