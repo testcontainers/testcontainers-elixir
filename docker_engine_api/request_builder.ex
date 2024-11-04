@@ -157,13 +157,13 @@ defmodule DockerEngineAPI.RequestBuilder do
   - `result` (Tesla.Env.result()): The Tesla response.
   - `mapping` ([{http_status, struct}]): Status-to-struct mapping for decoding.
   """
-  @spec evaluate_response(Tesla.Env.result(), response_mapping) :: {:ok, struct()} | {:ok, Tesla.Env.t} | {:error, Tesla.Env.t}
+  @spec evaluate_response(Tesla.Env.result(), response_mapping) :: {:ok, struct() | Tesla.Env.t} | {:error, Tesla.Env.t}
   def evaluate_response({:ok, %Tesla.Env{} = env}, mapping) do
     status = env.status
     mapping
     |> Enum.find_value({:error, env}, fn
       {^status, struct} -> decode(env, struct)
-      _ -> {:error, env}
+      _ -> nil
     end)
   end
 
