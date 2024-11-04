@@ -10,7 +10,7 @@ defmodule Testcontainers.ContainerBuilderHelper do
       |> Container.with_label(container_lang_label(), container_lang_value())
       |> Container.with_label(container_label(), "#{true}")
 
-    if config.reuse && "true" == Map.get(state.properties, "testcontainers.reuse.enable", "false") do
+    if config.reuse && ("true" == Map.get(state.properties, "testcontainers.reuse.enable", "false") || config.force_reuse) do
       hash = Hash.struct_to_hash(config)
       config
       |> Container.with_label(container_reuse(), "true")

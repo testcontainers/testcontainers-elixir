@@ -26,20 +26,17 @@ defmodule Testcontainers.Docker.Api do
       "label" => ["#{Testcontainers.Constants.container_reuse_hash_label}=#{hash}"]
     } |> Jason.encode!()
     case Api.Container.container_list(conn, filters: filters_json) do
-      {:ok, containers} when is_list(containers) ->
-        case containers do
-          [] ->
-            {:error, :no_container}
-
-          [container | _] ->
-            get_container(container."Id", conn)
-        end
-
-      {:error, %Tesla.Env{status: other}} ->
-        {:error, {:http_error, other}}
-
       {:ok, %DockerEngineAPI.Model.ErrorResponse{} = error} ->
         {:error, {:failed_to_get_container, error}}
+
+      {:error, error} ->
+        {:error, error}
+
+      {:ok, []} ->
+        {:error, :no_container}
+
+      {:ok, [container | _]}->
+        get_container(container."Id", conn)
     end
   end
 
@@ -125,9 +122,6 @@ defmodule Testcontainers.Docker.Api do
       {:ok, %DockerEngineAPI.Model.ExecInspectResponse{} = body} ->
         {:ok, parse_inspect_result(body)}
 
-      {:ok, %Tesla.Env{status: status}} ->
-        {:error, {:http_error, status}}
-
       {:ok, %DockerEngineAPI.Model.ErrorResponse{message: message}} ->
         {:error, message}
 
@@ -156,8 +150,8 @@ defmodule Testcontainers.Docker.Api do
       {:ok, %DockerEngineAPI.Model.ErrorResponse{message: message}} ->
         {:error, message}
 
-      {:error, message} ->
-        {:error, message}
+      {:error, error} ->
+        {:error, :unknown, error}
     end
   end
 

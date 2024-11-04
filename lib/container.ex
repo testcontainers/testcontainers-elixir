@@ -23,7 +23,8 @@ defmodule Testcontainers.Container do
     container_id: nil,
     check_image: ~r/.*/,
     network_mode: nil,
-    reuse: false
+    reuse: false,
+    force_reuse: false
   ]
 
   @doc """
@@ -164,6 +165,13 @@ defmodule Testcontainers.Container do
       raise ArgumentError, "Cannot reuse a container that is set to auto-remove"
     end
     %__MODULE__{config | reuse: reuse}
+  end
+
+  def with_force_reuse(%__MODULE__{} = config, force_reuse) when is_boolean(force_reuse)  do
+    if config.auto_remove do
+      raise ArgumentError, "Cannot reuse a container that is set to auto-remove"
+    end
+    %__MODULE__{config | reuse: true, force_reuse: force_reuse}
   end
 
   @doc """

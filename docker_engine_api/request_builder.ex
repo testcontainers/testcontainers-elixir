@@ -152,46 +152,28 @@ defmodule DockerEngineAPI.RequestBuilder do
   @type response_mapping :: [{status_code, false | %{} | module()}]
 
   @doc """
-  Evaluate the response from a Tesla request.
-  Decode the response for a Tesla request.
+  Evaluate and decode the response from a Tesla request.
 
-  ### Parameters
-
-  - `result` (Tesla.Env.result()): The response from Tesla.request/2.
-  - `mapping` ([{http_status, struct}]): The mapping for status to struct for decoding.
-
-  ### Returns
-
-  - `{:ok, struct}` or `{:ok, Tesla.Env.t()}` on success
-  - `{:error, term}` on failure
+  - `result` (Tesla.Env.result()): The Tesla response.
+  - `mapping` ([{http_status, struct}]): Status-to-struct mapping for decoding.
   """
-  @spec evaluate_response(Tesla.Env.result(), response_mapping) :: {:ok, struct()} | Tesla.Env.result()
+  @spec evaluate_response(Tesla.Env.result(), response_mapping) :: {:ok, struct() | list(struct()) | Tesla.Env.t} | {:error, term()}
   def evaluate_response({:ok, %Tesla.Env{} = env}, mapping) do
-    resolve_mapping(env, mapping, nil)
+    status = env.status
+    mapping
+    |> Enum.find_value({:error, env}, fn
+      {^status, struct} -> decode(env, struct)
+      _ -> nil
+    end)
   end
 
-  def evaluate_response({:error, _} = error, _), do: error
+  def evaluate_response({:error, %Tesla.Env{} = env}, _), do: {:error, env}
 
-  defp resolve_mapping(%Tesla.Env{status: status} = env, [{mapping_status, struct} | _], _)
-      when status == mapping_status do
-    decode(env, struct)
-  end
-
-  defp resolve_mapping(env, [{:default, struct} | tail], _), do: resolve_mapping(env, tail, struct)
-
-  defp resolve_mapping(env, [_ | tail], struct), do: resolve_mapping(env, tail, struct)
-
-  defp resolve_mapping(env, [], nil), do: {:error, env}
-
-  defp resolve_mapping(env, [], struct), do: decode(env, struct)
-
-  defp decode(%Tesla.Env{} = env, false), do: {:ok, env}
-
-  defp decode(%Tesla.Env{body: body}, %{}) do
-    DockerEngineAPI.Deserializer.jason_decode(body)
-  end
-
-  defp decode(%Tesla.Env{body: body}, module) do
-    DockerEngineAPI.Deserializer.jason_decode(body, module)
+  defp decode(%Tesla.Env{body: body} = env, struct) do
+    case struct do
+      false -> {:ok, env}
+      %{} -> DockerEngineAPI.Deserializer.jason_decode(body)
+      module -> DockerEngineAPI.Deserializer.jason_decode(body, module)
+    end
   end
 end

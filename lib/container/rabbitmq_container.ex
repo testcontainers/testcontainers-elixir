@@ -36,7 +36,8 @@ defmodule Testcontainers.RabbitMQContainer do
     :cmd,
     :wait_timeout,
     check_image: @default_image,
-    reuse: false
+    reuse: false,
+    force_reuse: false
   ]
 
   @doc """
@@ -160,6 +161,10 @@ defmodule Testcontainers.RabbitMQContainer do
     %__MODULE__{config | reuse: reuse}
   end
 
+  def with_force_reuse(%__MODULE__{} = config) do
+    %__MODULE__{config | reuse: true, force_reuse: true}
+  end
+
   @doc """
   Retrieves the default Docker image for the RabbitMQ container
   """
@@ -281,6 +286,7 @@ defmodule Testcontainers.RabbitMQContainer do
       )
       |> with_check_image(config.check_image)
       |> with_reuse(config.reuse)
+      |> with_force_reuse(config.force_reuse)
       |> valid_image!()
     end
 
