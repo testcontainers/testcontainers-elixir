@@ -17,6 +17,7 @@ defmodule TestcontainersElixir.MixProject do
       homepage_url: @source_url,
       aliases: aliases(),
       deps: deps(),
+      dialyzer: [plt_add_apps: [:mix]],
       package: [
         links: %{"GitHub" => @source_url},
         licenses: ["MIT"]
