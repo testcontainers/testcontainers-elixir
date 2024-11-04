@@ -76,7 +76,7 @@ defmodule TestcontainersElixir.MixProject do
       # Zookeeper
       {:erlzk, "~> 0.6.2", only: [:dev, :test]},
       # RabbitMQ
-      {:amqp, "~> 3.3", only: [:dev, :test]},
+      {:amqp, "~> 4.0", only: [:dev, :test]},
       # EMQX
       {:tortoise311, "~> 0.12.0", only: [:dev, :test]},
       # For watching directories for file changes in mix task
