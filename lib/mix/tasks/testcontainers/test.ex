@@ -39,7 +39,7 @@ defmodule Mix.Tasks.Testcontainers.Test do
     end)
   end
 
-  @dialyzer {:no_return, run_tests_and_exit: 1}
+  @spec run_tests_and_exit(String.t()) :: no_return()
   defp run_tests_and_exit(database) do
     {container, env} = setup_container(database)
     exit_code = run_tests(env)

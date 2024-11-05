@@ -208,15 +208,13 @@ defmodule Testcontainers.Container do
   @doc """
   Sets a network mode to apply to the container object in docker.
   """
-  @dialyzer {:nowarn_function, with_network_mode: 2}
-  def with_network_mode(%__MODULE__{} = config, mode)
-      when is_binary(mode) and not is_os(:linux) do
-    with mode <- String.downcase(mode) do
-      if mode == "host" do
-        Testcontainers.Logger.log(
-          "To use host network mode on non-linux hosts, please see https://docs.docker.com/network/drivers/host"
-        )
-      end
+  def with_network_mode(%__MODULE__{} = config, mode) when is_binary(mode) do
+    mode = String.downcase(mode)
+
+    if mode == "host" and not is_os(:linux) do
+      Testcontainers.Logger.log(
+        "To use host network mode on non-linux hosts, please see https://docs.docker.com/network/drivers/host"
+      )
     end
 
     %__MODULE__{config | network_mode: mode}

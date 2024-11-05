@@ -100,7 +100,8 @@ defmodule Testcontainers.Docker.Api do
 
   def put_file(container_id, connection, path, file_name, file_contents) do
     with {:ok, tar_file_contents} <- create_tar_stream(file_name, file_contents),
-         {:ok, %Tesla.Env{}} <- Api.Container.put_container_archive(connection, container_id, path, tar_file_contents) do
+         {:ok, %Tesla.Env{}} <-
+           Api.Container.put_container_archive(connection, container_id, path, tar_file_contents) do
       :ok
     end
   end
