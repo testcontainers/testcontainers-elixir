@@ -183,6 +183,7 @@ defmodule Testcontainers.KafkaContainer do
     """
     @impl true
     @spec after_start(%KafkaContainer{}, %Testcontainers.Container{}, %Tesla.Env{}) :: :ok
+    @dialyzer {:no_return, after_start: 3}
     def after_start(config = %{start_file_path: start_file_path}, container, conn) do
       with script <- build_startup_script(container, config),
            {:ok, _} <-

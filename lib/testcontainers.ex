@@ -233,6 +233,7 @@ defmodule Testcontainers do
         case Api.get_container_by_hash(hash, state.conn) do
           {:error, :no_container} ->
             Logger.log("Container does not exist with hash: #{hash}")
+
             create_and_start_container(
               config,
               config_builder,
@@ -247,6 +248,7 @@ defmodule Testcontainers do
             Logger.log("Container already exists with hash: #{hash}")
             {:ok, container}
         end
+
       {:noreuse, config, _} ->
         create_and_start_container(
           config,

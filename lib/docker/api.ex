@@ -24,9 +24,12 @@ defmodule Testcontainers.Docker.Api do
   end
 
   def get_container_by_hash(hash, conn) do
-    filters_json = %{
-      "label" => ["#{Testcontainers.Constants.container_reuse_hash_label}=#{hash}"]
-    } |> Jason.encode!()
+    filters_json =
+      %{
+        "label" => ["#{Testcontainers.Constants.container_reuse_hash_label()}=#{hash}"]
+      }
+      |> Jason.encode!()
+
     case Api.Container.container_list(conn, filters: filters_json) do
       {:ok, %DockerEngineAPI.Model.ErrorResponse{} = error} ->
         {:error, {:failed_to_get_container, error}}
@@ -37,7 +40,7 @@ defmodule Testcontainers.Docker.Api do
       {:ok, []} ->
         {:error, :no_container}
 
-      {:ok, [container | _]}->
+      {:ok, [container | _]} ->
         get_container(container."Id", conn)
     end
   end
@@ -95,6 +98,7 @@ defmodule Testcontainers.Docker.Api do
     end
   end
 
+  @dialyzer {:no_return, put_file: 5}
   def put_file(container_id, connection, path, file_name, file_contents) do
     with {:ok, tar_file_contents} <- create_tar_stream(file_name, file_contents) do
       Api.Container.put_container_archive(connection, container_id, path, tar_file_contents)
@@ -102,6 +106,7 @@ defmodule Testcontainers.Docker.Api do
   end
 
   # Helper function to create a tar stream from a file
+  @dialyzer {:no_return, create_tar_stream: 2}
   defp create_tar_stream(file_name, file_contents) do
     tar_file = System.tmp_dir!() |> Path.join("#{UUID.uuid4()})-#{file_name}.tar")
 

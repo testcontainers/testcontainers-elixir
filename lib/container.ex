@@ -35,10 +35,10 @@ defmodule Testcontainers.Container do
            when is_binary(check_image) or is_struct(check_image, Regex)
 
   @os_type (case :os.type() do
-    {:win32, _} -> :windows
-    {:unix, :darwin} -> :macos
-    {:unix, _} -> :linux
-  end)
+              {:win32, _} -> :windows
+              {:unix, :darwin} -> :macos
+              {:unix, _} -> :linux
+            end)
 
   @doc guard: true
   defguard is_os(name)
@@ -164,13 +164,15 @@ defmodule Testcontainers.Container do
     if config.auto_remove do
       raise ArgumentError, "Cannot reuse a container that is set to auto-remove"
     end
+
     %__MODULE__{config | reuse: reuse}
   end
 
-  def with_force_reuse(%__MODULE__{} = config, force_reuse) when is_boolean(force_reuse)  do
+  def with_force_reuse(%__MODULE__{} = config, force_reuse) when is_boolean(force_reuse) do
     if config.auto_remove do
       raise ArgumentError, "Cannot reuse a container that is set to auto-remove"
     end
+
     %__MODULE__{config | reuse: true, force_reuse: force_reuse}
   end
 
@@ -206,12 +208,17 @@ defmodule Testcontainers.Container do
   @doc """
   Sets a network mode to apply to the container object in docker.
   """
-  def with_network_mode(%__MODULE__{} = config, mode) when is_binary(mode) and not is_os(:linux) do
+  @dialyzer {:nowarn_function, with_network_mode: 2}
+  def with_network_mode(%__MODULE__{} = config, mode)
+      when is_binary(mode) and not is_os(:linux) do
     with mode <- String.downcase(mode) do
       if mode == "host" do
-        Testcontainers.Logger.log("To use host network mode on non-linux hosts, please see https://docs.docker.com/network/drivers/host")
+        Testcontainers.Logger.log(
+          "To use host network mode on non-linux hosts, please see https://docs.docker.com/network/drivers/host"
+        )
       end
     end
+
     %__MODULE__{config | network_mode: mode}
   end
 
