@@ -107,7 +107,7 @@ defmodule Testcontainers.Docker.Api do
 
   # Helper function to create a tar stream from a file
   defp create_tar_stream(file_name, file_contents) do
-    tar_file = System.tmp_dir!() |> Path.join("#{UUID.uuid4()})-#{file_name}.tar")
+    tar_file = System.tmp_dir!() |> Path.join("#{UUID.uuid4()}-#{file_name}.tar")
 
     :ok =
       :erl_tar.create(
