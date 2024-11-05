@@ -98,15 +98,14 @@ defmodule Testcontainers.Docker.Api do
     end
   end
 
-  @dialyzer {:no_return, put_file: 5}
   def put_file(container_id, connection, path, file_name, file_contents) do
-    with {:ok, tar_file_contents} <- create_tar_stream(file_name, file_contents) do
-      Api.Container.put_container_archive(connection, container_id, path, tar_file_contents)
+    with {:ok, tar_file_contents} <- create_tar_stream(file_name, file_contents),
+         {:ok, %Tesla.Env{}} <- Api.Container.put_container_archive(connection, container_id, path, tar_file_contents) do
+      :ok
     end
   end
 
   # Helper function to create a tar stream from a file
-  @dialyzer {:no_return, create_tar_stream: 2}
   defp create_tar_stream(file_name, file_contents) do
     tar_file = System.tmp_dir!() |> Path.join("#{UUID.uuid4()})-#{file_name}.tar")
 
@@ -115,7 +114,7 @@ defmodule Testcontainers.Docker.Api do
         tar_file,
         # file_name must be charlist ref https://til.kaiwern.com/tags/88
         [{file_name |> String.to_charlist(), file_contents}],
-        [:write, :compressed]
+        [:compressed]
       )
 
     with {:ok, tar_file_contents} <- File.read(tar_file),

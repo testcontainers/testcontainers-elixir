@@ -230,7 +230,6 @@ defmodule Testcontainers.MySqlContainer do
     end
 
     @impl true
-    @spec after_start(%MySqlContainer{}, %Container{}, %Tesla.Env{}) :: :ok
     def after_start(_config, _container, _conn), do: :ok
   end
 

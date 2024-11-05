@@ -90,7 +90,6 @@ defmodule Testcontainers.SeleniumContainer do
     end
 
     @impl true
-    @spec after_start(%SeleniumContainer{}, %Container{}, %Tesla.Env{}) :: :ok
     def after_start(_config, _container, _conn), do: :ok
   end
 end

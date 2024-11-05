@@ -13,12 +13,8 @@ defmodule Test.NginxContainer do
     end
 
     @impl true
-    @spec after_start(%Test.NginxContainer{}, %Testcontainers.Container{}, %Tesla.Env{}) :: :ok
     def after_start(_config, container, conn) do
-      with {:ok, _} <-
-             Docker.Api.put_file(container.container_id, conn, "/tmp", "foo.txt", "Hello foo bar") do
-        :ok
-      end
+      Docker.Api.put_file(container.container_id, conn, "/tmp", "foo.txt", "Hello foo bar")
     end
   end
 end

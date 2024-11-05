@@ -100,7 +100,6 @@ defmodule Testcontainers.CassandraContainer do
     end
 
     @impl true
-    @spec after_start(%CassandraContainer{}, %Container{}, %Tesla.Env{}) :: :ok
     def after_start(_config, _container, _conn), do: :ok
   end
 end
