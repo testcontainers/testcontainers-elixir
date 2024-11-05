@@ -78,7 +78,7 @@ defmodule DockerEngineAPI.Api.Exec do
 
   @doc """
   Resize an exec instance
-  Resize the TTY session used by an exec instance. This endpoint only works if `tty` was specified as part of creating and starting the exec instance. 
+  Resize the TTY session used by an exec instance. This endpoint only works if `tty` was specified as part of creating and starting the exec instance.
 
   ### Parameters
 
@@ -120,21 +120,21 @@ defmodule DockerEngineAPI.Api.Exec do
 
   @doc """
   Start an exec instance
-  Starts a previously set up exec instance. If detach is true, this endpoint returns immediately after starting the command. Otherwise, it sets up an interactive session with the command. 
+  Starts a previously set up exec instance. If detach is true, this endpoint returns immediately after starting the command. Otherwise, it sets up an interactive session with the command.
 
   ### Parameters
 
   - `connection` (DockerEngineAPI.Connection): Connection to server
   - `id` (String.t): Exec instance ID
   - `opts` (keyword): Optional parameters
-    - `:body` (ExecStartConfig): 
+    - `:body` (ExecStartConfig):
 
   ### Returns
 
   - `{:ok, nil}` on success
   - `{:error, Tesla.Env.t}` on failure
   """
-  @spec exec_start(Tesla.Env.client, String.t, keyword()) :: {:ok, nil} | {:ok, DockerEngineAPI.Model.ErrorResponse.t} | {:error, Tesla.Env.t}
+  @spec exec_start(Tesla.Env.client, String.t, keyword()) :: {:ok, Tesla.Env.t | DockerEngineAPI.Model.ErrorResponse.t} | {:error, Tesla.Env.t}
   def exec_start(connection, id, opts \\ []) do
     optional_params = %{
       :body => :body

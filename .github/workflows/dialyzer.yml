@@ -1,0 +1,23 @@
+name: Dialyzer
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+  push:
+    branches:
+      - main
+jobs:
+  dialyzer:
+    name: Run Dialyzer for type checking
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run Dialyzer
+        uses: erlef/setup-elixir@v1
+        with:
+          otp-version: '26.2'
+          elixir-version: '1.16'
+      - run: mix deps.get
+      - run: mix dialyzer

@@ -4,6 +4,8 @@ defmodule Testcontainers.Docker.Api do
   Internal docker api. Only for direct use by `Testcontainers`
   """
 
+  alias DockerEngineAPI.Model.ExecConfig
+  alias DockerEngineAPI.Model.HostConfig
   alias DockerEngineAPI.Api
   alias Testcontainers.Container
 
@@ -185,7 +187,7 @@ defmodule Testcontainers.Docker.Api do
       ExposedPorts: map_exposed_ports(container_config),
       Env: map_env(container_config),
       Labels: container_config.labels,
-      HostConfig: %{
+      HostConfig: %HostConfig{
         AutoRemove: container_config.auto_remove,
         PortBindings: map_port_bindings(container_config),
         Privileged: container_config.privileged,
@@ -269,14 +271,11 @@ defmodule Testcontainers.Docker.Api do
   end
 
   defp create_exec(container_id, command, conn) do
-    data = %{"Cmd" => command}
+    data = %ExecConfig{Cmd: command}
 
     case Api.Exec.container_exec(conn, container_id, data) do
       {:ok, %DockerEngineAPI.Model.IdResponse{Id: id}} ->
         {:ok, id}
-
-      {:ok, %Tesla.Env{status: status}} ->
-        {:error, {:http_error, status}}
 
       {:ok, %DockerEngineAPI.Model.ErrorResponse{message: message}} ->
         {:error, message}
