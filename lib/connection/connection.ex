@@ -14,7 +14,7 @@ defmodule Testcontainers.Connection do
   @timeout 300_000
 
   def get_connection(options \\ []) do
-    docker_host_url = docker_base_url()
+    {docker_host_url, docker_host} = get_docker_host_url()
 
     Logger.log("Using docker host url: #{docker_host_url}")
 
@@ -25,10 +25,18 @@ defmodule Testcontainers.Connection do
         user_agent: Constants.user_agent()
       )
 
-    {Connection.new(options), docker_host_url}
+    {Connection.new(options), docker_host_url, docker_host}
   end
 
-  defp docker_base_url do
+  defp get_docker_host_url do
+    with {:ok, docker_host} <- get_docker_host() do
+      {DockerUrl.construct(docker_host), docker_host}
+    else {:error, error} ->
+      exit(error)
+    end
+  end
+
+  defp get_docker_host do
     strategies = [
       %DockerHostFromPropertiesStrategy{key: "tc.host"},
       %DockerHostFromEnvStrategy{},
@@ -39,10 +47,10 @@ defmodule Testcontainers.Connection do
 
     case DockerHostStrategyEvaluator.run_strategies(strategies, []) do
       {:ok, docker_host} ->
-        DockerUrl.construct(docker_host)
+        {:ok, docker_host}
 
       :error ->
-        exit("Failed to find docker host")
+        {:error, "Failed to find docker host"}
     end
   end
 end

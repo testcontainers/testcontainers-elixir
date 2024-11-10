@@ -7,6 +7,7 @@ defmodule Testcontainers do
   This is a GenServer that needs to be started before anything can happen.
   """
 
+  alias Testcontainers.Constants
   alias Testcontainers.WaitStrategy
   alias Testcontainers.Logger
   alias Testcontainers.Docker.Api
@@ -31,17 +32,31 @@ defmodule Testcontainers do
   end
 
   defp setup(options) do
-    {conn, docker_host_url} = Connection.get_connection(options)
+    {conn, docker_host_url, docker_host} = Connection.get_connection(options)
 
     session_id =
       :crypto.hash(:sha, "#{inspect(self())}#{DateTime.utc_now() |> DateTime.to_string()}")
       |> Base.encode16()
 
     ryuk_config =
-      Container.new("testcontainers/ryuk:0.9.0")
+      Container.new("testcontainers/ryuk:#{Constants.ryuk_version}")
       |> Container.with_exposed_port(8080)
       |> Container.with_environment("RYUK_PORT", "8080")
-      |> Container.with_bind_mount("/var/run/docker.sock", "/var/run/docker.sock", "rw")
+      |> then(fn config ->
+        # docker_host can be anything from an url like https://localhost:1234 to unix:///etc/....
+        # if its a unix socket, strip the prefix and use the unix socket as the bind mount for Ryuks unix socket
+        # this enables ryuk to communicate with docker environment it runs in, to stop and remove containers
+        if String.starts_with?(docker_host, "unix://") do
+          Container.with_bind_mount(
+            config,
+            String.replace_prefix(docker_host, "unix://", ""),
+            "/var/run/docker.sock",
+            "rw"
+          )
+        else
+          config
+        end
+      end)
       |> Container.with_auto_remove(true)
 
     with {:ok, _} <- Api.pull_image(ryuk_config.image, conn),
@@ -50,7 +65,7 @@ defmodule Testcontainers do
          {:ok, container} <- Api.get_container(ryuk_container_id, conn),
          {:ok, socket} <- create_ryuk_socket(container),
          :ok <- register_ryuk_filter(session_id, socket),
-         {:ok, docker_host} <- get_docker_host(docker_host_url, conn),
+         {:ok, docker_hostname} <- get_docker_hostname(docker_host_url, conn),
          {:ok, properties} <- PropertiesParser.read_property_file() do
       Logger.log("Testcontainers initialized")
 
@@ -58,7 +73,7 @@ defmodule Testcontainers do
        %{
          socket: socket,
          conn: conn,
-         docker_host: docker_host,
+         docker_hostname: docker_hostname,
          session_id: session_id,
          properties: properties
        }}
@@ -146,12 +161,12 @@ defmodule Testcontainers do
 
   @impl true
   def handle_call(:get_host, _from, state) do
-    {:reply, state.docker_host, state}
+    {:reply, state.docker_hostname, state}
   end
 
   # private functions
 
-  defp get_docker_host(docker_host_url, conn) do
+  defp get_docker_hostname(docker_host_url, conn) do
     case URI.parse(docker_host_url) do
       uri when uri.scheme == "http" or uri.scheme == "https" ->
         {:ok, uri.host}
