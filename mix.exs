@@ -2,7 +2,7 @@ defmodule TestcontainersElixir.MixProject do
   use Mix.Project
 
   @app :testcontainers
-  @version "1.11.0"
+  @version "1.11.1"
   @source_url "https://github.com/testcontainers/testcontainers-elixir"
 
   def project do
@@ -19,8 +19,9 @@ defmodule TestcontainersElixir.MixProject do
       deps: deps(),
       dialyzer: [plt_add_apps: [:mix]],
       package: [
+        files: ~w(lib docker_engine_api .formatter.exs mix.exs README* LICENSE*),
         links: %{"GitHub" => @source_url},
-        licenses: ["MIT"]
+        licenses: ["MIT License"]
       ],
       test_coverage: [
         summary: [threshold: 50],
