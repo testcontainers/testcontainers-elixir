@@ -534,47 +534,6 @@ defmodule DockerEngineAPI.Api.Image do
   end
 
   @doc """
-  Push an image
-  Push an image to a registry.  If you wish to push an image on to a private registry, that image must already have a tag which references the registry. For example, `registry.example.com/myimage:latest`.  The push is cancelled if the HTTP connection is closed.
-
-  ### Parameters
-
-  - `connection` (DockerEngineAPI.Connection): Connection to server
-  - `name` (String.t): Image name or ID.
-  - `x_registry_auth` (String.t): A base64url-encoded auth configuration.  Refer to the [authentication section](#section/Authentication) for details.
-  - `opts` (keyword): Optional parameters
-    - `:tag` (String.t): The tag to associate with the image on the registry.
-
-  ### Returns
-
-  - `{:ok, nil}` on success
-  - `{:error, Tesla.Env.t}` on failure
-  """
-  @spec image_push(Tesla.Env.client, String.t, String.t, keyword()) :: {:ok, nil} | {:ok, DockerEngineAPI.Model.ErrorResponse.t} | {:error, Tesla.Env.t}
-  def image_push(connection, name, x_registry_auth, opts \\ []) do
-    optional_params = %{
-      :tag => :query
-    }
-
-    request =
-      %{}
-      |> method(:post)
-      |> url("/images/#{name}/push")
-      |> add_param(:headers, :"X-Registry-Auth", x_registry_auth)
-      |> add_optional_params(optional_params, opts)
-      |> ensure_body()
-      |> Enum.into([])
-
-    connection
-    |> Connection.request(request)
-    |> evaluate_response([
-      {200, false},
-      {404, DockerEngineAPI.Model.ErrorResponse},
-      {500, DockerEngineAPI.Model.ErrorResponse}
-    ])
-  end
-
-  @doc """
   Search images
   Search for an image on Docker Hub.
 
