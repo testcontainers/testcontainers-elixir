@@ -14,12 +14,13 @@ defmodule Testcontainers.DockerSocketPathStrategy do
 
   defimpl Testcontainers.DockerHostStrategy do
     alias Testcontainers.DockerUrl
+    alias Testcontainers.Logger
 
     def execute(strategy, _input) do
       Enum.reduce_while(
         strategy.socket_paths,
-        {:error, docker_socket_path: :docker_socket_not_found},
-        fn path, _acc ->
+        {:error, {:docker_socket_not_found, []}},
+        fn path, {:error, {:docker_socket_not_found, tried_paths}} ->
           if path != nil && File.exists?(path) do
             path_with_scheme = "unix://" <> path
 
@@ -28,10 +29,11 @@ defmodule Testcontainers.DockerSocketPathStrategy do
                 {:halt, {:ok, path_with_scheme}}
 
               {:error, reason} ->
-                {:cont, {:error, docker_socket_path: {reason, path}}}
+                Logger.log("Docker socket path #{path} failed: #{reason}")
+                {:cont, {:error, {:docker_socket_not_found, tried_paths ++ [path]}}}
             end
           else
-            {:cont, {:error, docker_socket_path: {:docker_socket_not_found, path}}}
+            {:cont, {:error, {:docker_socket_not_found, tried_paths ++ [path]}}}
           end
         end
       )

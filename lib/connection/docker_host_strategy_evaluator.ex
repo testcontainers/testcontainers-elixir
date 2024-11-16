@@ -17,14 +17,14 @@ defmodule Testcontainers.DockerHostStrategyEvaluator do
         success
 
       errors when is_list(errors) ->
-        {:error, "Failed to find docker host. Errors: #{format_errors(errors)}"}
+        {:error, "Failed to find docker host: #{format_errors(errors)}"}
     end
   end
 
   defp format_errors(errors) do
     errors
     |> Enum.reverse()
-    |> Enum.map(&inspect/1)
+    |> Enum.map(fn {:error, error} -> inspect(error) end)
     |> Enum.join(", ")
   end
 end

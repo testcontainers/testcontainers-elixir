@@ -41,20 +41,17 @@ defmodule Testcontainers do
     ryuk_config =
       Container.new("testcontainers/ryuk:#{Constants.ryuk_version()}")
       |> Container.with_exposed_port(8080)
-      |> Container.with_environment("RYUK_PORT", "8080")
       |> then(fn config ->
-        # docker_host can be anything from an url like https://localhost:1234 to unix:///etc/....
-        # if its a unix socket, strip the prefix and use the unix socket as the bind mount for Ryuks unix socket
-        # this enables ryuk to communicate with docker environment it runs in, to stop and remove containers
-        if String.starts_with?(docker_host, "unix://") do
+        with %URI{scheme: "unix", path: docker_socket_path} <- URI.parse(docker_host) do
           Container.with_bind_mount(
             config,
-            String.replace_prefix(docker_host, "unix://", ""),
+            docker_socket_path,
             "/var/run/docker.sock",
             "rw"
           )
         else
-          config
+          _ ->
+            config
         end
       end)
       |> Container.with_auto_remove(true)

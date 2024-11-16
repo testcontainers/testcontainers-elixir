@@ -13,7 +13,7 @@ defmodule Testcontainers.Connection.DockerHostStrategy.DockerHostFromEnvTest do
       strategy = %DockerHostFromEnvStrategy{key: "X_DOCKER_HOST"}
 
       {:error,
-       "Failed to find docker host. Errors: {:error, [docker_host_from_env: {:econnrefused, \"X_DOCKER_HOST\"}]}"} =
+       "Failed to find docker host: [docker_host_from_env: {:econnrefused, \"X_DOCKER_HOST\"}]"} =
         DockerHostStrategyEvaluator.run_strategies([strategy], [])
     end
 
@@ -21,7 +21,7 @@ defmodule Testcontainers.Connection.DockerHostStrategy.DockerHostFromEnvTest do
       strategy = %DockerHostFromEnvStrategy{key: "NOT_SET"}
 
       {:error,
-       "Failed to find docker host. Errors: {:error, [docker_host_from_env: {:docker_host_not_found, \"NOT_SET\"}]}"} =
+       "Failed to find docker host: [docker_host_from_env: {:docker_host_not_found, \"NOT_SET\"}]"} =
         DockerHostStrategyEvaluator.run_strategies([strategy], [])
     end
   end
