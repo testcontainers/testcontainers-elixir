@@ -39,7 +39,7 @@ defmodule Testcontainers do
       |> Base.encode16()
 
     ryuk_config =
-      Container.new("testcontainers/ryuk:#{Constants.ryuk_version}")
+      Container.new("testcontainers/ryuk:#{Constants.ryuk_version()}")
       |> Container.with_exposed_port(8080)
       |> Container.with_environment("RYUK_PORT", "8080")
       |> then(fn config ->

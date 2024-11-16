@@ -13,7 +13,8 @@ defmodule Testcontainers.Connection.DockerHostStrategy.DockerHostFromPropertiesT
         filename: properties_path
       }
 
-      {:error, testcontainer_host_from_properties: :econnrefused} =
+      {:error,
+       "Failed to find docker host. Errors: {:error, [testcontainer_host_from_properties: :econnrefused]}"} =
         DockerHostStrategyEvaluator.run_strategies([strategy], [])
     end
 
@@ -25,7 +26,8 @@ defmodule Testcontainers.Connection.DockerHostStrategy.DockerHostFromPropertiesT
         filename: properties_path
       }
 
-      {:error, testcontainer_host_from_properties: :property_not_found} =
+      {:error,
+       "Failed to find docker host. Errors: {:error, [testcontainer_host_from_properties: :property_not_found]}"} =
         DockerHostStrategyEvaluator.run_strategies([strategy], [])
     end
 
@@ -37,7 +39,8 @@ defmodule Testcontainers.Connection.DockerHostStrategy.DockerHostFromPropertiesT
         filename: properties_path
       }
 
-      {:error, testcontainer_host_from_properties: :property_not_found} =
+      {:error,
+       "Failed to find docker host. Errors: {:error, [testcontainer_host_from_properties: :property_not_found]}"} =
         DockerHostStrategyEvaluator.run_strategies([strategy], [])
     end
   end

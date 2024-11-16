@@ -12,14 +12,16 @@ defmodule Testcontainers.Connection.DockerHostStrategy.DockerHostFromEnvTest do
     test "should return :econnrefused if env exists with a proper url" do
       strategy = %DockerHostFromEnvStrategy{key: "X_DOCKER_HOST"}
 
-      {:error, docker_host_from_env: :econnrefused} =
+      {:error,
+       "Failed to find docker host. Errors: {:error, [docker_host_from_env: :econnrefused]}"} =
         DockerHostStrategyEvaluator.run_strategies([strategy], [])
     end
 
     test "should return error if env is not set to a proper url" do
       strategy = %DockerHostFromEnvStrategy{key: "NOT_SET"}
 
-      {:error, docker_host_from_env: :docker_host_not_found} =
+      {:error,
+       "Failed to find docker host. Errors: {:error, [docker_host_from_env: :docker_host_not_found]}"} =
         DockerHostStrategyEvaluator.run_strategies([strategy], [])
     end
   end

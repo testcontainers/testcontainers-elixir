@@ -31,8 +31,9 @@ defmodule Testcontainers.Connection do
   defp get_docker_host_url do
     with {:ok, docker_host} <- get_docker_host() do
       {DockerUrl.construct(docker_host), docker_host}
-    else {:error, error} ->
-      exit(error)
+    else
+      {:error, error} ->
+        exit(error)
     end
   end
 
@@ -45,12 +46,6 @@ defmodule Testcontainers.Connection do
       %DockerSocketPathStrategy{}
     ]
 
-    case DockerHostStrategyEvaluator.run_strategies(strategies, []) do
-      {:ok, docker_host} ->
-        {:ok, docker_host}
-
-      :error ->
-        {:error, "Failed to find docker host"}
-    end
+    DockerHostStrategyEvaluator.run_strategies(strategies, [])
   end
 end
