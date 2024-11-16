@@ -40,9 +40,8 @@ defmodule Testcontainers.Connection do
   defp get_docker_host do
     strategies = [
       %DockerHostFromPropertiesStrategy{key: "tc.host"},
-      %DockerHostFromEnvStrategy{},
-      %DockerSocketPathStrategy{socket_paths: ["/var/run/docker.sock"]},
       %DockerHostFromPropertiesStrategy{key: "docker.host"},
+      %DockerHostFromEnvStrategy{},
       %DockerSocketPathStrategy{}
     ]
 

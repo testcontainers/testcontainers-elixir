@@ -14,7 +14,7 @@ defmodule Testcontainers.DockerHostFromEnvStrategy do
             {:ok, docker_host}
 
           {:error, reason} ->
-            {:error, docker_host_from_env: reason}
+            {:error, docker_host_from_env: {reason, strategy.key}}
         end
       end
     end
@@ -22,10 +22,10 @@ defmodule Testcontainers.DockerHostFromEnvStrategy do
     defp get_docker_host(strategy) do
       case System.get_env(strategy.key) do
         nil ->
-          {:error, docker_host_from_env: :docker_host_not_found}
+          {:error, docker_host_from_env: {:docker_host_not_found, strategy.key}}
 
         "" ->
-          {:error, docker_host_from_env: :docker_host_empty}
+          {:error, docker_host_from_env: {:docker_host_empty, strategy.key}}
 
         docker_host when is_binary(docker_host) ->
           {:ok, docker_host}

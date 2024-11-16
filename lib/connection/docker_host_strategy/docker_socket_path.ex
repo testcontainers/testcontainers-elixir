@@ -2,14 +2,15 @@
 defmodule Testcontainers.DockerSocketPathStrategy do
   @moduledoc false
 
-  @rootless_docker_socket_paths [
-    System.get_env("XDG_RUNTIME_DIR"),
+  @docker_socket_paths [
     Path.expand("~/.docker/run/docker.sock"),
     Path.expand("~/.docker/desktop/docker.sock"),
-    "/run/user/#{:os.getpid()}/docker.sock"
+    "/run/user/#{:os.getpid()}/podman/podman.sock",
+    "/run/user/#{:os.getpid()}/docker.sock",
+    "/var/run/docker.sock"
   ]
 
-  defstruct socket_paths: @rootless_docker_socket_paths
+  defstruct socket_paths: @docker_socket_paths
 
   defimpl Testcontainers.DockerHostStrategy do
     alias Testcontainers.DockerUrl
@@ -27,10 +28,10 @@ defmodule Testcontainers.DockerSocketPathStrategy do
                 {:halt, {:ok, path_with_scheme}}
 
               {:error, reason} ->
-                {:cont, {:error, docker_socket_path: reason}}
+                {:cont, {:error, docker_socket_path: {reason, path}}}
             end
           else
-            {:cont, {:error, docker_socket_path: :docker_socket_not_found}}
+            {:cont, {:error, docker_socket_path: {:docker_socket_not_found, path}}}
           end
         end
       )
