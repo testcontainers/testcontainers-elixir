@@ -38,4 +38,4 @@ jobs:
       - name: Run tests
         run: |
           export DOCKER_HOST=unix://$XDG_RUNTIME_DIR/podman/podman.sock
-          MIX_ENV=test mix citest
+          MIX_ENV=test mix citest --exclude needs_root
