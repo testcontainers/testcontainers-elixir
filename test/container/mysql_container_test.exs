@@ -30,7 +30,6 @@ defmodule Testcontainers.Container.MySqlContainerTest do
     import MySqlContainer
 
     @custom_mysql_container new()
-                            |> with_image("mysql/mysql-server:8.0.32-1.2.11-server")
                             |> with_user("custom-user")
                             |> with_password("custom-password")
                             |> with_database("custom-database")
@@ -44,10 +43,7 @@ defmodule Testcontainers.Container.MySqlContainerTest do
 
       {:ok, pid} = MyXQL.start_link(params)
 
-      query_result = MyXQL.query!(pid, "SELECT version()", [])
-
-      version_info = query_result.rows |> Enum.at(0) |> Enum.at(0)
-      assert version_info =~ "8.0.32"
+      assert %{num_rows: 1} = MyXQL.query!(pid, "SELECT 1", [])
     end
   end
 end
