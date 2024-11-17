@@ -2,23 +2,37 @@
 defmodule Testcontainers.DockerSocketPathStrategy do
   @moduledoc false
 
-  @docker_socket_paths [
-    Path.expand("~/.docker/run/docker.sock"),
-    Path.expand("~/.docker/desktop/docker.sock"),
-    "/run/user/#{:os.getpid()}/podman/podman.sock",
-    "/run/user/#{:os.getpid()}/docker.sock",
-    "/var/run/docker.sock"
-  ]
-
-  defstruct socket_paths: @docker_socket_paths
+  defstruct socket_paths: []
 
   defimpl Testcontainers.DockerHostStrategy do
     alias Testcontainers.DockerUrl
     alias Testcontainers.Logger
 
+    defp default_socket_paths do
+      [
+        Path.expand("~/.docker/run/docker.sock"),
+        Path.expand("~/.docker/desktop/docker.sock"),
+        "/var/run/docker.sock"
+      ] ++
+        case System.get_env("XDG_RUNTIME_DIR") do
+          nil ->
+            []
+
+          path ->
+            [
+              "#{path}/podman/podman.sock",
+              "#{path}/docker.sock"
+            ]
+        end
+    end
+
     def execute(strategy, _input) do
       Enum.reduce_while(
-        strategy.socket_paths,
+        if length(strategy.socket_paths) == 0 do
+          default_socket_paths()
+        else
+          strategy.socket_paths
+        end,
         {:error, {:docker_socket_not_found, []}},
         fn path, {:error, {:docker_socket_not_found, tried_paths}} ->
           if path != nil && File.exists?(path) do

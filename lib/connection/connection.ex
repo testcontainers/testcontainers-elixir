@@ -14,7 +14,8 @@ defmodule Testcontainers.Connection do
   @timeout 300_000
 
   def get_connection(options \\ []) do
-    {docker_host_url, docker_host} = get_docker_host_url()
+    {docker_host_url, docker_host} =
+      get_docker_host_url() |> IO.inspect(label: "Testcontainers using")
 
     Logger.log("Using docker host url: #{docker_host_url}")
 
