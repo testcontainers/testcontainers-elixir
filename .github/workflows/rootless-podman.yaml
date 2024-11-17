@@ -28,5 +28,12 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get -qq -y install podman
           systemctl --user enable --now podman.socket
-      - name: Echo docker host (should not be there)
-        run: echo $DOCKER_HOST
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.16"
+          otp-version: "26.2"
+      - name: Install dependencies
+        run: mix deps.get
+      - name: Run tests
+        run: MIX_ENV=test mix citest
