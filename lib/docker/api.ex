@@ -292,7 +292,7 @@ defmodule Testcontainers.Docker.Api do
   end
 
   defp start_exec(exec_id, conn) do
-    case Api.Exec.exec_start(conn, exec_id) do
+    case Api.Exec.exec_start(conn, exec_id, body: %{:Detach => true}) do
       {:ok, %Tesla.Env{status: 200}} ->
         :ok
 

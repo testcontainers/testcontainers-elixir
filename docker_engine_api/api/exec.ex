@@ -145,7 +145,7 @@ defmodule DockerEngineAPI.Api.Exec do
       |> method(:post)
       |> url("/exec/#{id}/start")
       |> add_optional_params(optional_params, opts)
-      |> add_param(:headers, :"Content-Type", "application/json")
+      |> ensure_body()
       |> Enum.into([])
 
     connection
