@@ -100,7 +100,7 @@ container(:redis, Testcontainers.RedisContainer.new())
 
 To run/wrap testcontainers around a project use the testcontainers.test task.
 
-`mix testcontainers.test [--database postgres|mysql]`
+`mix testcontainers.test [--database postgres|mysql] [--watch dir ...]`
 
 to use postgres you can just run
 
@@ -120,6 +120,12 @@ config :my_app, MyApp.Repo,
 ```
 
 Activate reuse of database containers started by mix task with adding `testcontainers.reuse.enable=true` in `~/.testcontainers.properties`. This is experimental.
+
+You can pass arguments to mix test by append -- to the of the command like this:
+
+`mix testcontainers.test -- --exclude flaky --stale`
+
+In the example above we are excluding flaky tests and using the --stale option.
 
 ### Logging
 
