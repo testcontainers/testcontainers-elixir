@@ -123,16 +123,7 @@ Activate reuse of database containers started by mix task with adding `testconta
 
 ### Logging
 
-By default, Testcontainers doesn't log anything. If you want Testcontainers to log, set the desired log level in config/test.exs:
-
-```elixir
-# config/test.exs
-
-import Config 
-
-config :testcontainers,
-  log_level: :warning
-```
+Testcontainers use the standard Logger, see https://hexdocs.pm/logger/Logger.html.
 
 ## API Documentation
 
