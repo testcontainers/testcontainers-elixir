@@ -2,9 +2,10 @@
 defmodule Testcontainers.Connection do
   @moduledoc false
 
+  require Logger
+
   alias Testcontainers.Constants
   alias Testcontainers.DockerUrl
-  alias Testcontainers.Logger
   alias Testcontainers.DockerHostStrategyEvaluator
   alias Testcontainers.DockerSocketPathStrategy
   alias Testcontainers.DockerHostFromPropertiesStrategy
@@ -15,9 +16,7 @@ defmodule Testcontainers.Connection do
 
   def get_connection(options \\ []) do
     {docker_host_url, docker_host} =
-      get_docker_host_url() |> IO.inspect(label: "Testcontainers using")
-
-    Logger.log("Using docker host url: #{docker_host_url}")
+      get_docker_host_url() |> tap(&Logger.info("Docker host: #{inspect(&1, pretty: false)}"))
 
     options =
       Keyword.merge(options,

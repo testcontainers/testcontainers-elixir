@@ -2,11 +2,12 @@
 defmodule Testcontainers.DockerSocketPathStrategy do
   @moduledoc false
 
+  require Logger
+
   defstruct socket_paths: []
 
   defimpl Testcontainers.DockerHostStrategy do
     alias Testcontainers.DockerUrl
-    alias Testcontainers.Logger
 
     defp default_socket_paths do
       [
@@ -43,7 +44,7 @@ defmodule Testcontainers.DockerSocketPathStrategy do
                 {:halt, {:ok, path_with_scheme}}
 
               {:error, reason} ->
-                Logger.log("Docker socket path #{path} failed: #{reason}")
+                Logger.debug("Docker socket path #{path} failed: #{reason}")
                 {:cont, {:error, {:docker_socket_not_found, tried_paths ++ [path]}}}
             end
           else

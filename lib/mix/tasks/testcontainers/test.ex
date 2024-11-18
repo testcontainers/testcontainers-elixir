@@ -11,7 +11,7 @@ defmodule Mix.Tasks.Testcontainers.Test do
 
     {:ok, _} = Testcontainers.start_link()
 
-    {opts, _, _} =
+    {opts, args, _} =
       OptionParser.parse(args,
         switches: [
           database: :string,
@@ -24,10 +24,10 @@ defmodule Mix.Tasks.Testcontainers.Test do
 
     if Enum.empty?(folder_to_watch) do
       IO.puts("No folders specified. Only running tests.")
-      run_tests_and_exit(database)
+      run_tests_and_exit(database, args)
     else
       check_folders_exist(folder_to_watch)
-      run_tests_and_watch(database, folder_to_watch)
+      run_tests_and_watch(database, args, folder_to_watch)
     end
   end
 
@@ -39,15 +39,15 @@ defmodule Mix.Tasks.Testcontainers.Test do
     end)
   end
 
-  @spec run_tests_and_exit(String.t()) :: no_return()
-  defp run_tests_and_exit(database) do
+  @spec run_tests_and_exit(String.t(), list(String.t())) :: no_return()
+  defp run_tests_and_exit(database, args) do
     {container, env} = setup_container(database)
-    exit_code = run_tests(env)
+    exit_code = run_tests(env, args)
     Testcontainers.stop_container(container.container_id)
     System.halt(exit_code)
   end
 
-  defp run_tests_and_watch(database, folders) do
+  defp run_tests_and_watch(database, args, folders) do
     {container, env} = setup_container(database)
 
     Enum.each(folders, fn folder ->
@@ -55,8 +55,8 @@ defmodule Mix.Tasks.Testcontainers.Test do
       :fs.subscribe(String.to_atom("watcher_" <> folder))
     end)
 
-    run_tests(env)
-    loop(env, container)
+    run_tests(env, args)
+    loop(env, args, container)
   end
 
   defp setup_container(database) do
@@ -99,8 +99,12 @@ defmodule Mix.Tasks.Testcontainers.Test do
     ]
   end
 
-  defp run_tests(env) do
-    case System.cmd("mix", ["test"], env: env, into: IO.stream(:stdio, :line)) do
+  defp run_tests(env, args) do
+    case System.cmd("mix", ["test"] ++ args,
+           env: env,
+           into: IO.stream(),
+           stderr_to_stdout: false
+         ) do
       {_, exit_code} ->
         if exit_code == 0 do
           IO.puts("Test process completed successfully")
@@ -112,27 +116,27 @@ defmodule Mix.Tasks.Testcontainers.Test do
     end
   end
 
-  defp loop(env, container) do
+  defp loop(env, args, container) do
     receive do
       {_watcher_process, {:fs, :file_event}, {changed_file, _type}} ->
         IO.puts("#{changed_file} was updated, waiting for more changes...")
-        wait_for_changes(env, container)
+        wait_for_changes(env, args, container)
     after
       5000 ->
-        loop(env, container)
+        loop(env, args, container)
     end
   end
 
-  defp wait_for_changes(env, container) do
+  defp wait_for_changes(env, args, container) do
     receive do
       {_watcher_process, {:fs, :file_event}, {changed_file, _type}} ->
         IO.puts("#{changed_file} was updated, waiting for more changes...")
-        wait_for_changes(env, container)
+        wait_for_changes(env, args, container)
     after
       1000 ->
         IO.ANSI.clear()
-        run_tests(env)
-        loop(env, container)
+        run_tests(env, args)
+        loop(env, args, container)
     end
   end
 end

@@ -6,6 +6,8 @@ defmodule Testcontainers.Container do
   A struct with builder functions for creating a definition of a container.
   """
 
+  require Logger
+
   @enforce_keys [:image]
   defstruct [
     :image,
@@ -212,7 +214,7 @@ defmodule Testcontainers.Container do
     mode = String.downcase(mode)
 
     if mode == "host" and not is_os(:linux) do
-      Testcontainers.Logger.log(
+      Logger.warning(
         "To use host network mode on non-linux hosts, please see https://docs.docker.com/network/drivers/host"
       )
     end

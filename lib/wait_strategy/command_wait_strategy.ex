@@ -6,6 +6,8 @@ defmodule Testcontainers.CommandWaitStrategy do
   Considers a container ready as soon as a command runs successfully inside it.
   """
 
+  require Logger
+
   @retry_delay 200
   defstruct [:command, :timeout, retry_delay: @retry_delay]
 
@@ -22,7 +24,7 @@ defmodule Testcontainers.CommandWaitStrategy do
   # Private functions and implementations
 
   defimpl Testcontainers.WaitStrategy do
-    alias Testcontainers.{Docker, Logger}
+    alias Testcontainers.Docker
 
     @impl true
     def wait_until_container_is_ready(wait_strategy, container, conn) do
@@ -96,7 +98,7 @@ defmodule Testcontainers.CommandWaitStrategy do
     end
 
     defp log_retry_message(container_id, exit_code, delay) do
-      Logger.log(
+      Logger.debug(
         "Command execution in container #{container_id} failed with exit_code #{exit_code}, retrying in #{delay}ms."
       )
     end

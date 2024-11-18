@@ -4,6 +4,8 @@ defmodule Testcontainers.PortWaitStrategy do
   Considers the container as ready when it successfully accepts connections on the specified port.
   """
 
+  require Logger
+
   @retry_delay 200
   defstruct [:ip, :port, :timeout, retry_delay: @retry_delay]
 
@@ -19,7 +21,7 @@ defmodule Testcontainers.PortWaitStrategy do
   # Private functions and implementations
 
   defimpl Testcontainers.WaitStrategy do
-    alias Testcontainers.{Container, Logger}
+    alias Testcontainers.Container
 
     @impl true
     def wait_until_container_is_ready(wait_strategy, container, _conn) do
@@ -78,7 +80,7 @@ defmodule Testcontainers.PortWaitStrategy do
     end
 
     defp log_retry_message(wait_strategy, host_port) do
-      Logger.log(
+      Logger.debug(
         "Port #{wait_strategy.port} (host port #{host_port}) not open on IP #{wait_strategy.ip}, retrying in #{wait_strategy.retry_delay}ms."
       )
     end

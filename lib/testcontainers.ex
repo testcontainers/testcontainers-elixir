@@ -7,9 +7,10 @@ defmodule Testcontainers do
   This is a GenServer that needs to be started before anything can happen.
   """
 
+  require Logger
+
   alias Testcontainers.Constants
   alias Testcontainers.WaitStrategy
-  alias Testcontainers.Logger
   alias Testcontainers.Docker.Api
   alias Testcontainers.Connection
   alias Testcontainers.Container
@@ -64,7 +65,7 @@ defmodule Testcontainers do
          :ok <- register_ryuk_filter(session_id, socket),
          {:ok, docker_hostname} <- get_docker_hostname(docker_host_url, conn),
          {:ok, properties} <- PropertiesParser.read_property_file() do
-      Logger.log("Testcontainers initialized")
+      Logger.info("Testcontainers initialized")
 
       {:ok,
        %{
@@ -170,17 +171,17 @@ defmodule Testcontainers do
 
       uri when uri.scheme == "http+unix" ->
         if File.exists?("/.dockerenv") do
-          Logger.log("Running in docker environment, trying to get bridge network gateway")
+          Logger.debug("Running in docker environment, trying to get bridge network gateway")
 
           with {:ok, gateway} <- Api.get_bridge_gateway(conn) do
             {:ok, gateway}
           else
             {:error, reason} ->
-              Logger.log("Failed to get bridge gateway: #{inspect(reason)}. Using localhost")
+              Logger.debug("Failed to get bridge gateway: #{inspect(reason)}. Using localhost")
               {:ok, "localhost"}
           end
         else
-          Logger.log("Not running in docker environment, using localhost")
+          Logger.debug("Not running in docker environment, using localhost")
           {:ok, "localhost"}
         end
     end
@@ -206,7 +207,7 @@ defmodule Testcontainers do
         {:ok, connected}
 
       {:error, :econnrefused} ->
-        Logger.log("Connection refused. Retrying... Attempt #{reattempt_count + 1}/3")
+        Logger.debug("Connection refused. Retrying... Attempt #{reattempt_count + 1}/3")
         :timer.sleep(5000)
         create_ryuk_socket(container, reattempt_count + 1)
 
@@ -216,7 +217,7 @@ defmodule Testcontainers do
   end
 
   defp create_ryuk_socket(%Container{} = _container, _reattempt_count) do
-    Logger.log("Ryuk host refused to connect")
+    Logger.debug("Ryuk host refused to connect")
     {:error, :econnrefused}
   end
 
@@ -244,7 +245,7 @@ defmodule Testcontainers do
       {:reuse, config, hash} ->
         case Api.get_container_by_hash(hash, state.conn) do
           {:error, :no_container} ->
-            Logger.log("Container does not exist with hash: #{hash}")
+            Logger.debug("Container does not exist with hash: #{hash}")
 
             create_and_start_container(
               config,
@@ -253,11 +254,11 @@ defmodule Testcontainers do
             )
 
           {:error, error} ->
-            Logger.log("Failed to get container by hash: #{inspect(error)}")
+            Logger.debug("Failed to get container by hash: #{inspect(error)}")
             {:error, error}
 
           {:ok, container} ->
-            Logger.log("Container already exists with hash: #{hash}")
+            Logger.debug("Container already exists with hash: #{hash}")
             {:ok, container}
         end
 

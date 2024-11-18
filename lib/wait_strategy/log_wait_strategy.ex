@@ -3,6 +3,7 @@ defmodule Testcontainers.LogWaitStrategy do
   @moduledoc """
   Considers the container as ready as soon as a specific log message is detected in the container's log stream.
   """
+  require Logger
 
   @retry_delay 500
   defstruct [:log_regex, :timeout, retry_delay: @retry_delay]
@@ -20,7 +21,7 @@ defmodule Testcontainers.LogWaitStrategy do
   # Private functions and implementations
 
   defimpl Testcontainers.WaitStrategy do
-    alias Testcontainers.{Docker, Logger}
+    alias Testcontainers.Docker
 
     @impl true
     def wait_until_container_is_ready(wait_strategy, container, conn) do
@@ -68,7 +69,7 @@ defmodule Testcontainers.LogWaitStrategy do
     end
 
     defp log_retry_message(container_id, log_regex, delay) do
-      Logger.log(
+      Logger.debug(
         "Logs in container #{container_id} didn't match regex #{inspect(log_regex)}, retrying in #{delay}ms."
       )
     end
