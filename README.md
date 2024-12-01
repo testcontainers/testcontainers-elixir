@@ -137,16 +137,23 @@ For more detailed information about the API, different container configurations,
 
 ## Windows support
 
-You can run on windows natively with elixir and erlang by enabling "Expose daemon on tcp://localhost:2375 without TLS" and then: 
+### Native
+You can run on windows natively with elixir and erlang. 
 
+First install Visual Studio 2022.
+
+Now enable "Expose daemon on tcp://localhost:2375 without TLS" in Docker settings.
+
+`mix deps.get`
+`mix deps.compile`
 `set DOCKER_HOST=tcp://localhost:2375`
-and
 `mix test`
+
+### Devcontainer
 
 You can also use this library inside a devcontainer on Windows. This also requires exposing daemon without tls and then:
 
 `export DOCKER_HOST="tcp://$(awk '/^nameserver/{print $2; exit}' /etc/resolv.conf):2375"`
-and
 `mix test`
 
 ## Contributing
