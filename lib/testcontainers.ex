@@ -18,6 +18,7 @@ defmodule Testcontainers do
   alias Testcontainers.Util.PropertiesParser
 
   import Testcontainers.Constants
+  import Testcontainers.Container, only: [is_os: 1]
 
   @timeout 300_000
 
@@ -42,28 +43,17 @@ defmodule Testcontainers do
     ryuk_config =
       Container.new("testcontainers/ryuk:#{Constants.ryuk_version()}")
       |> Container.with_exposed_port(8080)
-      |> then(fn config ->
-        with %URI{scheme: "unix", path: docker_socket_path} <- URI.parse(docker_host) do
-          Container.with_bind_mount(
-            config,
-            docker_socket_path,
-            "/var/run/docker.sock",
-            "rw"
-          )
-        else
-          _ ->
-            config
-        end
-      end)
-      |> Container.with_auto_remove(true)
+      |> then(&apply_ryuk_socket(&1, docker_host))
+      |> Container.with_auto_remove(false)
+      |> Container.with_privileged(true)
 
     with {:ok, _} <- Api.pull_image(ryuk_config.image, conn),
+         {:ok, docker_hostname} <- get_docker_hostname(docker_host_url, conn),
          {:ok, ryuk_container_id} <- Api.create_container(ryuk_config, conn),
          :ok <- Api.start_container(ryuk_container_id, conn),
          {:ok, container} <- Api.get_container(ryuk_container_id, conn),
-         {:ok, socket} <- create_ryuk_socket(container),
-         :ok <- register_ryuk_filter(session_id, socket),
-         {:ok, docker_hostname} <- get_docker_hostname(docker_host_url, conn),
+         {:ok, socket} <- create_ryuk_socket(container, docker_hostname) |> IO.inspect(label: "create ryuk socket"),
+         :ok <- register_ryuk_filter(session_id, socket) |> IO.inspect(label: "register ryuk filter"),
          {:ok, properties} <- PropertiesParser.read_property_file() do
       Logger.info("Testcontainers initialized")
 
@@ -191,13 +181,14 @@ defmodule Testcontainers do
     GenServer.call(name, call, @timeout)
   end
 
-  defp create_ryuk_socket(container, reattempt_count \\ 0)
+  defp create_ryuk_socket(container, docker_hostname, reattempt_count \\ 0)
 
-  defp create_ryuk_socket(%Container{} = container, reattempt_count)
+  defp create_ryuk_socket(%Container{} = container, docker_hostname, reattempt_count)
        when reattempt_count < 3 do
     host_port = Container.mapped_port(container, 8080)
+    IO.inspect("#{docker_hostname}:#{host_port}")
 
-    case :gen_tcp.connect(~c"localhost", host_port, [
+    case :gen_tcp.connect(~c"#{docker_hostname}" |> IO.inspect(), host_port, [
            :binary,
            active: false,
            packet: :line,
@@ -207,17 +198,17 @@ defmodule Testcontainers do
         {:ok, connected}
 
       {:error, :econnrefused} ->
-        Logger.debug("Connection refused. Retrying... Attempt #{reattempt_count + 1}/3")
+        Logger.info("Connection refused. Retrying... Attempt #{reattempt_count + 1}/3")
         :timer.sleep(5000)
-        create_ryuk_socket(container, reattempt_count + 1)
+        create_ryuk_socket(container, docker_hostname, reattempt_count + 1)
 
       {:error, error} ->
         {:error, error}
     end
   end
 
-  defp create_ryuk_socket(%Container{} = _container, _reattempt_count) do
-    Logger.debug("Ryuk host refused to connect")
+  defp create_ryuk_socket(%Container{} = _container, _docker_hostname, _reattempt_count) do
+    Logger.info("Ryuk host refused to connect")
     {:error, :econnrefused}
   end
 
@@ -291,4 +282,37 @@ defmodule Testcontainers do
         error
     end)
   end
+
+  defp apply_ryuk_socket(config, docker_host) do
+    cond do
+      is_os(:linux) or is_os(:macos) ->
+        case URI.parse(docker_host) do
+          %URI{scheme: "unix", path: docker_socket_path} ->
+            Container.with_bind_mount(
+              config,
+              docker_socket_path,
+              "/var/run/docker.sock",
+              "rw"
+            )
+
+          _ ->
+            # TODO: remove this... needed for docker in docker.. in windows
+            Container.with_bind_mount(
+              config,
+              "//var/run/docker.sock",
+              "/var/run/docker.sock",
+              "rw"
+            )
+        end
+
+      is_os(:windows) ->
+        Container.with_bind_mount(
+          config,
+          "//var/run/docker.sock",
+          "/var/run/docker.sock",
+          "rw"
+        )
+    end
+  end
+
 end

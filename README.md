@@ -135,6 +135,20 @@ Testcontainers use the standard Logger, see https://hexdocs.pm/logger/Logger.htm
 
 For more detailed information about the API, different container configurations, and advanced usage scenarios, please refer to the [API documentation](https://hexdocs.pm/testcontainers/api-reference.html).
 
+## Windows support
+
+You can run on windows natively with elixir and erlang by enabling "Expose daemon on tcp://localhost:2375 without TLS" and then: 
+
+`set DOCKER_HOST=tcp://localhost:2375`
+and
+`mix test`
+
+You can also use this library inside a devcontainer on Windows. This also requires exposing daemon without tls and then:
+
+`export DOCKER_HOST="tcp://$(awk '/^nameserver/{print $2; exit}' /etc/resolv.conf):2375"`
+and
+`mix test`
+
 ## Contributing
 
 We welcome your contributions! Please see our contributing guidelines (TBD) for more details on how to submit patches and the contribution workflow.

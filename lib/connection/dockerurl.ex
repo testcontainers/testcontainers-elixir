@@ -20,7 +20,6 @@ defmodule Testcontainers.DockerUrl do
 
   def test_docker_host(docker_host) do
     url = "#{construct(docker_host)}/_ping"
-
     case Tesla.get(@test_client, url) do
       {:ok, _response} ->
         :ok
