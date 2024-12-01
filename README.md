@@ -145,8 +145,11 @@ First install Visual Studio 2022.
 Now enable "Expose daemon on tcp://localhost:2375 without TLS" in Docker settings.
 
 `mix deps.get`
+
 `mix deps.compile`
+
 `set DOCKER_HOST=tcp://localhost:2375`
+
 `mix test`
 
 ### Devcontainer
@@ -154,6 +157,7 @@ Now enable "Expose daemon on tcp://localhost:2375 without TLS" in Docker setting
 You can also use this library inside a devcontainer on Windows. This also requires exposing daemon without tls and then:
 
 `export DOCKER_HOST="tcp://$(awk '/^nameserver/{print $2; exit}' /etc/resolv.conf):2375"`
+
 `mix test`
 
 ## Contributing
