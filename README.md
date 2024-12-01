@@ -140,15 +140,25 @@ For more detailed information about the API, different container configurations,
 ### Native
 You can run on windows natively with elixir and erlang. 
 
-First install Visual Studio 2022.
+First install Visual Studio 2022 with Desktop development with C++.
 
-Now enable "Expose daemon on tcp://localhost:2375 without TLS" in Docker settings.
+Open visual studio dev shell. I do it by just opening an empty c++ project, then View -> Terminal.
+
+Enable "Expose daemon on tcp://localhost:2375 without TLS" in Docker settings.
+
+for powershell:
+
+`$Env:DOCKER_HOST = "tcp://localhost:2375"`
+
+for cmd:
+
+`set DOCKER_HOST=tcp://localhost:2375`
+
+Compile and run tests:
 
 `mix deps.get`
 
 `mix deps.compile`
-
-`set DOCKER_HOST=tcp://localhost:2375`
 
 `mix test`
 
