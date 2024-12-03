@@ -135,6 +135,33 @@ Testcontainers use the standard Logger, see https://hexdocs.pm/logger/Logger.htm
 
 For more detailed information about the API, different container configurations, and advanced usage scenarios, please refer to the [API documentation](https://hexdocs.pm/testcontainers/api-reference.html).
 
+## Windows support
+
+### Native
+You can run on windows natively with elixir and erlang. 
+
+First install Visual Studio 2022 with Desktop development with C++.
+
+Open visual studio dev shell. I do it by just opening an empty c++ project, then View -> Terminal.
+
+Enable "Expose daemon on tcp://localhost:2375 without TLS" in Docker settings.
+
+for powershell:
+
+`$Env:DOCKER_HOST = "tcp://localhost:2375"`
+
+for cmd:
+
+`set DOCKER_HOST=tcp://localhost:2375`
+
+Compile and run tests:
+
+`mix deps.get`
+
+`mix deps.compile`
+
+`mix test`
+
 ## Contributing
 
 We welcome your contributions! Please see our contributing guidelines (TBD) for more details on how to submit patches and the contribution workflow.

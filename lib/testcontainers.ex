@@ -18,6 +18,7 @@ defmodule Testcontainers do
   alias Testcontainers.Util.PropertiesParser
 
   import Testcontainers.Constants
+  import Testcontainers.Container, only: [os_type: 0]
 
   @timeout 300_000
 
@@ -42,28 +43,16 @@ defmodule Testcontainers do
     ryuk_config =
       Container.new("testcontainers/ryuk:#{Constants.ryuk_version()}")
       |> Container.with_exposed_port(8080)
-      |> then(fn config ->
-        with %URI{scheme: "unix", path: docker_socket_path} <- URI.parse(docker_host) do
-          Container.with_bind_mount(
-            config,
-            docker_socket_path,
-            "/var/run/docker.sock",
-            "rw"
-          )
-        else
-          _ ->
-            config
-        end
-      end)
+      |> then(&apply_docker_socket_volume_binding(&1, docker_host))
       |> Container.with_auto_remove(true)
 
     with {:ok, _} <- Api.pull_image(ryuk_config.image, conn),
+         {:ok, docker_hostname} <- get_docker_hostname(docker_host_url, conn),
          {:ok, ryuk_container_id} <- Api.create_container(ryuk_config, conn),
          :ok <- Api.start_container(ryuk_container_id, conn),
          {:ok, container} <- Api.get_container(ryuk_container_id, conn),
-         {:ok, socket} <- create_ryuk_socket(container),
+         {:ok, socket} <- create_ryuk_socket(container, docker_hostname),
          :ok <- register_ryuk_filter(session_id, socket),
-         {:ok, docker_hostname} <- get_docker_hostname(docker_host_url, conn),
          {:ok, properties} <- PropertiesParser.read_property_file() do
       Logger.info("Testcontainers initialized")
 
@@ -191,13 +180,13 @@ defmodule Testcontainers do
     GenServer.call(name, call, @timeout)
   end
 
-  defp create_ryuk_socket(container, reattempt_count \\ 0)
+  defp create_ryuk_socket(container, docker_hostname, reattempt_count \\ 0)
 
-  defp create_ryuk_socket(%Container{} = container, reattempt_count)
+  defp create_ryuk_socket(%Container{} = container, docker_hostname, reattempt_count)
        when reattempt_count < 3 do
     host_port = Container.mapped_port(container, 8080)
 
-    case :gen_tcp.connect(~c"localhost", host_port, [
+    case :gen_tcp.connect(~c"#{docker_hostname}", host_port, [
            :binary,
            active: false,
            packet: :line,
@@ -207,17 +196,17 @@ defmodule Testcontainers do
         {:ok, connected}
 
       {:error, :econnrefused} ->
-        Logger.debug("Connection refused. Retrying... Attempt #{reattempt_count + 1}/3")
+        Logger.info("Connection refused. Retrying... Attempt #{reattempt_count + 1}/3")
         :timer.sleep(5000)
-        create_ryuk_socket(container, reattempt_count + 1)
+        create_ryuk_socket(container, docker_hostname, reattempt_count + 1)
 
       {:error, error} ->
         {:error, error}
     end
   end
 
-  defp create_ryuk_socket(%Container{} = _container, _reattempt_count) do
-    Logger.debug("Ryuk host refused to connect")
+  defp create_ryuk_socket(%Container{} = _container, _docker_hostname, _reattempt_count) do
+    Logger.info("Ryuk host refused to connect")
     {:error, :econnrefused}
   end
 
@@ -291,4 +280,40 @@ defmodule Testcontainers do
         error
     end)
   end
+
+  defp apply_docker_socket_volume_binding(config, docker_host) do
+    case {os_type(), URI.parse(docker_host)} do
+      {os, uri} -> handle_docker_socket_binding(config, os, uri)
+    end
+  end
+
+  @dialyzer {:nowarn_function, handle_docker_socket_binding: 3}
+  defp handle_docker_socket_binding(config, :linux, %URI{scheme: "unix", path: docker_socket_path}) do
+    Container.with_bind_mount(
+      config,
+      docker_socket_path,
+      "/var/run/docker.sock",
+      "rw"
+    )
+  end
+
+  defp handle_docker_socket_binding(config, :macos, %URI{scheme: "unix", path: docker_socket_path}) do
+    Container.with_bind_mount(
+      config,
+      docker_socket_path,
+      "/var/run/docker.sock",
+      "rw"
+    )
+  end
+
+  defp handle_docker_socket_binding(config, :windows, _) do
+    Container.with_bind_mount(
+      config,
+      "//var/run/docker.sock",
+      "/var/run/docker.sock",
+      "rw"
+    )
+  end
+
+  defp handle_docker_socket_binding(config, _, _), do: config
 end
