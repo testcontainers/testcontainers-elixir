@@ -43,7 +43,7 @@ defmodule Testcontainers do
     ryuk_config =
       Container.new("testcontainers/ryuk:#{Constants.ryuk_version()}")
       |> Container.with_exposed_port(8080)
-      |> then(&apply_ryuk_socket(&1, docker_host))
+      |> then(&apply_docker_socket_volume_binding(&1, docker_host))
       |> Container.with_auto_remove(false)
       |> Container.with_privileged(true)
 
@@ -52,8 +52,8 @@ defmodule Testcontainers do
          {:ok, ryuk_container_id} <- Api.create_container(ryuk_config, conn),
          :ok <- Api.start_container(ryuk_container_id, conn),
          {:ok, container} <- Api.get_container(ryuk_container_id, conn),
-         {:ok, socket} <- create_ryuk_socket(container, docker_hostname) |> IO.inspect(label: "create ryuk socket"),
-         :ok <- register_ryuk_filter(session_id, socket) |> IO.inspect(label: "register ryuk filter"),
+         {:ok, socket} <- create_ryuk_socket(container, docker_hostname),
+         :ok <- register_ryuk_filter(session_id, socket),
          {:ok, properties} <- PropertiesParser.read_property_file() do
       Logger.info("Testcontainers initialized")
 
@@ -186,9 +186,8 @@ defmodule Testcontainers do
   defp create_ryuk_socket(%Container{} = container, docker_hostname, reattempt_count)
        when reattempt_count < 3 do
     host_port = Container.mapped_port(container, 8080)
-    IO.inspect("#{docker_hostname}:#{host_port}")
 
-    case :gen_tcp.connect(~c"#{docker_hostname}" |> IO.inspect(), host_port, [
+    case :gen_tcp.connect(~c"#{docker_hostname}", host_port, [
            :binary,
            active: false,
            packet: :line,
@@ -283,7 +282,8 @@ defmodule Testcontainers do
     end)
   end
 
-  defp apply_ryuk_socket(config, docker_host) do
+  defp apply_docker_socket_volume_binding(config, docker_host) do
+    # The is_os guards are inlined because of dialyxir complains
     cond do
       is_os(:linux) or is_os(:macos) ->
         case URI.parse(docker_host) do
@@ -296,13 +296,7 @@ defmodule Testcontainers do
             )
 
           _ ->
-            # TODO: remove this... needed for docker in docker.. in windows
-            Container.with_bind_mount(
-              config,
-              "//var/run/docker.sock",
-              "/var/run/docker.sock",
-              "rw"
-            )
+            config
         end
 
       is_os(:windows) ->
