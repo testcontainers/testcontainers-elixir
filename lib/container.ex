@@ -62,11 +62,6 @@ defmodule Testcontainers.Container do
   def new(image) when is_binary(image) do
     %__MODULE__{image: image}
   end
-
-  def with_privileged(%__MODULE__{} = config, bool) when is_boolean(bool) do
-    %__MODULE__{config | privileged: bool}
-  end
-
   @doc """
   Sets a _waiting strategy_ for the _container_.
   """

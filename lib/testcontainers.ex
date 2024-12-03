@@ -44,8 +44,7 @@ defmodule Testcontainers do
       Container.new("testcontainers/ryuk:#{Constants.ryuk_version()}")
       |> Container.with_exposed_port(8080)
       |> then(&apply_docker_socket_volume_binding(&1, docker_host))
-      |> Container.with_auto_remove(false)
-      |> Container.with_privileged(true)
+      |> Container.with_auto_remove(true)
 
     with {:ok, _} <- Api.pull_image(ryuk_config.image, conn),
          {:ok, docker_hostname} <- get_docker_hostname(docker_host_url, conn),
