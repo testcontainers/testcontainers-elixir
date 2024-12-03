@@ -18,7 +18,7 @@ defmodule Testcontainers do
   alias Testcontainers.Util.PropertiesParser
 
   import Testcontainers.Constants
-  import Testcontainers.Container, only: [is_os: 1]
+  import Testcontainers.Container, only: [os_type: 0]
 
   @timeout 300_000
 
@@ -283,30 +283,38 @@ defmodule Testcontainers do
   end
 
   defp apply_docker_socket_volume_binding(config, docker_host) do
-    # The is_os guards are inlined because of dialyxir complains
-    cond do
-      is_os(:linux) or is_os(:macos) ->
-        case URI.parse(docker_host) do
-          %URI{scheme: "unix", path: docker_socket_path} ->
-            Container.with_bind_mount(
-              config,
-              docker_socket_path,
-              "/var/run/docker.sock",
-              "rw"
-            )
-
-          _ ->
-            config
-        end
-
-      is_os(:windows) ->
-        Container.with_bind_mount(
-          config,
-          "//var/run/docker.sock",
-          "/var/run/docker.sock",
-          "rw"
-        )
+    case {os_type(), URI.parse(docker_host)} do
+      {os, uri} -> handle_docker_socket_binding(config, os, uri)
     end
   end
 
+  @dialyzer {:nowarn_function, handle_docker_socket_binding: 3}
+  defp handle_docker_socket_binding(config, :linux, %URI{scheme: "unix", path: docker_socket_path}) do
+    Container.with_bind_mount(
+      config,
+      docker_socket_path,
+      "/var/run/docker.sock",
+      "rw"
+    )
+  end
+
+  defp handle_docker_socket_binding(config, :macos, %URI{scheme: "unix", path: docker_socket_path}) do
+    Container.with_bind_mount(
+      config,
+      docker_socket_path,
+      "/var/run/docker.sock",
+      "rw"
+    )
+  end
+
+  defp handle_docker_socket_binding(config, :windows, _) do
+    Container.with_bind_mount(
+      config,
+      "//var/run/docker.sock",
+      "/var/run/docker.sock",
+      "rw"
+    )
+  end
+
+  defp handle_docker_socket_binding(config, _, _), do: config
 end

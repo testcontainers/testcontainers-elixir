@@ -46,6 +46,16 @@ defmodule Testcontainers.Container do
   defguard is_os(name)
            when is_atom(name) and name == @os_type
 
+  @dialyzer {:nowarn_function, os_type: 0}
+  def os_type() do
+    cond do
+      is_os(:linux) -> :linux
+      is_os(:macos) -> :macos
+      is_os(:windows) -> :windows
+      true -> :unknown
+    end
+  end
+
   @doc """
   A constructor function to make it easier to construct a container
   """
@@ -54,7 +64,7 @@ defmodule Testcontainers.Container do
   end
 
   def with_privileged(%__MODULE__{} = config, bool) when is_boolean(bool) do
-    %__MODULE__{config | privileged: bool }
+    %__MODULE__{config | privileged: bool}
   end
 
   @doc """
