@@ -162,14 +162,6 @@ Compile and run tests:
 
 `mix test`
 
-### Devcontainer
-
-You can also use this library inside a devcontainer on Windows. This also requires exposing daemon without tls and then:
-
-`export DOCKER_HOST="tcp://$(awk '/^nameserver/{print $2; exit}' /etc/resolv.conf):2375"`
-
-`mix test`
-
 ## Contributing
 
 We welcome your contributions! Please see our contributing guidelines (TBD) for more details on how to submit patches and the contribution workflow.
