@@ -11,9 +11,9 @@ defmodule Testcontainers.DockerSocketPathStrategy do
 
     defp default_socket_paths do
       [
+        "/var/run/docker.sock",
         Path.expand("~/.docker/run/docker.sock"),
-        Path.expand("~/.docker/desktop/docker.sock"),
-        "/var/run/docker.sock"
+        Path.expand("~/.docker/desktop/docker.sock")
       ] ++
         case System.get_env("XDG_RUNTIME_DIR") do
           nil ->
