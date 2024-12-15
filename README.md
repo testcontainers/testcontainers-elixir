@@ -137,8 +137,12 @@ For more detailed information about the API, different container configurations,
 
 ## Windows support
 
+### Testcontainers Desktop
+
+This is the supported way to use Testcontainers Elixir on Windows. Download Testcontainers Desktop, install it and everything just works.
+
 ### Native
-You can run on windows natively with elixir and erlang. 
+You can run on windows natively with elixir and erlang. But its not really supported, but I have investigated and tried it out. These are my findings:
 
 First install Visual Studio 2022 with Desktop development with C++.
 
