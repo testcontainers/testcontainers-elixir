@@ -45,7 +45,7 @@ defmodule TestcontainersElixir.MixProject do
 
   defp deps do
     [
-      {:elixir_uuid, "~> 1.2"},
+      {:uniq, "~> 0.6"},
       {:dialyxir, "~> 1.3", only: [:dev], runtime: false},
       {:ex_doc, "~> 0.30", only: :dev, runtime: false},
       {:tesla, "~> 1.7"},
