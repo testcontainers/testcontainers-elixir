@@ -261,7 +261,7 @@ defmodule Testcontainers do
   end
 
   defp create_and_start_container(config, config_builder, state) do
-    with {:ok, _} <- Api.pull_image(config.image, state.conn, auth: config.auth),
+    with :ok <- maybe_pull_image(config, state.conn),
          {:ok, id} <- Api.create_container(config, state.conn),
          :ok <- Api.start_container(id, state.conn),
          {:ok, container} <- Api.get_container(id, state.conn),
@@ -269,6 +269,35 @@ defmodule Testcontainers do
          :ok <- wait_for_container(container, config.wait_strategies || [], state.conn) do
       {:ok, container}
     end
+  end
+
+  defp maybe_pull_image(config = %{pull_policy: %{always_pull: true}}, conn) do
+    case Api.pull_image(config.image, conn, auth: config.auth) do
+      {:ok, _nil} -> :ok
+      error -> error
+    end
+  end
+
+  defp maybe_pull_image(config = %{pull_policy: %{pull_condition: expr}}, conn)
+       when is_function(expr) do
+    with {:eval, true} <- {:eval, expr.(config, conn)},
+         {:ok, _nil} <- Api.pull_image(config.image, conn, auth: config.auth) do
+      :ok
+    else
+      {:eval, reason} ->
+        Logger.debug(
+          "Pull policy expression evaluated to: #{inspect(reason)}, image will not be fetched"
+        )
+
+        :ok
+
+      error ->
+        error
+    end
+  end
+
+  defp maybe_pull_image(_config, _conn) do
+    :ok
   end
 
   defp wait_for_container(container, wait_strategies, conn) do

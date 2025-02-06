@@ -590,7 +590,7 @@ defmodule DockerEngineAPI.Api.Image do
   - `{:ok, nil}` on success
   - `{:error, Tesla.Env.t}` on failure
   """
-  @spec image_tag(Tesla.Env.client, String.t, keyword()) :: {:ok, nil} | {:ok, DockerEngineAPI.Model.ErrorResponse.t} | {:error, Tesla.Env.t}
+  @spec image_tag(Tesla.Env.client, String.t, keyword()) :: {:ok, Tesla.Env.t | DockerEngineAPI.Model.ErrorResponse.t} | {:error, Tesla.Env.t}
   def image_tag(connection, name, opts \\ []) do
     optional_params = %{
       :repo => :query,

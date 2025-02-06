@@ -182,6 +182,22 @@ defmodule Testcontainers.Docker.Api do
     end
   end
 
+  def tag_image(image, repo, tag, conn) do
+    case Api.Image.image_tag(conn, image, repo: repo, tag: tag) do
+      {:ok, %Tesla.Env{status: 201}} ->
+        {:ok, "#{repo}:#{tag}"}
+
+      {:ok, %Tesla.Env{status: status}} ->
+        {:error, {:http_error, status}}
+
+      {:ok, %DockerEngineAPI.Model.ErrorResponse{message: message}} ->
+        {:error, message}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
   defp parse_inspect_result(%DockerEngineAPI.Model.ExecInspectResponse{} = json) do
     %{running: json."Running", exit_code: json."ExitCode"}
   end

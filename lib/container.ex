@@ -26,7 +26,8 @@ defmodule Testcontainers.Container do
     check_image: ~r/.*/,
     network_mode: nil,
     reuse: false,
-    force_reuse: false
+    force_reuse: false,
+    pull_policy: Testcontainers.PullPolicy.always_pull()
   ]
 
   @doc """
@@ -62,6 +63,7 @@ defmodule Testcontainers.Container do
   def new(image) when is_binary(image) do
     %__MODULE__{image: image}
   end
+
   @doc """
   Sets a _waiting strategy_ for the _container_.
   """
@@ -276,6 +278,19 @@ defmodule Testcontainers.Container do
       {:error,
        "Unexpected image #{image}. If this is a valid image, provide a broader `check_image` regex to the container configuration."}
     end
+  end
+
+  @doc """
+  Controls if image is pulled from a remote repository
+
+  Available options:
+
+    * `TestContainers.PullPolicy.always_pull()` - default, always pulls image from the remote repository
+    * `TestContainers.PullPolicy.never_pull()` - does not pull images, use when working with local images
+    * `TestContainers.PullPolicy.pull_condition(expr)` - pulls image if expression returns `true`
+  """
+  def with_pull_policy(%__MODULE__{} = container, %Testcontainers.PullPolicy{} = pull_policy) do
+    %{container | pull_policy: pull_policy}
   end
 
   defimpl Testcontainers.ContainerBuilder do
