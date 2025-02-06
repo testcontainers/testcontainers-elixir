@@ -72,6 +72,8 @@ defmodule TestcontainersElixir.MixProject do
       {:erlzk, "~> 0.6.2", only: [:dev, :test]},
       # RabbitMQ
       {:amqp, "~> 3.3", only: [:dev, :test]},
+      # NOTE: needed to compile amqp for OTP 27
+      {:rabbit_common, "~> 3.13.4", only: [:dev, :test], override: true},
       # EMQX
       {:tortoise311, "~> 0.12.0", only: [:dev, :test]},
       # For watching directories for file changes in mix task
