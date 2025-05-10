@@ -32,3 +32,8 @@ testcontainers_elixir-*.tar
 *.iml
 
 .elixir_ls/
+
+# direnv and flake
+.direnv/
+.mix/
+.hex/
