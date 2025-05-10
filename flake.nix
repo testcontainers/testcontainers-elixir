@@ -17,7 +17,7 @@
         # Define the VSCode package with desired extensions
         vscode = pkgs.vscode-with-extensions.override {
           vscodeExtensions = with pkgs.vscode-extensions; [
-	          elixir-lsp.vscode-elixir-ls
+            elixir-lsp.vscode-elixir-ls
             phoenixframework.phoenix
             jnoortheen.nix-ide
             eamodio.gitlens

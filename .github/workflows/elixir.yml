@@ -18,7 +18,7 @@ permissions:
 jobs:
   build:
     name: Build and test
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu
 
     strategy:
       fail-fast: false
