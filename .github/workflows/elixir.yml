@@ -18,7 +18,7 @@ permissions:
 jobs:
   build:
     name: Build and test
-    runs-on: ubuntu
+    runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
@@ -59,7 +59,7 @@ jobs:
   test_examples:
 
     name: Test example projects
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
