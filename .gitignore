@@ -37,3 +37,4 @@ testcontainers_elixir-*.tar
 .direnv/
 .mix/
 .hex/
+.nix-mix/
