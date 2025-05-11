@@ -32,6 +32,7 @@
     export MIX_ENV=${mixEnv}
 
     export LANG=en_US.UTF-8
+    export ELIXIR_ERL_OPTIONS="+fnu"
     # keep your shell history in iex
     export ERL_AFLAGS="-kernel shell_history enabled"
 
