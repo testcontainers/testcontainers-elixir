@@ -39,35 +39,11 @@
   in {
     packages = forAllSystems (system: let
       pkgs = nixpkgsFor system;
-      # FIXME: import the Mix deps into Nix by running `mix2nix > deps.nix` from a dev shell
-      # mixNixDeps = import ./deps.nix {
-      #  lib = pkgs.lib;
-      #  beamPackages = pkgs.beamPackages;
-      #};
     in {
       default = pkgs.beamPackages.mixRelease {
-        pname = "my-phx-app";
-        # Elixir app source path
+        pname = "testcontainers-elixir-lib";
         src = ./.;
         version = "0.1.0";
-        # FIXME: mixNixDeps was specified in the FIXME above. Uncomment the next line.
-        # inherit mixNixDeps;
-
-        # add esbuild and tailwindcss
-        buildInputs = [pkgs.elixir pkgs.esbuild pkgs.tailwindcss];
-
-        # Explicitly declare tailwind and esbuild binary paths (don't let Mix fetch them)
-        preConfigure = ''
-          substituteInPlace config/config.exs \
-            --replace "config :tailwind," "config :tailwind, path: \"${pkgs.tailwindcss}/bin/tailwindcss\","\
-            --replace "config :esbuild," "config :esbuild, path: \"${pkgs.esbuild}/bin/esbuild\", "
-        '';
-
-        # Deploy assets before creating release
-        preInstall = ''
-          # https://github.com/phoenixframework/phoenix/issues/2690
-           mix do deps.loadpaths --no-deps-check, assets.deploy
-        '';
       };
     });
     devShells = forAllSystems (system: let
