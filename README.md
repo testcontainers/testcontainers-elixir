@@ -155,6 +155,22 @@ You can pass arguments to the sub-task by appending them after the sub-task name
 
 In the example above we are running tests while excluding flaky tests and using the --stale option.
 
+#### Backward Compatibility
+
+For backward compatibility, the old `mix testcontainers.test` task is still available and works exactly as before. It automatically delegates to `mix testcontainers.run test`, so existing scripts and workflows will continue to work without modification:
+
+```bash
+# These commands are equivalent:
+mix testcontainers.test --database mysql
+mix testcontainers.run test --database mysql
+
+# Both support all the same options:
+mix testcontainers.test --database postgres --db-volume my_data
+mix testcontainers.run test --database postgres --db-volume my_data
+```
+
+While the old task will continue to work, we recommend updating to `mix testcontainers.run` for new projects as it provides more flexibility by allowing you to run any Mix task, not just tests.
+
 ### Logging
 
 Testcontainers use the standard Logger, see https://hexdocs.pm/logger/Logger.html.
