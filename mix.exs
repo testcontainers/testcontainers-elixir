@@ -84,7 +84,8 @@ defmodule TestcontainersElixir.MixProject do
   defp aliases do
     [
       setup: ["deps.get"],
-      citest: ["test --exclude flaky --cover"]
+      citest: ["test --exclude flaky --cover"],
+      "testcontainers.test": ["testcontainers.run test"]
     ]
   end
 end
