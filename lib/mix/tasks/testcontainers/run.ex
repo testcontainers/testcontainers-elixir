@@ -6,14 +6,14 @@ defmodule Mix.Tasks.Testcontainers.Run do
   @shortdoc "Runs a Mix sub-task (test, phx.server, etc) with a database container"
   @moduledoc """
   Usage:
-    mix testcontainers.run [sub_task] [--database DB] [--watch folder] [--db-volume VOLUME] [sub_task_args...]
+    mix testcontainers.run [sub_task] [--database DB] [--db-volume VOLUME] [sub_task_args...]
 
   Examples:
     mix testcontainers.run test --database postgres
     mix testcontainers.run phx.server --database mysql
-    mix testcontainers.run test --watch lib --watch test
     mix testcontainers.run test --database postgres --db-volume my_postgres_data
-    mix testcontainers.run test --database mysql --db-volume my_mysql_data
+    mix testcontainers.run phx.server --db-volume my_postgres_data
+    mix testcontainers.run some.custom.server
   """
 
   def run(args) do
@@ -27,13 +27,11 @@ defmodule Mix.Tasks.Testcontainers.Run do
       OptionParser.parse(args,
         switches: [
           database: :string,
-          watch: [:string, :keep],
           db_volume: :string
         ]
       )
 
     database = opts[:database] || "postgres"
-    folder_to_watch = Keyword.get_values(opts, :watch)
     db_volume = opts[:db_volume]
 
     # Determine sub_task and its args
@@ -43,41 +41,29 @@ defmodule Mix.Tasks.Testcontainers.Run do
         [] -> {"test", []}
       end
 
-    if Enum.empty?(folder_to_watch) do
-      IO.puts("No folders specified. Only running subtask '#{sub_task}'.")
-      run_sub_task_and_exit(database, sub_task, sub_task_args, db_volume)
-    else
-      check_folders_exist(folder_to_watch)
-      run_sub_task_and_watch(database, sub_task, sub_task_args, folder_to_watch, db_volume)
-    end
-  end
-
-  defp check_folders_exist(folders) do
-    Enum.each(folders, fn folder ->
-      unless File.dir?(folder) do
-        raise("Folder does not exist: #{folder}")
-      end
-    end)
+    run_sub_task_and_exit(database, sub_task, sub_task_args, db_volume)
   end
 
   @spec run_sub_task_and_exit(String.t(), String.t(), list(String.t()), String.t() | nil) :: no_return()
   defp run_sub_task_and_exit(database, sub_task, sub_task_args, db_volume) do
     {container, env} = setup_container(database, db_volume)
-    exit_code = run_mix_task(env, sub_task, sub_task_args)
-    Testcontainers.stop_container(container.container_id)
-    System.halt(exit_code)
-  end
 
-  defp run_sub_task_and_watch(database, sub_task, sub_task_args, folders, db_volume) do
-    {container, env} = setup_container(database, db_volume)
+    IO.puts("Starting in-process mix task: #{sub_task} #{Enum.join(sub_task_args, " ")}")
 
-    Enum.each(folders, fn folder ->
-      :fs.start_link(String.to_atom("watcher_" <> folder), Path.absname(folder))
-      :fs.subscribe(String.to_atom("watcher_" <> folder))
+    # Always stop the container when the VM exits (covers both long-running and short-lived tasks)
+    System.at_exit(fn _ ->
+      try do
+        Testcontainers.stop_container(container.container_id)
+      catch
+        _, _ -> :ok
+      end
     end)
 
-    run_mix_task(env, sub_task, sub_task_args)
-    loop(env, sub_task, sub_task_args, container)
+    with_env(env, fn ->
+      maybe_bootstrap_tools()
+      # Running the sub-task in-process blocks for long-running tasks and returns for short-lived ones.
+      run_mix_task_in_process(sub_task, sub_task_args)
+    end)
   end
 
   defp setup_container(database, db_volume) do
@@ -125,50 +111,38 @@ defmodule Mix.Tasks.Testcontainers.Run do
 
   defp create_env(port) do
     [
-      {"DB_USER", "test"},
-      {"DB_PASSWORD", "test"},
-      {"DB_HOST", Testcontainers.get_host()},
-      {"DB_PORT", Integer.to_string(port)}
+      {"DATABASE_URL", "ecto://test:test@#{Testcontainers.get_host()}:#{port}/test"}
     ]
   end
 
-  defp run_mix_task(env, sub_task, sub_task_args) do
-    case System.cmd("mix", [sub_task] ++ sub_task_args,
-           env: env,
-           into: IO.stream(),
-           stderr_to_stdout: false
-         ) do
-      {_, exit_code} ->
-        if exit_code == 0 do
-          IO.puts("Task '#{sub_task}' completed successfully")
-        else
-          IO.puts(:stderr, "Mix task '#{sub_task}' failed with exit code: #{exit_code}")
-        end
-        exit_code
+
+  defp with_env(env_kv, fun) when is_function(fun, 0) do
+    Enum.each(env_kv, fn {k, v} -> System.put_env(k, v) end)
+    fun.()
+  end
+
+  defp run_mix_task_in_process(sub_task, sub_task_args) do
+    Mix.Task.clear()
+    Mix.Task.reenable("local.hex")
+    Mix.Task.reenable("local.rebar")
+    Mix.Task.reenable(sub_task)
+    Mix.Task.run(sub_task, sub_task_args)
+  end
+
+  defp maybe_bootstrap_tools do
+    IO.puts("Bootstrapping Mix tasks...")
+    safe_run_task("local.hex", ["--force"])
+    safe_run_task("local.rebar", ["--force"])
+  end
+
+  defp safe_run_task(task, args) do
+    try do
+      Mix.Task.run(task, args)
+    rescue
+      _ -> :ok
+    catch
+      _, _ -> :ok
     end
   end
 
-  defp loop(env, sub_task, sub_task_args, container) do
-    receive do
-      {_watcher_process, {:fs, :file_event}, {changed_file, _type}} ->
-        IO.puts("#{changed_file} was updated, waiting for more changes...")
-        wait_for_changes(env, sub_task, sub_task_args, container)
-    after
-      5000 ->
-        loop(env, sub_task, sub_task_args, container)
-    end
-  end
-
-  defp wait_for_changes(env, sub_task, sub_task_args, container) do
-    receive do
-      {_watcher_process, {:fs, :file_event}, {changed_file, _type}} ->
-        IO.puts("#{changed_file} was updated, waiting for more changes...")
-        wait_for_changes(env, sub_task, sub_task_args, container)
-    after
-      1000 ->
-        IO.ANSI.clear()
-        run_mix_task(env, sub_task, sub_task_args)
-        loop(env, sub_task, sub_task_args, container)
-    end
-  end
 end
