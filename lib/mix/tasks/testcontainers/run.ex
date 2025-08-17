@@ -115,7 +115,6 @@ defmodule Mix.Tasks.Testcontainers.Run do
     ]
   end
 
-
   defp with_env(env_kv, fun) when is_function(fun, 0) do
     Enum.each(env_kv, fn {k, v} -> System.put_env(k, v) end)
     fun.()

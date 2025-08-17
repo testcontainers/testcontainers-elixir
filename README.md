@@ -110,16 +110,16 @@ to use postgres you can just run
 
 ```bash
 # Run tests with PostgreSQL (default)
-mix testcontainers.run test
+MIX_ENV=test mix testcontainers.run test
 
 # Run tests with MySQL
-mix testcontainers.run test --database mysql
+MIX_ENV=test mix testcontainers.run test --database mysql
 
 # Run Phoenix server with PostgreSQL and persistent volume
 mix testcontainers.run phx.server --database postgres --db-volume my_postgres_data
 
 # Run tests with MySQL and persistent volume
-mix testcontainers.run test --database mysql --db-volume my_mysql_data
+MIX_ENV=test mix testcontainers.run test --database mysql --db-volume my_mysql_data
 
 # Start Phoenix server with containerized DB (will keep running until stopped)
 mix testcontainers.run phx.server --database postgres --db-volume my_dev_data
@@ -152,7 +152,7 @@ if config_env() in [:dev, :test] do
 end
 ```
 
-This allows you to run your Phoenix server or tests with a containerized database without changing dev.exs or test.exs:
+This allows you to run your Phoenix server or tests with a containerized database without changing dev.exs or test.exs (remember to set MIX_ENV when running tests):
 
 ```bash
 # Start Phoenix server with PostgreSQL container
@@ -167,11 +167,15 @@ mix testcontainers.run phx.server --database postgres --db-volume my_dev_data
 
 Activate reuse of database containers started by mix task with adding `testcontainers.reuse.enable=true` in `~/.testcontainers.properties`. This is experimental.
 
-You can pass arguments to the sub-task by appending them after the sub-task name. For example, to pass arguments to mix test:
+You can pass arguments to the sub-task by appending them after `--`. For example, to pass arguments to mix test:
 
-`mix testcontainers.run test --exclude flaky --stale`
+`MIX_ENV=test mix testcontainers.run test -- --exclude flaky --stale`
 
 In the example above we are running tests while excluding flaky tests and using the --stale option.
+
+Note: MIX_ENV is not overridden by the run task. For tests, set it explicitly in the shell:
+
+`MIX_ENV=test mix testcontainers.run test`
 
 #### Backward Compatibility
 
