@@ -29,7 +29,7 @@ To add Testcontainers to your project, follow these steps:
 ```elixir
 def deps do
   [
-    {:testcontainers, "~> 1.11"}
+    {:testcontainers, "~> 1.13"}
   ]
 end
 ```
