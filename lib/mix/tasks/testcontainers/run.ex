@@ -124,7 +124,7 @@ defmodule Mix.Tasks.Testcontainers.Run do
          ) do
       {_, exit_code} ->
         if exit_code == 0 do
-          IO.puts("Mix task '#{sub_task}' completed successfully")
+          IO.puts("Task '#{sub_task}' completed successfully")
         else
           IO.puts(:stderr, "Mix task '#{sub_task}' failed with exit code: #{exit_code}")
         end
