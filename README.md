@@ -134,9 +134,11 @@ The `--db-volume` parameter allows you to specify a persistent volume for databa
 
 This is particularly useful when you want to maintain database state across test runs or development sessions.
 
-in your config/test.exs you can then change the repo config to this:
+#### Configuration
 
-```
+**For testing (config/test.exs):**
+
+```elixir
 config :my_app, MyApp.Repo,
   username: System.get_env("DB_USER") || "postgres",
   password: System.get_env("DB_PASSWORD") || "postgres",
@@ -145,6 +147,35 @@ config :my_app, MyApp.Repo,
   database: "my_app_test#{System.get_env("MIX_TEST_PARTITION")}",
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: System.schedulers_online() * 2
+```
+
+**For development (config/dev.exs):**
+
+If you want to use `mix testcontainers.run phx.server` or other development tasks with a containerized database, you can configure your `config/dev.exs` similarly:
+
+```elixir
+config :my_app, MyApp.Repo,
+  username: System.get_env("DB_USER") || "postgres",
+  password: System.get_env("DB_PASSWORD") || "postgres",
+  hostname: System.get_env("DB_HOST") || "localhost",
+  port: System.get_env("DB_PORT") || "5432",
+  database: "my_app_dev",
+  stacktrace: true,
+  show_sensitive_data_on_connection_error: true,
+  pool_size: 10
+```
+
+This allows you to run your Phoenix server with a containerized database:
+
+```bash
+# Start Phoenix server with PostgreSQL container
+mix testcontainers.run phx.server --database postgres
+
+# Start Phoenix server with MySQL container
+mix testcontainers.run phx.server --database mysql
+
+# Start with persistent data
+mix testcontainers.run phx.server --database postgres --db-volume my_dev_data
 ```
 
 Activate reuse of database containers started by mix task with adding `testcontainers.reuse.enable=true` in `~/.testcontainers.properties`. This is experimental.
