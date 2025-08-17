@@ -40,7 +40,7 @@ defmodule Mix.Tasks.Testcontainers.Run do
       end
 
     if Enum.empty?(folder_to_watch) do
-      IO.puts("No folders specified. Only running sub-task '#{sub_task}'.")
+      IO.puts("No folders specified. Only running subtask '#{sub_task}'.")
       run_sub_task_and_exit(database, sub_task, sub_task_args)
     else
       check_folders_exist(folder_to_watch)
