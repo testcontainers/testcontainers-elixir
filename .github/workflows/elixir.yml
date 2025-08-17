@@ -24,6 +24,10 @@ jobs:
       fail-fast: false
       matrix:
         pair:
+          - elixir: 1.18
+            otp: 27.2
+          - elixir: 1.17
+            otp: 27.2
           - elixir: 1.16
             otp: 26.2
           - elixir: 1.15
@@ -32,14 +36,14 @@ jobs:
             otp: 25.3
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Elixir
       uses: erlef/setup-beam@v1
       with:
         elixir-version: ${{ matrix.pair.elixir }} # [Required] Define the Elixir version
         otp-version: ${{ matrix.pair.otp }}      # [Required] Define the Erlang/OTP version
     - name: Restore dependencies cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: deps
         key: ${{ runner.os }}-${{ matrix.pair.otp }}-${{ matrix.pair.elixir }}-mix-${{ hashFiles('**/mix.lock') }}
@@ -58,12 +62,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Elixir
       uses: erlef/setup-beam@v1
       with:
-        elixir-version: '1.16' # [Required] Define the Elixir version
-        otp-version: '26.2'      # [Required] Define the Erlang/OTP version
+        elixir-version: '1.18' # [Required] Define the Elixir version
+        otp-version: '27.2'      # [Required] Define the Erlang/OTP version
     - name: Run example phoenix project tests
       run: |
        cd examples/phoenix_project

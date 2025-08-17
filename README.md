@@ -98,13 +98,41 @@ container(:redis, Testcontainers.RedisContainer.new())
 
 ### Run tests in a Phoenix project (or any project for that matter)
 
-To run/wrap testcontainers around a project use the testcontainers.test task.
+To run/wrap testcontainers around a project use the testcontainers.run task.
 
-`mix testcontainers.test [--database postgres|mysql] [--watch dir ...]`
+`mix testcontainers.run [sub_task] [--database postgres|mysql] [--watch dir ...] [--db-volume VOLUME]`
 
 to use postgres you can just run
 
-`mix testcontainers.test` since postgres is default.
+`mix testcontainers.run test` since postgres is default and test is the default sub-task.
+
+#### Examples:
+
+```bash
+# Run tests with PostgreSQL (default)
+mix testcontainers.run test
+
+# Run tests with MySQL
+mix testcontainers.run test --database mysql
+
+# Run Phoenix server with PostgreSQL and persistent volume
+mix testcontainers.run phx.server --database postgres --db-volume my_postgres_data
+
+# Run tests with MySQL and persistent volume
+mix testcontainers.run test --database mysql --db-volume my_mysql_data
+
+# Run tests with file watching
+mix testcontainers.run test --watch lib --watch test
+```
+
+#### Persistent Volumes
+
+The `--db-volume` parameter allows you to specify a persistent volume for database data. This ensures that your database data persists between container restarts. The volume name you provide will be used to create a Docker volume that gets mounted to the appropriate database data directory:
+
+- **PostgreSQL**: Volume is mounted to `/var/lib/postgresql/data`
+- **MySQL**: Volume is mounted to `/var/lib/mysql`
+
+This is particularly useful when you want to maintain database state across test runs or development sessions.
 
 in your config/test.exs you can then change the repo config to this:
 
@@ -121,11 +149,27 @@ config :my_app, MyApp.Repo,
 
 Activate reuse of database containers started by mix task with adding `testcontainers.reuse.enable=true` in `~/.testcontainers.properties`. This is experimental.
 
-You can pass arguments to mix test by append -- to the of the command like this:
+You can pass arguments to the sub-task by appending them after the sub-task name. For example, to pass arguments to mix test:
 
-`mix testcontainers.test -- --exclude flaky --stale`
+`mix testcontainers.run test --exclude flaky --stale`
 
-In the example above we are excluding flaky tests and using the --stale option.
+In the example above we are running tests while excluding flaky tests and using the --stale option.
+
+#### Backward Compatibility
+
+For backward compatibility, the old `mix testcontainers.test` task is still available and works exactly as before. It automatically delegates to `mix testcontainers.run test`, so existing scripts and workflows will continue to work without modification:
+
+```bash
+# These commands are equivalent:
+mix testcontainers.test --database mysql
+mix testcontainers.run test --database mysql
+
+# Both support all the same options:
+mix testcontainers.test --database postgres --db-volume my_data
+mix testcontainers.run test --database postgres --db-volume my_data
+```
+
+While the old task will continue to work, we recommend updating to `mix testcontainers.run` for new projects as it provides more flexibility by allowing you to run any Mix task, not just tests.
 
 ### Logging
 
