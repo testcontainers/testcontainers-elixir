@@ -6,12 +6,14 @@ defmodule Mix.Tasks.Testcontainers.Run do
   @shortdoc "Runs a Mix sub-task (test, phx.server, etc) with a database container"
   @moduledoc """
   Usage:
-    mix testcontainers.run [sub_task] [--database DB] [--watch folder] [sub_task_args...]
+    mix testcontainers.run [sub_task] [--database DB] [--watch folder] [--db-volume VOLUME] [sub_task_args...]
 
   Examples:
     mix testcontainers.run test --database postgres
     mix testcontainers.run phx.server --database mysql
     mix testcontainers.run test --watch lib --watch test
+    mix testcontainers.run test --database postgres --db-volume my_postgres_data
+    mix testcontainers.run test --database mysql --db-volume my_mysql_data
   """
 
   def run(args) do
@@ -25,12 +27,14 @@ defmodule Mix.Tasks.Testcontainers.Run do
       OptionParser.parse(args,
         switches: [
           database: :string,
-          watch: [:string, :keep]
+          watch: [:string, :keep],
+          db_volume: :string
         ]
       )
 
     database = opts[:database] || "postgres"
     folder_to_watch = Keyword.get_values(opts, :watch)
+    db_volume = opts[:db_volume]
 
     # Determine sub_task and its args
     {sub_task, sub_task_args} =
@@ -41,10 +45,10 @@ defmodule Mix.Tasks.Testcontainers.Run do
 
     if Enum.empty?(folder_to_watch) do
       IO.puts("No folders specified. Only running subtask '#{sub_task}'.")
-      run_sub_task_and_exit(database, sub_task, sub_task_args)
+      run_sub_task_and_exit(database, sub_task, sub_task_args, db_volume)
     else
       check_folders_exist(folder_to_watch)
-      run_sub_task_and_watch(database, sub_task, sub_task_args, folder_to_watch)
+      run_sub_task_and_watch(database, sub_task, sub_task_args, folder_to_watch, db_volume)
     end
   end
 
@@ -56,16 +60,16 @@ defmodule Mix.Tasks.Testcontainers.Run do
     end)
   end
 
-  @spec run_sub_task_and_exit(String.t(), String.t(), list(String.t())) :: no_return()
-  defp run_sub_task_and_exit(database, sub_task, sub_task_args) do
-    {container, env} = setup_container(database)
+  @spec run_sub_task_and_exit(String.t(), String.t(), list(String.t()), String.t() | nil) :: no_return()
+  defp run_sub_task_and_exit(database, sub_task, sub_task_args, db_volume) do
+    {container, env} = setup_container(database, db_volume)
     exit_code = run_mix_task(env, sub_task, sub_task_args)
     Testcontainers.stop_container(container.container_id)
     System.halt(exit_code)
   end
 
-  defp run_sub_task_and_watch(database, sub_task, sub_task_args, folders) do
-    {container, env} = setup_container(database)
+  defp run_sub_task_and_watch(database, sub_task, sub_task_args, folders, db_volume) do
+    {container, env} = setup_container(database, db_volume)
 
     Enum.each(folders, fn folder ->
       :fs.start_link(String.to_atom("watcher_" <> folder), Path.absname(folder))
@@ -76,29 +80,41 @@ defmodule Mix.Tasks.Testcontainers.Run do
     loop(env, sub_task, sub_task_args, container)
   end
 
-  defp setup_container(database) do
+  defp setup_container(database, db_volume) do
     case database do
       "postgres" ->
-        {:ok, container} =
-          Testcontainers.start_container(
-            PostgresContainer.new()
-            |> PostgresContainer.with_user("test")
-            |> PostgresContainer.with_password("test")
-            |> PostgresContainer.with_reuse(true)
-          )
+        container_def =
+          PostgresContainer.new()
+          |> PostgresContainer.with_user("test")
+          |> PostgresContainer.with_password("test")
+          |> PostgresContainer.with_reuse(true)
+          |> (fn config ->
+                if db_volume do
+                  PostgresContainer.with_persistent_volume(config, db_volume)
+                else
+                  config
+                end
+              end).()
 
+        {:ok, container} = Testcontainers.start_container(container_def)
         port = PostgresContainer.port(container)
         {container, create_env(port)}
 
       "mysql" ->
-        {:ok, container} =
-          Testcontainers.start_container(
-            MySqlContainer.new()
-            |> MySqlContainer.with_user("test")
-            |> MySqlContainer.with_password("test")
-            |> MySqlContainer.with_reuse(true)
-          )
+        container_def =
+          MySqlContainer.new()
+          |> MySqlContainer.with_user("test")
+          |> MySqlContainer.with_password("test")
+          |> MySqlContainer.with_reuse(true)
+          |> (fn config ->
+                if db_volume do
+                  MySqlContainer.with_persistent_volume(config, db_volume)
+                else
+                  config
+                end
+              end).()
 
+        {:ok, container} = Testcontainers.start_container(container_def)
         port = MySqlContainer.port(container)
         {container, create_env(port)}
 
