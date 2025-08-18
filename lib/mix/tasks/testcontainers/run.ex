@@ -70,7 +70,7 @@ defmodule Mix.Tasks.Testcontainers.Run do
           |> PostgresContainer.with_user("test")
           |> PostgresContainer.with_password("test")
           |> PostgresContainer.with_reuse(true)
-          |> maybe_with_persistent_volume(db_volume, &PostgresContainer.with_persistent_volume/2)
+          |> maybe_with_persistent_volume(db_volume, PostgresContainer)
 
         {:ok, container} = Testcontainers.start_container(container_def)
         port = PostgresContainer.port(container)
@@ -82,7 +82,7 @@ defmodule Mix.Tasks.Testcontainers.Run do
           |> MySqlContainer.with_user("test")
           |> MySqlContainer.with_password("test")
           |> MySqlContainer.with_reuse(true)
-          |> maybe_with_persistent_volume(db_volume, &MySqlContainer.with_persistent_volume/2)
+          |> maybe_with_persistent_volume(db_volume, MySqlContainer)
 
         {:ok, container} = Testcontainers.start_container(container_def)
         port = MySqlContainer.port(container)
@@ -93,9 +93,9 @@ defmodule Mix.Tasks.Testcontainers.Run do
     end
   end
 
-  defp maybe_with_persistent_volume(config, db_volume, function) do
+  defp maybe_with_persistent_volume(config, db_volume, module) do
     if db_volume do
-      function.(config, db_volume)
+      module.with_persistent_volume(config, db_volume)
     else
       config
     end
