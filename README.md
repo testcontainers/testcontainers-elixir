@@ -145,7 +145,7 @@ if config_env() in [:dev, :test] do
   if url = System.get_env("DATABASE_URL") do
     config :my_app, MyApp.Repo,
       url: url,
-      # Optional extras for dev/test
+      pool: Ecto.Adapters.SQL.Sandbox,
       show_sensitive_data_on_connection_error: true,
       pool_size: 10
   end
