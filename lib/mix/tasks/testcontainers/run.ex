@@ -50,7 +50,6 @@ defmodule Mix.Tasks.Testcontainers.Run do
 
     IO.puts("Starting in-process mix task: #{sub_task} #{Enum.join(sub_task_args, " ")}")
 
-    # Always stop the container when the VM exits (covers both long-running and short-lived tasks)
     System.at_exit(fn _ ->
       try do
         Testcontainers.stop_container(container.container_id)
@@ -60,9 +59,7 @@ defmodule Mix.Tasks.Testcontainers.Run do
     end)
 
     with_env(env, fn ->
-      maybe_bootstrap_tools()
-      # Running the sub-task in-process blocks for long-running tasks and returns for short-lived ones.
-      run_mix_task_in_process(sub_task, sub_task_args)
+      Mix.Task.run(sub_task, sub_task_args)
     end)
   end
 
@@ -74,13 +71,7 @@ defmodule Mix.Tasks.Testcontainers.Run do
           |> PostgresContainer.with_user("test")
           |> PostgresContainer.with_password("test")
           |> PostgresContainer.with_reuse(true)
-          |> (fn config ->
-                if db_volume do
-                  PostgresContainer.with_persistent_volume(config, db_volume)
-                else
-                  config
-                end
-              end).()
+          |> maybe_with_persistent_volume(db_volume, &PostgresContainer.with_persistent_volume/2)
 
         {:ok, container} = Testcontainers.start_container(container_def)
         port = PostgresContainer.port(container)
@@ -92,13 +83,7 @@ defmodule Mix.Tasks.Testcontainers.Run do
           |> MySqlContainer.with_user("test")
           |> MySqlContainer.with_password("test")
           |> MySqlContainer.with_reuse(true)
-          |> (fn config ->
-                if db_volume do
-                  MySqlContainer.with_persistent_volume(config, db_volume)
-                else
-                  config
-                end
-              end).()
+          |> maybe_with_persistent_volume(db_volume, &MySqlContainer.with_persistent_volume/2)
 
         {:ok, container} = Testcontainers.start_container(container_def)
         port = MySqlContainer.port(container)
@@ -106,6 +91,14 @@ defmodule Mix.Tasks.Testcontainers.Run do
 
       _ ->
         raise("Unsupported database: #{database}")
+    end
+  end
+
+  defp maybe_with_persistent_volume(config, db_volume, function) do
+    if db_volume do
+      function.(config, db_volume)
+    else
+      config
     end
   end
 
@@ -119,29 +112,4 @@ defmodule Mix.Tasks.Testcontainers.Run do
     Enum.each(env_kv, fn {k, v} -> System.put_env(k, v) end)
     fun.()
   end
-
-  defp run_mix_task_in_process(sub_task, sub_task_args) do
-    Mix.Task.clear()
-    Mix.Task.reenable("local.hex")
-    Mix.Task.reenable("local.rebar")
-    Mix.Task.reenable(sub_task)
-    Mix.Task.run(sub_task, sub_task_args)
-  end
-
-  defp maybe_bootstrap_tools do
-    IO.puts("Bootstrapping Mix tasks...")
-    safe_run_task("local.hex", ["--force"])
-    safe_run_task("local.rebar", ["--force"])
-  end
-
-  defp safe_run_task(task, args) do
-    try do
-      Mix.Task.run(task, args)
-    rescue
-      _ -> :ok
-    catch
-      _, _ -> :ok
-    end
-  end
-
 end
