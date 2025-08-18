@@ -58,9 +58,8 @@ defmodule Mix.Tasks.Testcontainers.Run do
       end
     end)
 
-    with_env(env, fn ->
-      Mix.Task.run(sub_task, sub_task_args)
-    end)
+    Enum.each(env, fn {k, v} -> System.put_env(k, v) end)
+    Mix.Task.run(sub_task, sub_task_args)
   end
 
   defp setup_container(database, db_volume) do
@@ -106,10 +105,5 @@ defmodule Mix.Tasks.Testcontainers.Run do
     [
       {"DATABASE_URL", "ecto://test:test@#{Testcontainers.get_host()}:#{port}/test"}
     ]
-  end
-
-  defp with_env(env_kv, fun) when is_function(fun, 0) do
-    Enum.each(env_kv, fn {k, v} -> System.put_env(k, v) end)
-    fun.()
   end
 end
