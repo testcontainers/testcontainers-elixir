@@ -25,7 +25,7 @@ jobs:
       matrix:
         pair:
           - elixir: 1.18.4
-            otp: 28.2
+            otp: 28.02
           - elixir: 1.18
             otp: 27.2
           - elixir: 1.17
