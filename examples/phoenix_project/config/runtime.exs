@@ -23,7 +23,7 @@ end
 if config_env() in [:test, :dev] do
   # In test environment, use DATABASE_URL if available (for Docker)
   if database_url = System.get_env("DATABASE_URL") do
-    config :hello, EasySolutions.Repo,
+    config :hello, Hello.Repo,
       url: database_url,
       pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10")
   end
