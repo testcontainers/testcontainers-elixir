@@ -29,7 +29,7 @@ To add Testcontainers to your project, follow these steps:
 ```elixir
 def deps do
   [
-    {:testcontainers, "~> 1.11"}
+    {:testcontainers, "~> 1.13", only: [:test, :dev]}
   ]
 end
 ```
@@ -98,34 +98,100 @@ container(:redis, Testcontainers.RedisContainer.new())
 
 ### Run tests in a Phoenix project (or any project for that matter)
 
-To run/wrap testcontainers around a project use the testcontainers.test task.
+To run/wrap testcontainers around a project use the testcontainers.run task.
 
-`mix testcontainers.test [--database postgres|mysql] [--watch dir ...]`
+`mix testcontainers.run [sub_task] [--database postgres|mysql] [--db-volume VOLUME]`
 
 to use postgres you can just run
 
-`mix testcontainers.test` since postgres is default.
+`mix testcontainers.run test` since postgres is default and test is the default sub-task.
 
-in your config/test.exs you can then change the repo config to this:
+#### Examples:
 
+```bash
+# Run tests with PostgreSQL (default)
+MIX_ENV=test mix testcontainers.run test
+
+# Run tests with MySQL
+MIX_ENV=test mix testcontainers.run test --database mysql
+
+# Run Phoenix server with PostgreSQL and persistent volume
+mix testcontainers.run phx.server --database postgres --db-volume my_postgres_data
+
+# Run tests with MySQL and persistent volume
+MIX_ENV=test mix testcontainers.run test --database mysql --db-volume my_mysql_data
+
+# Start Phoenix server with containerized DB (will keep running until stopped)
+mix testcontainers.run phx.server --database postgres --db-volume my_dev_data
 ```
-config :my_app, MyApp.Repo,
-  username: System.get_env("DB_USER") || "postgres",
-  password: System.get_env("DB_PASSWORD") || "postgres",
-  hostname: System.get_env("DB_HOST") || "localhost",
-  port: System.get_env("DB_PORT") || "5432",
-  database: "my_app_test#{System.get_env("MIX_TEST_PARTITION")}",
-  pool: Ecto.Adapters.SQL.Sandbox,
-  pool_size: System.schedulers_online() * 2
+
+#### Persistent Volumes
+
+The `--db-volume` parameter allows you to specify a persistent volume for database data. This ensures that your database data persists between container restarts. The volume name you provide will be used to create a Docker volume that gets mounted to the appropriate database data directory:
+
+- **PostgreSQL**: Volume is mounted to `/var/lib/postgresql/data`
+- **MySQL**: Volume is mounted to `/var/lib/mysql`
+
+This is particularly useful when you want to maintain database state across test runs or development sessions.
+
+#### Configuration (runtime.exs)
+
+Instead of editing dev.exs or test.exs, you can let testcontainers set `DATABASE_URL` and use it from `config/runtime.exs` for dev and test:
+
+```elixir
+# config/runtime.exs
+
+if config_env() in [:dev, :test] do
+  if url = System.get_env("DATABASE_URL") do
+    config :my_app, MyApp.Repo,
+      url: url,
+      pool: Ecto.Adapters.SQL.Sandbox,
+      show_sensitive_data_on_connection_error: true,
+      pool_size: 10
+  end
+end
+```
+
+This allows you to run your Phoenix server or tests with a containerized database without changing dev.exs or test.exs (remember to set MIX_ENV when running tests):
+
+```bash
+# Start Phoenix server with PostgreSQL container
+mix testcontainers.run phx.server --database postgres
+
+# Start Phoenix server with MySQL container
+mix testcontainers.run phx.server --database mysql
+
+# Start with persistent data
+mix testcontainers.run phx.server --database postgres --db-volume my_dev_data
 ```
 
 Activate reuse of database containers started by mix task with adding `testcontainers.reuse.enable=true` in `~/.testcontainers.properties`. This is experimental.
 
-You can pass arguments to mix test by append -- to the of the command like this:
+You can pass arguments to the sub-task by appending them after `--`. For example, to pass arguments to mix test:
 
-`mix testcontainers.test -- --exclude flaky --stale`
+`MIX_ENV=test mix testcontainers.run test -- --exclude flaky --stale`
 
-In the example above we are excluding flaky tests and using the --stale option.
+In the example above we are running tests while excluding flaky tests and using the --stale option.
+
+Note: MIX_ENV is not overridden by the run task. For tests, set it explicitly in the shell:
+
+`MIX_ENV=test mix testcontainers.run test`
+
+#### Backward Compatibility
+
+For backward compatibility, the old `mix testcontainers.test` task is still available and works exactly as before. It automatically delegates to `mix testcontainers.run test`, so existing scripts and workflows will continue to work without modification:
+
+```bash
+# These commands are equivalent:
+mix testcontainers.test --database mysql
+mix testcontainers.run test --database mysql
+
+# Both support all the same options:
+mix testcontainers.test --database postgres --db-volume my_data
+mix testcontainers.run test --database postgres --db-volume my_data
+```
+
+While the old task will continue to work, we recommend updating to `mix testcontainers.run` for new projects as it provides more flexibility by allowing you to run any Mix task, not just tests.
 
 ### Logging
 

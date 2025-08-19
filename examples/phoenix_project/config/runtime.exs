@@ -20,6 +20,14 @@ if System.get_env("PHX_SERVER") do
   config :hello, HelloWeb.Endpoint, server: true
 end
 
+if config_env() in [:test, :dev] do
+  if database_url = System.get_env("DATABASE_URL") do
+    config :hello, Hello.Repo,
+      url: database_url,
+      pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10")
+  end
+end
+
 if config_env() == :prod do
   database_url =
     System.get_env("DATABASE_URL") ||
