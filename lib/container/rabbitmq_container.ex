@@ -4,6 +4,8 @@ defmodule Testcontainers.RabbitMQContainer do
 
   NOTE: The default starting command is `chmod 400 /var/lib/rabbitmq/.erlang.cookie; rabbitmq-server`.
   `chmod 400 /var/lib/rabbitmq/.erlang.cookie` is necessary for the waiting strategy, which calls the command `rabbitmq-diagnostics check_running`; otherwise CLI tools cannot communicate with the RabbitMQ node.
+
+  NOTE: Currently untested, any developer who tries to add improvements on this container should consider moving this container implementation to a separate Elixir package.
   """
   alias Testcontainers.ContainerBuilder
   alias Testcontainers.Container
