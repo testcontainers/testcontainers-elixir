@@ -21,7 +21,6 @@ if System.get_env("PHX_SERVER") do
 end
 
 if config_env() in [:test, :dev] do
-  # In test environment, use DATABASE_URL if available (for Docker)
   if database_url = System.get_env("DATABASE_URL") do
     config :hello, Hello.Repo,
       url: database_url,
