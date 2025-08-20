@@ -129,7 +129,7 @@ defmodule Testcontainers.ContainerTest do
         |> Container.new()
         |> Container.with_check_image("my-image")
 
-      assert container.check_image == ~r/my-image/
+      assert "my-image" == Regex.source(container.check_image)
     end
 
     test "raises Regex.CompileError when string can't be compiled to a valid regex" do
@@ -146,7 +146,7 @@ defmodule Testcontainers.ContainerTest do
         |> Container.new()
         |> Container.with_check_image(~r/.*my-image.*/)
 
-      assert container.check_image == ~r/.*my-image.*/
+      assert ".*my-image.*" == Regex.source(container.check_image)
     end
   end
 
