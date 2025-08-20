@@ -72,15 +72,13 @@ defmodule Testcontainers.SeleniumContainer do
   defimpl ContainerBuilder do
     import Container
 
-    @log_regex ~r/.*(RemoteWebDriver instances should connect to|Selenium Server is up and running|Started Selenium Standalone).*\n/
-
     @spec build(%SeleniumContainer{}) :: %Container{}
     @impl true
     def build(%SeleniumContainer{} = config) do
       new(config.image)
       |> with_exposed_ports([config.port1, config.port2])
       |> with_waiting_strategies([
-        LogWaitStrategy.new(@log_regex, config.wait_timeout, 1000),
+        LogWaitStrategy.new(~r/.*(RemoteWebDriver instances should connect to|Selenium Server is up and running|Started Selenium Standalone).*\n/, config.wait_timeout, 1000),
         PortWaitStrategy.new("127.0.0.1", config.port1, config.wait_timeout, 1000),
         PortWaitStrategy.new("127.0.0.1", config.port2, config.wait_timeout, 1000)
       ])

@@ -23,7 +23,7 @@ defmodule Testcontainers.Container do
     labels: %{},
     auto_remove: false,
     container_id: nil,
-    check_image: ~r/.*/,
+    check_image: nil,
     network_mode: nil,
     reuse: false,
     force_reuse: false,
@@ -272,7 +272,7 @@ defmodule Testcontainers.Container do
   Check if the provided image is compatible with the expected default image.
   """
   def valid_image(%__MODULE__{image: image, check_image: check_image} = config) do
-    if Regex.match?(check_image, image) do
+    if Regex.match?(check_image || ~r/.*/, image) do
       {:ok, config}
     else
       {:error,
