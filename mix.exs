@@ -2,7 +2,7 @@ defmodule TestcontainersElixir.MixProject do
   use Mix.Project
 
   @app :testcontainers
-  @version "1.13.1"
+  @version "1.13.2"
   @source_url "https://github.com/testcontainers/testcontainers-elixir"
 
   def project do
