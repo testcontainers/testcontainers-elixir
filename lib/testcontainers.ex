@@ -22,8 +22,22 @@ defmodule Testcontainers do
 
   @timeout 300_000
 
+  @doc """
+  Starts the Testcontainers application.
+
+  This will terminate when the calling process exits, for ex a task.
+  """
   def start_link(options \\ []) do
     GenServer.start_link(__MODULE__, options, name: Keyword.get(options, :name, __MODULE__))
+  end
+
+  @doc """
+  Starts the Testcontainers application.
+
+  This will NOT terminate when the calling process exits, for ex a task.
+  """
+  def start(options \\ []) do
+    GenServer.start(__MODULE__, options, name: Keyword.get(options, :name, __MODULE__))
   end
 
   @impl true

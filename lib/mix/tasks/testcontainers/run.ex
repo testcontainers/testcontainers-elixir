@@ -21,7 +21,7 @@ defmodule Mix.Tasks.Testcontainers.Run do
       {:ok, _} = Application.ensure_all_started(app)
     end)
 
-    {:ok, _} = Testcontainers.start_link()
+    {:ok, _} = Testcontainers.start()
 
     {opts, rest_args, _} =
       OptionParser.parse(args,
@@ -41,25 +41,24 @@ defmodule Mix.Tasks.Testcontainers.Run do
         [] -> {"test", []}
       end
 
-    run_sub_task_and_exit(database, sub_task, sub_task_args, db_volume)
+    IO.puts("Starting database container: #{database}")
+    IO.puts("Using database volume: #{db_volume || "none"}")
+
+    {_container, env} = setup_container(database, db_volume)
+
+    run_sub_task_and_exit(sub_task, sub_task_args, env)
   end
 
-  @spec run_sub_task_and_exit(String.t(), String.t(), list(String.t()), String.t() | nil) :: no_return()
-  defp run_sub_task_and_exit(database, sub_task, sub_task_args, db_volume) do
-    {container, env} = setup_container(database, db_volume)
+  @spec run_sub_task_and_exit(String.t(), list(String.t()), list({String.t(), String.t()})) :: no_return()
+  defp run_sub_task_and_exit(sub_task, sub_task_args, env) do
 
-    IO.puts("Starting in-process mix task: #{sub_task} #{Enum.join(sub_task_args, " ")}")
-
-    System.at_exit(fn _ ->
-      try do
-        Testcontainers.stop_container(container.container_id)
-      catch
-        _, _ -> :ok
-      end
-    end)
+    IO.puts("Starting mix task: #{sub_task} #{Enum.join(sub_task_args, " ")}")
 
     Enum.each(env, fn {k, v} -> System.put_env(k, v) end)
-    Mix.Task.run(sub_task, sub_task_args)
+
+    :ok = Mix.Task.run(sub_task, sub_task_args)
+
+    IO.puts("Task finished: #{sub_task} #{Enum.join(sub_task_args, " ")}")
   end
 
   defp setup_container(database, db_volume) do
