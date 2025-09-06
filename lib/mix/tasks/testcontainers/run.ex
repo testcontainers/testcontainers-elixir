@@ -71,7 +71,7 @@ defmodule Mix.Tasks.Testcontainers.Run do
           |> PostgresContainer.with_user("test")
           |> PostgresContainer.with_password("test")
           |> PostgresContainer.with_reuse(true)
-          |> maybe_with_host_port(host_port, 5432, PostgresContainer)
+          |> maybe_with_host_port(host_port, PostgresContainer.default_port(), PostgresContainer)
           |> maybe_with_persistent_volume(db_volume, PostgresContainer)
 
         {:ok, container} = Testcontainers.start_container(container_def)
@@ -84,7 +84,7 @@ defmodule Mix.Tasks.Testcontainers.Run do
           |> MySqlContainer.with_user("test")
           |> MySqlContainer.with_password("test")
           |> MySqlContainer.with_reuse(true)
-          |> maybe_with_host_port(host_port, 3306, MySqlContainer)
+          |> maybe_with_host_port(host_port, MySqlContainer.default_port(), MySqlContainer)
           |> maybe_with_persistent_volume(db_volume, MySqlContainer)
 
         {:ok, container} = Testcontainers.start_container(container_def)
