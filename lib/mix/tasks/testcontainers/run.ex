@@ -96,9 +96,9 @@ defmodule Mix.Tasks.Testcontainers.Run do
     end
   end
 
-  defp maybe_with_host_port(config, nil, _container_port, _module), do: config
-  defp maybe_with_host_port(config, host_port, container_port, module) do
-    module.with_port(config, {host_port, container_port})
+  defp maybe_with_host_port(config, nil, _exposed_port, _module), do: config
+  defp maybe_with_host_port(config, host_port, exposed_port, module) do
+    module.with_port(config, {exposed_port, host_port})
   end
 
   defp maybe_with_persistent_volume(config, nil, _module), do: config
