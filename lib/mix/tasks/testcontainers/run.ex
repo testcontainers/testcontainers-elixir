@@ -27,12 +27,14 @@ defmodule Mix.Tasks.Testcontainers.Run do
       OptionParser.parse(args,
         switches: [
           database: :string,
-          db_volume: :string
+          db_volume: :string,
+          host_port: :integer
         ]
       )
 
     database = opts[:database] || "postgres"
     db_volume = opts[:db_volume]
+    host_port = opts[:host_port]
 
     # Determine sub_task and its args
     {sub_task, sub_task_args} =
@@ -44,7 +46,7 @@ defmodule Mix.Tasks.Testcontainers.Run do
     IO.puts("Starting database container: #{database}")
     IO.puts("Using database volume: #{db_volume || "none"}")
 
-    {_container, env} = setup_container(database, db_volume)
+    {_container, env} = setup_container(database, db_volume, host_port)
 
     run_sub_task_and_exit(sub_task, sub_task_args, env)
   end
@@ -61,7 +63,7 @@ defmodule Mix.Tasks.Testcontainers.Run do
     IO.puts("Task finished: #{sub_task} #{Enum.join(sub_task_args, " ")}")
   end
 
-  defp setup_container(database, db_volume) do
+  defp setup_container(database, db_volume, host_port) do
     case database do
       "postgres" ->
         container_def =
@@ -69,6 +71,7 @@ defmodule Mix.Tasks.Testcontainers.Run do
           |> PostgresContainer.with_user("test")
           |> PostgresContainer.with_password("test")
           |> PostgresContainer.with_reuse(true)
+          |> maybe_with_host_port(host_port, PostgresContainer.default_port(), PostgresContainer)
           |> maybe_with_persistent_volume(db_volume, PostgresContainer)
 
         {:ok, container} = Testcontainers.start_container(container_def)
@@ -81,6 +84,7 @@ defmodule Mix.Tasks.Testcontainers.Run do
           |> MySqlContainer.with_user("test")
           |> MySqlContainer.with_password("test")
           |> MySqlContainer.with_reuse(true)
+          |> maybe_with_host_port(host_port, MySqlContainer.default_port(), MySqlContainer)
           |> maybe_with_persistent_volume(db_volume, MySqlContainer)
 
         {:ok, container} = Testcontainers.start_container(container_def)
@@ -92,12 +96,14 @@ defmodule Mix.Tasks.Testcontainers.Run do
     end
   end
 
+  defp maybe_with_host_port(config, nil, _exposed_port, _module), do: config
+  defp maybe_with_host_port(config, host_port, exposed_port, module) do
+    module.with_port(config, {exposed_port, host_port})
+  end
+
+  defp maybe_with_persistent_volume(config, nil, _module), do: config
   defp maybe_with_persistent_volume(config, db_volume, module) do
-    if db_volume do
-      module.with_persistent_volume(config, db_volume)
-    else
-      config
-    end
+    module.with_persistent_volume(config, db_volume)
   end
 
   defp create_env(port) do
