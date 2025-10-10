@@ -12,7 +12,7 @@ defmodule Test.ZookeeperContainer do
 
     @impl true
     def build(%Test.ZookeeperContainer{}) do
-      new("bitnami/zookeeper:3.7.2")
+      new("zookeeper:3.9.4")
       |> with_fixed_port(2181)
       |> with_environment(:ALLOW_ANONYMOUS_LOGIN, "true")
       |> with_waiting_strategy(
