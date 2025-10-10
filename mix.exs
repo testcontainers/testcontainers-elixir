@@ -73,7 +73,7 @@ defmodule TestcontainersElixir.MixProject do
       # EMQX
       {:tortoise311, "~> 0.12.0", only: [:dev, :test]},
       # For watching directories for file changes in mix task
-      {:fs, "~> 8.6"}
+      {:fs, "~> 11.4"}
     ]
   end
 
