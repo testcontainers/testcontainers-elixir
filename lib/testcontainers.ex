@@ -50,15 +50,21 @@ defmodule Testcontainers do
   defp setup(options) do
     {conn, docker_host_url, docker_host} = Connection.get_connection(options)
 
+    # Read properties first so we can configure Ryuk appropriately
+    {:ok, properties} = PropertiesParser.read_property_sources()
+
     session_id =
       :crypto.hash(:sha, "#{inspect(self())}#{DateTime.utc_now() |> DateTime.to_string()}")
       |> Base.encode16()
+
+    ryuk_privileged = Map.get(properties, "ryuk.container.privileged", "false") == "true"
 
     ryuk_config =
       Container.new("testcontainers/ryuk:#{Constants.ryuk_version()}")
       |> Container.with_exposed_port(8080)
       |> then(&apply_docker_socket_volume_binding(&1, docker_host))
       |> Container.with_auto_remove(true)
+      |> Container.with_privileged(ryuk_privileged)
 
     with {:ok, _} <- Api.pull_image(ryuk_config.image, conn),
          {:ok, docker_hostname} <- get_docker_hostname(docker_host_url, conn),
@@ -66,8 +72,7 @@ defmodule Testcontainers do
          :ok <- Api.start_container(ryuk_container_id, conn),
          {:ok, container} <- Api.get_container(ryuk_container_id, conn),
          {:ok, socket} <- create_ryuk_socket(container, docker_hostname),
-         :ok <- register_ryuk_filter(session_id, socket),
-         {:ok, properties} <- PropertiesParser.read_property_file() do
+         :ok <- register_ryuk_filter(session_id, socket) do
       Logger.info("Testcontainers initialized")
 
       {:ok,
