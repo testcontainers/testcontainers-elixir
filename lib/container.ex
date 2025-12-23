@@ -171,6 +171,16 @@ defmodule Testcontainers.Container do
   end
 
   @doc """
+  Sets whether the container should run in privileged mode.
+
+  Required for containers that need access to the Docker/Podman socket
+  when running under SELinux (e.g., Ryuk on Podman).
+  """
+  def with_privileged(%__MODULE__{} = config, privileged) when is_boolean(privileged) do
+    %__MODULE__{config | privileged: privileged}
+  end
+
+  @doc """
   Sets whether the container should be reused if it is already running.
   """
   def with_reuse(%__MODULE__{} = config, reuse) when is_boolean(reuse) do

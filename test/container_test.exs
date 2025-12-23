@@ -205,4 +205,24 @@ defmodule Testcontainers.ContainerTest do
                    end
     end
   end
+
+  describe "with_privileged/2" do
+    test "sets privileged to true" do
+      container = Container.new("my-image")
+      assert container.privileged == false
+
+      updated_container = Container.with_privileged(container, true)
+
+      assert updated_container.privileged == true
+    end
+
+    test "sets privileged to false" do
+      container =
+        Container.new("my-image")
+        |> Container.with_privileged(true)
+        |> Container.with_privileged(false)
+
+      assert container.privileged == false
+    end
+  end
 end
