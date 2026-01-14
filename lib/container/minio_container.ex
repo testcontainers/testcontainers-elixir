@@ -83,7 +83,12 @@ defmodule Testcontainers.MinioContainer do
       |> with_environment(:MINIO_ROOT_USER, config.username)
       |> with_environment(:MINIO_ROOT_PASSWORD, config.password)
       |> with_reuse(config.reuse)
-      |> with_cmd(["server", "--console-address", ":#{MinioContainer.default_ui_port()}", "/data"])
+      |> with_cmd([
+        "server",
+        "--console-address",
+        ":#{MinioContainer.default_ui_port()}",
+        "/data"
+      ])
       |> with_waiting_strategy(
         LogWaitStrategy.new(~r/.*Status:         1 Online, 0 Offline..*/, config.wait_timeout)
       )

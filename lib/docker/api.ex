@@ -185,6 +185,8 @@ defmodule Testcontainers.Docker.Api do
   @doc """
   Creates a Docker network.
   """
+  # Suppress Dialyzer warnings - runtime behavior may differ from generated specs
+  @dialyzer {:nowarn_function, create_network: 3}
   def create_network(name, conn, opts \\ []) when is_binary(name) do
     driver = Keyword.get(opts, :driver, "bridge")
 
@@ -201,36 +203,35 @@ defmodule Testcontainers.Docker.Api do
       {:ok, %DockerEngineAPI.Model.ErrorResponse{message: message}} ->
         {:error, {:failed_to_create_network, message}}
 
-      {:error, %Tesla.Env{status: 409}} ->
+      {_, %Tesla.Env{status: 409}} ->
         {:ok, :already_exists}
 
-      {:error, %Tesla.Env{status: status}} ->
+      {_, %Tesla.Env{status: status}} ->
         {:error, {:http_error, status}}
-
-      {:error, reason} ->
-        {:error, reason}
     end
   end
 
   @doc """
   Removes a Docker network.
   """
+  # Suppress Dialyzer warnings - runtime behavior may differ from generated specs
+  @dialyzer {:nowarn_function, remove_network: 2}
   def remove_network(name, conn) when is_binary(name) do
     case Api.Network.network_delete(conn, name) do
-      {:ok, %Tesla.Env{status: 204}} ->
+      {:ok, nil} ->
         :ok
 
-      {:ok, %Tesla.Env{status: 404}} ->
+      {_, %Tesla.Env{status: 204}} ->
+        :ok
+
+      {_, %Tesla.Env{status: 404}} ->
         {:error, :network_not_found}
 
       {:ok, %DockerEngineAPI.Model.ErrorResponse{message: message}} ->
         {:error, {:failed_to_remove_network, message}}
 
-      {:error, %Tesla.Env{status: status}} ->
+      {_, %Tesla.Env{status: status}} ->
         {:error, {:http_error, status}}
-
-      {:error, reason} ->
-        {:error, reason}
     end
   end
 
@@ -415,8 +416,6 @@ defmodule Testcontainers.Docker.Api do
       _ -> nil
     end)
   end
-
-  defp get_ip_from_networks(_), do: nil
 
   defp create_exec(container_id, command, conn) do
     data = %ExecConfig{Cmd: command}
