@@ -57,22 +57,9 @@ defmodule Testcontainers do
       :crypto.hash(:sha, "#{inspect(self())}#{DateTime.utc_now() |> DateTime.to_string()}")
       |> Base.encode16()
 
-    ryuk_privileged = Map.get(properties, "ryuk.container.privileged", "false") == "true"
-
-    ryuk_config =
-      Container.new("testcontainers/ryuk:#{Constants.ryuk_version()}")
-      |> Container.with_exposed_port(8080)
-      |> then(&apply_docker_socket_volume_binding(&1, docker_host))
-      |> Container.with_auto_remove(true)
-      |> Container.with_privileged(ryuk_privileged)
-
-    with {:ok, _} <- Api.pull_image(ryuk_config.image, conn),
-         {:ok, docker_hostname} <- get_docker_hostname(docker_host_url, conn),
-         {:ok, ryuk_container_id} <- Api.create_container(ryuk_config, conn),
-         :ok <- Api.start_container(ryuk_container_id, conn),
-         {:ok, container} <- Api.get_container(ryuk_container_id, conn),
-         {:ok, socket} <- create_ryuk_socket(container, docker_hostname),
-         :ok <- register_ryuk_filter(session_id, socket) do
+    with {:ok, docker_hostname} <- get_docker_hostname(docker_host_url, conn),
+         {:ok, socket} <- start_reaper(conn, session_id, properties, docker_host, docker_hostname),
+         {:ok, properties} <- PropertiesParser.read_property_file() do
       Logger.info("Testcontainers initialized")
 
       {:ok,
@@ -197,6 +184,36 @@ defmodule Testcontainers do
 
   defp wait_for_call(call, name) do
     GenServer.call(name, call, @timeout)
+  end
+
+  defp start_reaper(conn, session_id, docker_host, docker_hostname) do
+    case System.get_env("TESTCONTAINERS_RYUK_DISABLED") do
+      "true" ->
+        {:ok, nil}
+
+      _ ->
+        start_ryuk(conn, session_id, docker_host, docker_hostname)
+    end
+  end
+
+  defp start_ryuk(conn, session_id, properties, docker_host, docker_hostname) do
+    ryuk_privileged = Map.get(properties, "ryuk.container.privileged", "false") == "true"
+
+    ryuk_config =
+      Container.new("testcontainers/ryuk:#{Constants.ryuk_version()}")
+      |> Container.with_exposed_port(8080)
+      |> then(&apply_docker_socket_volume_binding(&1, docker_host))
+      |> Container.with_auto_remove(true)
+      |> Container.with_privileged(ryuk_privileged)
+
+    with {:ok, _} <- Api.pull_image(ryuk_config.image, conn),
+         {:ok, ryuk_container_id} <- Api.create_container(ryuk_config, conn),
+         :ok <- Api.start_container(ryuk_container_id, conn),
+         {:ok, container} <- Api.get_container(ryuk_container_id, conn),
+         {:ok, socket} <- create_ryuk_socket(container, docker_hostname),
+         :ok <- register_ryuk_filter(session_id, socket) do
+      {:ok, socket}
+    end
   end
 
   defp create_ryuk_socket(container, docker_hostname, reattempt_count \\ 0)
