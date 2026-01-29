@@ -197,7 +197,7 @@ defmodule Testcontainers do
   defp create_ryuk_socket(container, docker_hostname, reattempt_count \\ 0)
 
   defp create_ryuk_socket(%Container{} = container, docker_hostname, reattempt_count)
-       when reattempt_count < 3 do
+       when reattempt_count < 10 do
     host_port = Container.mapped_port(container, 8080)
 
     case :gen_tcp.connect(~c"#{docker_hostname}", host_port, [
