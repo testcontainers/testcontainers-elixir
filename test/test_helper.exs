@@ -1,3 +1,6 @@
+Path.wildcard("test/support/**/*.ex")
+|> Kernel.ParallelCompiler.compile()
+
 Testcontainers.start_link()
 
 ExUnit.start()
