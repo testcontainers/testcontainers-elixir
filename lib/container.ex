@@ -242,13 +242,10 @@ defmodule Testcontainers.Container do
   """
   def mapped_port(%__MODULE__{} = container, port) when is_number(port) do
     container.exposed_ports
-    |> Enum.filter(fn
-      {exposed_port, _} -> exposed_port == port
-      port -> port == port
+    |> Enum.find_value(nil, fn
+      {^port, host_port} -> host_port
+      _ -> nil
     end)
-    |> List.first({})
-    |> Tuple.to_list()
-    |> List.last()
   end
 
   @doc """

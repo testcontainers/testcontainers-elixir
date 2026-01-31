@@ -96,6 +96,11 @@ defmodule Testcontainers.ContainerTest do
       container = Container.new("my-image")
       assert Container.mapped_port(container, 80) == nil
     end
+
+    test "returns nil (and does not crash) if the exposed port is present but not mapped (integer)" do
+      container = Container.new("my-image") |> Container.with_exposed_port(80)
+      assert Container.mapped_port(container, 80) == nil
+    end
   end
 
   describe "with_network_mode/2" do
