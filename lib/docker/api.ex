@@ -224,7 +224,6 @@ defmodule Testcontainers.Docker.Api do
     container_config.exposed_ports
     |> Enum.map(fn
       {container_port, _host_port} -> {container_port, %{}}
-      port -> {port, %{}}
     end)
     |> Enum.into(%{})
   end
@@ -237,11 +236,11 @@ defmodule Testcontainers.Docker.Api do
   defp map_port_bindings(%Container{} = container_config) do
     container_config.exposed_ports
     |> Enum.map(fn
+      {container_port, host_port} when is_nil(host_port) ->
+        {container_port, [%{"HostIp" => "0.0.0.0", "HostPort" => ""}]}
+
       {container_port, host_port} ->
         {container_port, [%{"HostIp" => "0.0.0.0", "HostPort" => to_string(host_port)}]}
-
-      port ->
-        {port, [%{"HostIp" => "0.0.0.0", "HostPort" => ""}]}
     end)
     |> Enum.into(%{})
   end

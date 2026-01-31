@@ -21,10 +21,10 @@ defmodule Testcontainers.ContainerTest do
       container2 = ContainerBuilder.build(Testcontainers.PostgresContainer.new())
 
       assert Testcontainers.Util.Hash.struct_to_hash(container1) ==
-               "2ac8f31c61b760b17176a9b9e51bd9d969eb26adadc9bf3db4cdcac69cfb065f"
+               "082851e217cae88e1684169a9759a6d702d012016054c14b23d192f7e2559c63"
 
       assert Testcontainers.Util.Hash.struct_to_hash(container2) ==
-               "2ac8f31c61b760b17176a9b9e51bd9d969eb26adadc9bf3db4cdcac69cfb065f"
+               "082851e217cae88e1684169a9759a6d702d012016054c14b23d192f7e2559c63"
     end
   end
 
@@ -34,7 +34,7 @@ defmodule Testcontainers.ContainerTest do
         Container.new("my-image")
         |> Container.with_exposed_port(80)
 
-      assert container.exposed_ports == [80]
+      assert container.exposed_ports == [{80, nil}]
     end
 
     test "removes duplicate exposed ports" do
@@ -43,7 +43,7 @@ defmodule Testcontainers.ContainerTest do
         |> Container.with_exposed_port(80)
         |> Container.with_exposed_port(80)
 
-      assert container.exposed_ports == [80]
+      assert container.exposed_ports == [{80, nil}]
     end
   end
 
@@ -53,7 +53,7 @@ defmodule Testcontainers.ContainerTest do
         Container.new("my-image")
         |> Container.with_exposed_ports([80, 443])
 
-      assert container.exposed_ports == [80, 443]
+      assert container.exposed_ports == [{80, nil}, {443, nil}]
     end
 
     test "removes duplicate exposed ports" do
@@ -62,7 +62,7 @@ defmodule Testcontainers.ContainerTest do
         |> Container.with_exposed_ports([80, 443])
         |> Container.with_exposed_ports([80])
 
-      assert container.exposed_ports == [80, 443]
+      assert container.exposed_ports == [{80, nil}, {443, nil}]
     end
   end
 
@@ -94,6 +94,11 @@ defmodule Testcontainers.ContainerTest do
 
     test "returns nil if the exposed port is not found" do
       container = Container.new("my-image")
+      assert Container.mapped_port(container, 80) == nil
+    end
+
+    test "returns nil (and does not crash) if the exposed port is present but not mapped (integer)" do
+      container = Container.new("my-image") |> Container.with_exposed_port(80)
       assert Container.mapped_port(container, 80) == nil
     end
   end
