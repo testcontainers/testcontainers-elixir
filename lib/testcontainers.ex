@@ -250,9 +250,14 @@ defmodule Testcontainers do
 
     case ryuk_disabled do
       true ->
-        Logger.warning(
-          "Ryuk has been disabled. This can cause unexpected behavior in your environment."
-        )
+        ryukDisabledMessage =
+          """
+          ********************************************************************************
+          Ryuk has been disabled. This can cause unexpected behavior in your environment.
+          ********************************************************************************
+          """
+
+        IO.puts(ryukDisabledMessage)
 
         {:ok, nil}
 
