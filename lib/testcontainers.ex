@@ -50,7 +50,7 @@ defmodule Testcontainers do
   defp setup(options) do
     {conn, docker_host_url, docker_host} = Connection.get_connection(options)
 
-    # Read properties first so we can configure Ryuk appropriately
+    # Read testcontainer properties
     {:ok, properties} = PropertiesParser.read_property_sources()
 
     session_id =
@@ -186,13 +186,19 @@ defmodule Testcontainers do
     GenServer.call(name, call, @timeout)
   end
 
-  defp start_reaper(conn, session_id, docker_host, docker_hostname) do
-    case System.get_env("TESTCONTAINERS_RYUK_DISABLED") do
-      "true" ->
+  defp start_reaper(conn, session_id, properties, docker_host, docker_hostname) do
+    ryuk_disabled = Map.get(properties, "ryuk.disabled", "false") == "true"
+
+    case ryuk_disabled do
+      true ->
+        Logger.warning(
+          "Ryuk has been disabled. This can cause unexpected behavior in your environment."
+        )
+
         {:ok, nil}
 
       _ ->
-        start_ryuk(conn, session_id, docker_host, docker_hostname)
+        start_ryuk(conn, session_id, properties, docker_host, docker_hostname)
     end
   end
 
