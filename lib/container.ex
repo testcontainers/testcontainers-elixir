@@ -90,18 +90,30 @@ defmodule Testcontainers.Container do
   Adds a _port_ to be exposed on the _container_.
   """
   def with_exposed_port(%__MODULE__{} = config, port) when is_integer(port) do
-    filtered_ports = config.exposed_ports |> Enum.reject(fn p -> p == port end)
+    filtered_ports =
+      config.exposed_ports
+      |> Enum.reject(fn
+        {p, _} -> p == port
+        p -> p == port
+      end)
 
-    %__MODULE__{config | exposed_ports: [port | filtered_ports]}
+    %__MODULE__{config | exposed_ports: [{port, nil} | filtered_ports]}
   end
 
   @doc """
   Adds multiple _ports_ to be exposed on the _container_.
   """
   def with_exposed_ports(%__MODULE__{} = config, ports) when is_list(ports) do
-    filtered_ports = config.exposed_ports |> Enum.reject(fn port -> port in ports end)
+    filtered_ports =
+      config.exposed_ports
+      |> Enum.reject(fn
+        {p, _} -> p in ports
+        p -> p in ports
+      end)
 
-    %__MODULE__{config | exposed_ports: ports ++ filtered_ports}
+    new_ports = Enum.map(ports, fn port -> {port, nil} end)
+
+    %__MODULE__{config | exposed_ports: new_ports ++ filtered_ports}
   end
 
   @doc """
