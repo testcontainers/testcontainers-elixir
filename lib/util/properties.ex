@@ -39,7 +39,9 @@ defmodule Testcontainers.Util.PropertiesParser do
   - `:project_file` - path to project properties file (default: .testcontainers.properties)
   - `:env_prefix` - environment variable prefix (default: TESTCONTAINERS_)
 
-  Returns `{:ok, map}` with merged properties.
+  ## Returns
+
+  - `{:ok, map}` with merged properties.
   """
   def read_property_sources(opts \\ []) do
     user_file = Keyword.get(opts, :user_file, @user_file)
