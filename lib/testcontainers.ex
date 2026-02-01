@@ -58,13 +58,12 @@ defmodule Testcontainers do
       |> Base.encode16()
 
     with {:ok, docker_hostname} <- get_docker_hostname(docker_host_url, conn),
-         {:ok, socket} <- start_reaper(conn, session_id, properties, docker_host, docker_hostname),
+         {:ok} <- start_reaper(conn, session_id, properties, docker_host, docker_hostname),
          {:ok, properties} <- PropertiesParser.read_property_file() do
       Logger.info("Testcontainers initialized")
 
       {:ok,
        %{
-         socket: socket,
          conn: conn,
          docker_hostname: docker_hostname,
          session_id: session_id,
@@ -282,7 +281,7 @@ defmodule Testcontainers do
          {:ok, container} <- Api.get_container(ryuk_container_id, conn),
          {:ok, socket} <- create_ryuk_socket(container, docker_hostname),
          :ok <- register_ryuk_filter(session_id, socket) do
-      {:ok, socket}
+      {:ok}
     end
   end
 
