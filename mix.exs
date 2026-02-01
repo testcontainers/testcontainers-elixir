@@ -77,6 +77,8 @@ defmodule TestcontainersElixir.MixProject do
       {:erlzk, "~> 0.6.2", only: [:dev, :test]},
       # EMQX
       {:tortoise311, "~> 0.12.0", only: [:dev, :test]},
+      # Toxiproxy (for fault injection tests)
+      {:toxiproxy_ex, "~> 2.0", only: [:dev, :test]},
       # For watching directories for file changes in mix task
       {:fs, "~> 11.4"}
     ]

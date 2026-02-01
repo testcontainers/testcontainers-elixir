@@ -25,6 +25,8 @@ defmodule Testcontainers.Container do
     container_id: nil,
     check_image: nil,
     network_mode: nil,
+    network: nil,
+    hostname: nil,
     reuse: false,
     force_reuse: false,
     pull_policy: Testcontainers.PullPolicy.always_pull()
@@ -257,6 +259,26 @@ defmodule Testcontainers.Container do
 
   def with_network_mode(%__MODULE__{} = config, mode) when is_binary(mode) do
     %__MODULE__{config | network_mode: mode}
+  end
+
+  @doc """
+  Sets the Docker network for the container to join.
+
+  Containers on the same network can communicate with each other using their
+  hostnames. Use `with_hostname/2` to set a custom hostname for the container.
+  """
+  def with_network(%__MODULE__{} = config, network_name) when is_binary(network_name) do
+    %__MODULE__{config | network: network_name}
+  end
+
+  @doc """
+  Sets the hostname for the container.
+
+  This is useful when containers need to communicate with each other by hostname
+  on a shared Docker network.
+  """
+  def with_hostname(%__MODULE__{} = config, hostname) when is_binary(hostname) do
+    %__MODULE__{config | hostname: hostname}
   end
 
   @doc """
