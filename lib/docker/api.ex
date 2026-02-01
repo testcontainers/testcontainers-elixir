@@ -351,25 +351,7 @@ defmodule Testcontainers.Docker.Api do
     # The default bridge IPAddress will be empty for custom networks
     resolved_ip = resolve_ip_address(ip_address, networks)
 
-    %Container{
-      container_id: container_id,
-      image: image,
-      labels: labels,
-      ip_address: resolved_ip,
-      exposed_ports:
-        Enum.reduce(ports || [], [], fn {key, ports}, acc ->
-          acc ++
-            Enum.map(ports || [], fn %{"HostPort" => host_port} ->
-              {key |> String.replace("/tcp", "") |> String.to_integer(),
-               host_port |> String.to_integer()}
-            end)
-        end),
-      environment:
-        Enum.reduce(env || [], %{}, fn env, acc ->
-          tokens = String.split(env, "=")
-          Map.merge(acc, %{"#{List.first(tokens)}": List.last(tokens)})
-        end)
-    }
+    make_container(container_id, image, labels, resolved_ip, ports, env)
   end
 
   # Also handle when Networks key is missing
@@ -379,6 +361,10 @@ defmodule Testcontainers.Docker.Api do
          NetworkSettings: %{IPAddress: ip_address, Ports: ports},
          Config: %{Env: env, Labels: labels}
        }) do
+    make_container(container_id, image, labels, ip_address, ports, env)
+  end
+
+  defp make_container(container_id, image, labels, ip_address, ports, env) do
     %Container{
       container_id: container_id,
       image: image,
@@ -412,7 +398,6 @@ defmodule Testcontainers.Docker.Api do
     networks
     |> Enum.find_value(fn
       {_name, %{IPAddress: ip}} when is_binary(ip) and ip != "" -> ip
-      {_name, %{"IPAddress" => ip}} when is_binary(ip) and ip != "" -> ip
       _ -> nil
     end)
   end
