@@ -39,8 +39,8 @@ defmodule TestcontainersElixir.MixProject do
     ]
   end
 
-  defp elixirc_paths(:prod), do: ["lib", "docker_engine_api"]
-  defp elixirc_paths(_),     do: ["lib", "test/support", "docker_engine_api"]
+  defp elixirc_paths(:test), do: ["lib", "test/support", "docker_engine_api"]
+  defp elixirc_paths(_), do: ["lib", "docker_engine_api"]
 
   def application do
     [
