@@ -68,7 +68,8 @@ defmodule Testcontainers do
          conn: conn,
          docker_hostname: docker_hostname,
          session_id: session_id,
-         properties: properties
+         properties: properties,
+         networks: MapSet.new()
        }}
     else
       error ->
@@ -132,6 +133,44 @@ defmodule Testcontainers do
     wait_for_call({:stop_container, container_id}, name)
   end
 
+  @doc """
+  Creates a Docker network.
+
+  Networks allow containers to communicate with each other using hostnames.
+  Use `Container.with_network/2` to attach a container to a network.
+
+  ## Parameters
+
+  - `network_name`: The name of the network to create.
+  - `name`: The name of the Testcontainers GenServer (defaults to `Testcontainers`).
+
+  ## Returns
+
+  - `{:ok, network_id}` if the network is created successfully.
+  - `{:ok, :already_exists}` if the network already exists.
+  - `{:error, reason}` on failure.
+  """
+  def create_network(network_name, name \\ __MODULE__) when is_binary(network_name) do
+    wait_for_call({:create_network, network_name}, name)
+  end
+
+  @doc """
+  Removes a Docker network.
+
+  ## Parameters
+
+  - `network_name`: The name of the network to remove.
+  - `name`: The name of the Testcontainers GenServer (defaults to `Testcontainers`).
+
+  ## Returns
+
+  - `:ok` if the network is removed successfully.
+  - `{:error, reason}` on failure.
+  """
+  def remove_network(network_name, name \\ __MODULE__) when is_binary(network_name) do
+    wait_for_call({:remove_network, network_name}, name)
+  end
+
   @impl true
   def handle_info(_msg, state) do
     {:noreply, state}
@@ -155,6 +194,26 @@ defmodule Testcontainers do
   @impl true
   def handle_call(:get_host, _from, state) do
     {:reply, state.docker_hostname, state}
+  end
+
+  @impl true
+  def handle_call({:create_network, network_name}, from, state) do
+    Task.async(fn ->
+      result = Api.create_network(network_name, state.conn)
+      GenServer.reply(from, result)
+    end)
+
+    {:noreply, %{state | networks: MapSet.put(state.networks, network_name)}}
+  end
+
+  @impl true
+  def handle_call({:remove_network, network_name}, from, state) do
+    Task.async(fn ->
+      result = Api.remove_network(network_name, state.conn)
+      GenServer.reply(from, result)
+    end)
+
+    {:noreply, %{state | networks: MapSet.delete(state.networks, network_name)}}
   end
 
   # private functions

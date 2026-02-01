@@ -51,9 +51,9 @@ defmodule Mix.Tasks.Testcontainers.Run do
     run_sub_task_and_exit(sub_task, sub_task_args, env)
   end
 
-  @spec run_sub_task_and_exit(String.t(), list(String.t()), list({String.t(), String.t()})) :: no_return()
+  @spec run_sub_task_and_exit(String.t(), list(String.t()), list({String.t(), String.t()})) ::
+          no_return()
   defp run_sub_task_and_exit(sub_task, sub_task_args, env) do
-
     IO.puts("Starting mix task: #{sub_task} #{Enum.join(sub_task_args, " ")}")
 
     Enum.each(env, fn {k, v} -> System.put_env(k, v) end)
@@ -97,11 +97,13 @@ defmodule Mix.Tasks.Testcontainers.Run do
   end
 
   defp maybe_with_host_port(config, nil, _exposed_port, _module), do: config
+
   defp maybe_with_host_port(config, host_port, exposed_port, module) do
     module.with_port(config, {exposed_port, host_port})
   end
 
   defp maybe_with_persistent_volume(config, nil, _module), do: config
+
   defp maybe_with_persistent_volume(config, db_volume, module) do
     module.with_persistent_volume(config, db_volume)
   end

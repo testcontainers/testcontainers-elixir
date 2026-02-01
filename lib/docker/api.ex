@@ -182,6 +182,69 @@ defmodule Testcontainers.Docker.Api do
     end
   end
 
+  @doc """
+  Creates a Docker network.
+  """
+  # Suppress Dialyzer warnings - runtime behavior may differ from generated specs
+  @dialyzer {:nowarn_function, create_network: 3}
+  def create_network(name, conn, opts \\ []) when is_binary(name) do
+    driver = Keyword.get(opts, :driver, "bridge")
+
+    body = %DockerEngineAPI.Model.NetworkCreateRequest{
+      Name: name,
+      Driver: driver,
+      CheckDuplicate: true
+    }
+
+    case Api.Network.network_create(conn, body) do
+      {:ok, %DockerEngineAPI.Model.NetworkCreateResponse{Id: id}} ->
+        {:ok, id}
+
+      {:ok, %DockerEngineAPI.Model.ErrorResponse{message: message}} ->
+        {:error, {:failed_to_create_network, message}}
+
+      {_, %Tesla.Env{status: 409}} ->
+        {:ok, :already_exists}
+
+      {_, %Tesla.Env{status: status}} ->
+        {:error, {:http_error, status}}
+    end
+  end
+
+  @doc """
+  Removes a Docker network.
+  """
+  # Suppress Dialyzer warnings - runtime behavior may differ from generated specs
+  @dialyzer {:nowarn_function, remove_network: 2}
+  def remove_network(name, conn) when is_binary(name) do
+    case Api.Network.network_delete(conn, name) do
+      {:ok, nil} ->
+        :ok
+
+      {_, %Tesla.Env{status: 204}} ->
+        :ok
+
+      {_, %Tesla.Env{status: 404}} ->
+        {:error, :network_not_found}
+
+      {:ok, %DockerEngineAPI.Model.ErrorResponse{message: message}} ->
+        {:error, {:failed_to_remove_network, message}}
+
+      {_, %Tesla.Env{status: status}} ->
+        {:error, {:http_error, status}}
+    end
+  end
+
+  @doc """
+  Checks if a network exists.
+  """
+  def network_exists?(name, conn) when is_binary(name) do
+    case Api.Network.network_inspect(conn, name) do
+      {:ok, %DockerEngineAPI.Model.Network{}} -> true
+      _ -> false
+    end
+  end
+
   def tag_image(image, repo, tag, conn) do
     case Api.Image.image_tag(conn, image, repo: repo, tag: tag) do
       {:ok, %Tesla.Env{status: 201}} ->
@@ -203,21 +266,35 @@ defmodule Testcontainers.Docker.Api do
   end
 
   defp container_create_request(%Container{} = container_config) do
-    %DockerEngineAPI.Model.ContainerCreateRequest{
+    base_request = %DockerEngineAPI.Model.ContainerCreateRequest{
       Image: container_config.image,
       Cmd: container_config.cmd,
       ExposedPorts: map_exposed_ports(container_config),
       Env: map_env(container_config),
       Labels: container_config.labels,
+      Hostname: container_config.hostname,
       HostConfig: %HostConfig{
         AutoRemove: container_config.auto_remove,
         PortBindings: map_port_bindings(container_config),
         Privileged: container_config.privileged,
         Binds: map_binds(container_config),
         Mounts: map_volumes(container_config),
-        NetworkMode: container_config.network_mode
+        NetworkMode: container_config.network_mode || container_config.network
       }
     }
+
+    # Add NetworkingConfig if a network is specified
+    if container_config.network do
+      endpoint_config = %{
+        container_config.network => %DockerEngineAPI.Model.EndpointSettings{}
+      }
+
+      Map.put(base_request, :NetworkingConfig, %DockerEngineAPI.Model.NetworkingConfig{
+        EndpointsConfig: endpoint_config
+      })
+    else
+      base_request
+    end
   end
 
   defp map_exposed_ports(%Container{} = container_config) do
@@ -267,9 +344,27 @@ defmodule Testcontainers.Docker.Api do
   defp from(%DockerEngineAPI.Model.ContainerInspectResponse{
          Id: container_id,
          Image: image,
+         NetworkSettings: %{IPAddress: ip_address, Ports: ports, Networks: networks},
+         Config: %{Env: env, Labels: labels}
+       }) do
+    # For custom networks, the IP address is in Networks.<network_name>.IPAddress
+    # The default bridge IPAddress will be empty for custom networks
+    resolved_ip = resolve_ip_address(ip_address, networks)
+
+    make_container(container_id, image, labels, resolved_ip, ports, env)
+  end
+
+  # Also handle when Networks key is missing
+  defp from(%DockerEngineAPI.Model.ContainerInspectResponse{
+         Id: container_id,
+         Image: image,
          NetworkSettings: %{IPAddress: ip_address, Ports: ports},
          Config: %{Env: env, Labels: labels}
        }) do
+    make_container(container_id, image, labels, ip_address, ports, env)
+  end
+
+  defp make_container(container_id, image, labels, ip_address, ports, env) do
     %Container{
       container_id: container_id,
       image: image,
@@ -289,6 +384,22 @@ defmodule Testcontainers.Docker.Api do
           Map.merge(acc, %{"#{List.first(tokens)}": List.last(tokens)})
         end)
     }
+  end
+
+  # Resolve IP address, preferring custom network IPs if default is empty
+  defp resolve_ip_address(nil, networks), do: get_ip_from_networks(networks)
+  defp resolve_ip_address("", networks), do: get_ip_from_networks(networks)
+  defp resolve_ip_address(ip, _networks) when is_binary(ip) and ip != "", do: ip
+
+  defp get_ip_from_networks(nil), do: nil
+
+  defp get_ip_from_networks(networks) when is_map(networks) do
+    # Get the first non-empty IP from any network
+    networks
+    |> Enum.find_value(fn
+      {_name, %{IPAddress: ip}} when is_binary(ip) and ip != "" -> ip
+      _ -> nil
+    end)
   end
 
   defp create_exec(container_id, command, conn) do
