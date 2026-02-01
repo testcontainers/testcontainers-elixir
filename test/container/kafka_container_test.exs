@@ -248,7 +248,6 @@ defmodule Testcontainers.Container.KafkaContainerTest do
       assert response.value == "hey"
     end
 
-    @tag flaky: "this fails all the time"
     test "with multiple connected nodes" do
       {:ok, zookeeper} = start_external_zookeeper()
       {:ok, kafka1} = start_kafka_with_external_zookeeper(zookeeper, 1, 9092)
@@ -333,7 +332,7 @@ defmodule Testcontainers.Container.KafkaContainerTest do
     }
 
     KafkaEx.create_topics([request], worker_name: worker_name)
-    :timer.sleep(100)
+    :timer.sleep(2000)
 
     :ok
   end
