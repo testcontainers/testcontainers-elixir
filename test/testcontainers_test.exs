@@ -27,4 +27,22 @@ defmodule TestcontainersTest do
         interval: 1000
       )
   end
+
+  test "initializes successfully when ryuk is disabled" do
+    # Set environment variable to disable Ryuk
+    System.put_env("TESTCONTAINERS_RYUK_DISABLED", "true")
+
+    try do
+      # This should succeed without errors when Ryuk is disabled
+      # The fix ensures start_reaper returns {:ok} instead of {:ok, nil}
+      # which matches the pattern in the with statement
+      {:ok, _pid} = Testcontainers.start_link(name: :ryuk_disabled_test)
+
+      # If we reach here, the initialization succeeded
+      assert true
+    after
+      # Clean up the environment variable
+      System.delete_env("TESTCONTAINERS_RYUK_DISABLED")
+    end
+  end
 end
