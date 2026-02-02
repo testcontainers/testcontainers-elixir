@@ -258,7 +258,7 @@ defmodule Testcontainers do
 
         IO.puts(ryukDisabledMessage)
 
-        {:ok, nil}
+        {:ok}
 
       _ ->
         start_ryuk(conn, session_id, properties, docker_host, docker_hostname)
