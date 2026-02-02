@@ -18,4 +18,14 @@ defmodule Testcontainers.Container.RedisContainerTest do
       assert Redix.command!(conn, ["PING"]) == "PONG"
     end
   end
+
+  describe "with password configuration" do
+    container(:redis, RedisContainer.new() |> RedisContainer.with_password("secret"))
+
+    test "provides a ready-to-use redis container with password", %{redis: redis} do
+      {:ok, conn} = Redix.start_link(RedisContainer.connection_url(redis))
+
+      assert Redix.command!(conn, ["PING"]) == "PONG"
+    end
+  end
 end

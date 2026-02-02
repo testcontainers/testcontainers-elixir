@@ -25,7 +25,8 @@ defmodule Testcontainers.RedisContainer do
     :port,
     :wait_timeout,
     check_image: @default_image,
-    reuse: false
+    reuse: false,
+    password: nil
   ]
 
   @doc """
@@ -35,7 +36,8 @@ defmodule Testcontainers.RedisContainer do
     do: %__MODULE__{
       image: @default_image_with_tag,
       wait_timeout: @default_wait_timeout,
-      port: @default_port
+      port: @default_port,
+      password: nil
     }
 
   @doc """
@@ -66,6 +68,20 @@ defmodule Testcontainers.RedisContainer do
   """
   def with_port(%__MODULE__{} = config, port) when is_integer(port) do
     %{config | port: port}
+  end
+
+  @doc """
+  Sets the password for the Redis container.
+
+  ## Examples
+
+      iex> config = RedisContainer.new()
+      iex> new_config = RedisContainer.with_password(config, "secret")
+      iex> new_config.password
+      "secret"
+  """
+  def with_password(%__MODULE__{} = config, password) when is_binary(password) do
+    %{config | password: password}
   end
 
   @doc """
@@ -122,8 +138,11 @@ defmodule Testcontainers.RedisContainer do
       iex> RedisContainer.connection_url(container)
       "http://localhost:32768" # This value will be different depending on the mapped port.
   """
-  def connection_url(%Container{} = container),
-    do: "redis://#{Testcontainers.get_host()}:#{port(container)}/"
+  def connection_url(%Container{} = container) do
+    password = container.environment[:REDIS_PASSWORD]
+    auth_part = if password, do: ":#{password}@", else: ""
+    "redis://#{auth_part}#{Testcontainers.get_host()}:#{port(container)}/"
+  end
 
   defimpl ContainerBuilder do
     import Container
@@ -149,14 +168,31 @@ defmodule Testcontainers.RedisContainer do
     @spec build(%RedisContainer{}) :: %Container{}
     @impl true
     def build(%RedisContainer{} = config) do
-      new(config.image)
-      |> with_exposed_port(config.port)
-      |> with_waiting_strategy(
-        CommandWaitStrategy.new(["redis-cli", "PING"], config.wait_timeout)
-      )
-      |> with_check_image(config.check_image)
-      |> with_reuse(config.reuse)
-      |> valid_image!()
+      container =
+        new(config.image)
+        |> with_exposed_port(config.port)
+        |> with_check_image(config.check_image)
+        |> with_reuse(config.reuse)
+
+      container =
+        if config.password do
+          container
+          |> with_cmd(["redis-server", "--requirepass", config.password])
+          |> with_waiting_strategy(
+            CommandWaitStrategy.new(
+              ["redis-cli", "-a", config.password, "PING"],
+              config.wait_timeout
+            )
+          )
+          |> with_environment("REDIS_PASSWORD", config.password)
+        else
+          container
+          |> with_waiting_strategy(
+            CommandWaitStrategy.new(["redis-cli", "PING"], config.wait_timeout)
+          )
+        end
+
+      valid_image!(container)
     end
 
     @impl true
