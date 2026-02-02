@@ -29,10 +29,12 @@ To add Testcontainers to your project, follow these steps:
 ```elixir
 def deps do
   [
-    {:testcontainers, "~> 1.13", only: [:test, :dev]}
+    {:testcontainers, "~> X.XX", only: [:test, :dev]}
   ]
 end
 ```
+
+Replace X.XX with the current major and minor version.
 
 2. Run mix deps.get
 
