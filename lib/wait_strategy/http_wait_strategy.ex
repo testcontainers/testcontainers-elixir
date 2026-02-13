@@ -96,6 +96,7 @@ defmodule Testcontainers.HttpWaitStrategy do
     # Response evaluation
 
     defp validate_response({:ok, response}), do: response
+    defp validate_response({:error, reason}), do: {:error, reason}
 
     defp verify_status_code(wait_strategy, %{status: status_code})
          when not is_nil(wait_strategy.status_code) and
