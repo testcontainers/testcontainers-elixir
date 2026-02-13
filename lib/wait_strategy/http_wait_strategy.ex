@@ -4,6 +4,7 @@ defmodule Testcontainers.HttpWaitStrategy do
   """
 
   @timeout 5000
+  @max_retries 3
 
   @typedoc """
   The HttpWaitStrategy struct
@@ -50,6 +51,7 @@ defmodule Testcontainers.HttpWaitStrategy do
     method: :get,
     headers: [],
     timeout: @timeout,
+    max_retries: @max_retries,
     # verification options
     status_code: nil,
     match: nil
@@ -121,10 +123,18 @@ defmodule Testcontainers.HttpWaitStrategy do
 
     defp build_request(wait_strategy, container) do
       base_url = get_base_url(wait_strategy, container)
+      request_timeout = round(wait_strategy.timeout / wait_strategy.max_retries)
 
       Tesla.client([
         {Tesla.Middleware.BaseUrl, base_url: base_url},
-        {Tesla.Middleware.Timeout, timeout: wait_strategy.timeout}
+        {Tesla.Middleware.Timeout, timeout: request_timeout},
+        {Tesla.Middleware.Retry,
+         delay: 1,
+         max_retries: wait_strategy.max_retries,
+         max_delay: 10,
+         should_retry: fn
+           _, _env, _context -> true
+         end}
       ])
     end
 
