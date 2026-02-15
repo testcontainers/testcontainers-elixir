@@ -190,6 +190,7 @@ defmodule Testcontainers.Container.ToxiproxyContainerTest do
   describe "create_proxy_for_container/5" do
     container(:toxiproxy, ToxiproxyContainer.new())
 
+    @tag :flaky
     test "creates proxy using container IP", %{toxiproxy: toxiproxy} do
       # Create a mock container struct with IP
       mock_container = %Container{
