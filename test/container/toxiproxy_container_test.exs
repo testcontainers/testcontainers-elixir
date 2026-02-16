@@ -142,32 +142,56 @@ defmodule Testcontainers.Container.ToxiproxyContainerTest do
     end
 
     test "can create and list proxies", %{toxiproxy: toxiproxy} do
+      # Use unique proxy name and port to avoid conflicts with concurrent tests
+      proxy_name = "test_proxy_#{:rand.uniform(100_000)}"
+      listen_port = ToxiproxyContainer.first_proxy_port() + 1
+
+      # Ensure cleanup always happens
+      on_exit(fn ->
+        ToxiproxyContainer.delete_proxy(toxiproxy, proxy_name)
+      end)
+
       # Create a proxy
       {:ok, proxy_port} =
-        ToxiproxyContainer.create_proxy(toxiproxy, "test_proxy", "localhost:12345")
+        ToxiproxyContainer.create_proxy(toxiproxy, proxy_name, "localhost:12345",
+          listen_port: listen_port
+        )
 
       assert is_integer(proxy_port)
 
       # List proxies
       {:ok, proxies} = ToxiproxyContainer.list_proxies(toxiproxy)
-      assert Map.has_key?(proxies, "test_proxy")
-      assert proxies["test_proxy"]["upstream"] == "localhost:12345"
+      assert Map.has_key?(proxies, proxy_name)
+      assert proxies[proxy_name]["upstream"] == "localhost:12345"
 
       # Delete proxy
-      :ok = ToxiproxyContainer.delete_proxy(toxiproxy, "test_proxy")
+      :ok = ToxiproxyContainer.delete_proxy(toxiproxy, proxy_name)
 
       # Verify deleted
       {:ok, proxies_after} = ToxiproxyContainer.list_proxies(toxiproxy)
-      refute Map.has_key?(proxies_after, "test_proxy")
+      refute Map.has_key?(proxies_after, proxy_name)
     end
 
     test "create_proxy/4 handles already existing proxy", %{toxiproxy: toxiproxy} do
-      # Create proxy twice - second should succeed (409 is handled)
-      {:ok, _} = ToxiproxyContainer.create_proxy(toxiproxy, "duplicate_proxy", "localhost:54321")
-      {:ok, _} = ToxiproxyContainer.create_proxy(toxiproxy, "duplicate_proxy", "localhost:54321")
+      # Use unique proxy name and port to avoid conflicts with concurrent tests
+      proxy_name = "duplicate_proxy_#{:rand.uniform(100_000)}"
+      listen_port = ToxiproxyContainer.first_proxy_port() + 2
 
-      # Cleanup
-      ToxiproxyContainer.delete_proxy(toxiproxy, "duplicate_proxy")
+      # Ensure cleanup always happens
+      on_exit(fn ->
+        ToxiproxyContainer.delete_proxy(toxiproxy, proxy_name)
+      end)
+
+      # Create proxy twice - second should succeed (409 is handled)
+      {:ok, _} =
+        ToxiproxyContainer.create_proxy(toxiproxy, proxy_name, "localhost:54321",
+          listen_port: listen_port
+        )
+
+      {:ok, _} =
+        ToxiproxyContainer.create_proxy(toxiproxy, proxy_name, "localhost:54321",
+          listen_port: listen_port
+        )
     end
 
     test "delete_proxy/2 returns error for non-existent proxy", %{toxiproxy: toxiproxy} do
@@ -176,22 +200,34 @@ defmodule Testcontainers.Container.ToxiproxyContainerTest do
     end
 
     test "reset/1 clears all toxics", %{toxiproxy: toxiproxy} do
+      # Use unique proxy name and port to avoid conflicts with concurrent tests
+      proxy_name = "reset_test_proxy_#{:rand.uniform(100_000)}"
+      listen_port = ToxiproxyContainer.first_proxy_port() + 3
+
+      # Ensure cleanup always happens
+      on_exit(fn ->
+        ToxiproxyContainer.delete_proxy(toxiproxy, proxy_name)
+      end)
+
       # Create a proxy
-      {:ok, _} = ToxiproxyContainer.create_proxy(toxiproxy, "reset_test_proxy", "localhost:11111")
+      {:ok, _} =
+        ToxiproxyContainer.create_proxy(toxiproxy, proxy_name, "localhost:11111",
+          listen_port: listen_port
+        )
 
       # Reset should succeed
       :ok = ToxiproxyContainer.reset(toxiproxy)
-
-      # Cleanup
-      ToxiproxyContainer.delete_proxy(toxiproxy, "reset_test_proxy")
     end
   end
 
   describe "create_proxy_for_container/5" do
     container(:toxiproxy, ToxiproxyContainer.new())
 
-    @tag :flaky
     test "creates proxy using container IP", %{toxiproxy: toxiproxy} do
+      # Use unique proxy name and port to avoid conflicts with concurrent tests
+      proxy_name = "container_proxy_#{:rand.uniform(100_000)}"
+      unique_listen_port = ToxiproxyContainer.first_proxy_port() + :rand.uniform(20)
+
       # Create a mock container struct with IP
       mock_container = %Container{
         container_id: "mock_id",
@@ -200,22 +236,25 @@ defmodule Testcontainers.Container.ToxiproxyContainerTest do
         exposed_ports: []
       }
 
+      # Ensure cleanup always happens
+      on_exit(fn ->
+        ToxiproxyContainer.delete_proxy(toxiproxy, proxy_name)
+      end)
+
       {:ok, proxy_port} =
         ToxiproxyContainer.create_proxy_for_container(
           toxiproxy,
-          "container_proxy",
+          proxy_name,
           mock_container,
-          6379
+          6379,
+          listen_port: unique_listen_port
         )
 
       assert is_integer(proxy_port)
 
       # Verify the upstream is correct
       {:ok, proxies} = ToxiproxyContainer.list_proxies(toxiproxy)
-      assert proxies["container_proxy"]["upstream"] == "172.17.0.5:6379"
-
-      # Cleanup
-      ToxiproxyContainer.delete_proxy(toxiproxy, "container_proxy")
+      assert proxies[proxy_name]["upstream"] == "172.17.0.5:6379"
     end
   end
 
