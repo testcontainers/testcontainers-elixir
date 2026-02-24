@@ -20,6 +20,7 @@ defmodule Testcontainers.Container do
     privileged: false,
     bind_mounts: [],
     bind_volumes: [],
+    copy_to: [],
     labels: %{},
     auto_remove: false,
     container_id: nil,
@@ -279,6 +280,14 @@ defmodule Testcontainers.Container do
   """
   def with_hostname(%__MODULE__{} = config, hostname) when is_binary(hostname) do
     %__MODULE__{config | hostname: hostname}
+  end
+
+  def with_copy_to(%__MODULE__{} = config, target, source)
+      when is_binary(target) and is_binary(source) do
+    %__MODULE__{
+      config
+      | copy_to: [%{"target" => target, "contents" => source} | config.copy_to]
+    }
   end
 
   @doc """

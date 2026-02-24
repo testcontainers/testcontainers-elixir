@@ -9,6 +9,7 @@ defmodule Testcontainers do
 
   require Logger
 
+  alias Testcontainers.CopyTo
   alias Testcontainers.Constants
   alias Testcontainers.WaitStrategy
   alias Testcontainers.Docker.Api
@@ -368,6 +369,7 @@ defmodule Testcontainers do
   defp create_and_start_container(config, config_builder, state) do
     with :ok <- maybe_pull_image(config, state.conn),
          {:ok, id} <- Api.create_container(config, state.conn),
+         :ok <- copy_to_container(id, config, state.conn),
          :ok <- Api.start_container(id, state.conn),
          {:ok, container} <- Api.get_container(id, state.conn),
          :ok <- ContainerBuilder.after_start(config_builder, container, state.conn),
@@ -403,6 +405,16 @@ defmodule Testcontainers do
 
   defp maybe_pull_image(_config, _conn) do
     :ok
+  end
+
+  defp copy_to_container(id, config, conn) do
+    Enum.reduce(config.copy_to, :ok, fn
+      copy_to, :ok ->
+        CopyTo.copy_to(conn, id, copy_to)
+
+      _, error ->
+        error
+    end)
   end
 
   defp wait_for_container(container, wait_strategies, conn) do
