@@ -9,7 +9,7 @@ defmodule CopyToTest do
     config =
       %Testcontainers.Container{image: "nginx:alpine"}
       |> Testcontainers.Container.with_exposed_port(port)
-      |> Testcontainers.Container.with_waiting_strategy(HttpWaitStrategy.new("/", port))
+      |> Testcontainers.Container.with_waiting_strategy(HttpWaitStrategy.new("/hello.txt", port))
       |> Testcontainers.Container.with_copy_to("/usr/share/nginx/html/hello.txt", contents)
 
     assert {:ok, container} = Testcontainers.start_container(config)
