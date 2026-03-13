@@ -23,11 +23,6 @@ defmodule TestcontainersElixir.MixProject do
         links: %{"GitHub" => @source_url},
         licenses: ["MIT"]
       ],
-      preferred_cli_env: [
-        test: :test,
-        citest: :test,
-        "testcontainers.test": :test
-      ],
       test_coverage: [
         summary: [threshold: 50],
         ignore_modules: [
@@ -37,6 +32,10 @@ defmodule TestcontainersElixir.MixProject do
       ],
       elixirc_paths: elixirc_paths(Mix.env())
     ]
+  end
+
+  def cli do
+    [preferred_envs: [test: :test, citest: :test, "testcontainers.test": :test]]
   end
 
   defp elixirc_paths(:test), do: ["lib", "test/support", "docker_engine_api"]
