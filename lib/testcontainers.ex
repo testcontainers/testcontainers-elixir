@@ -276,10 +276,7 @@ defmodule Testcontainers do
       |> Container.with_auto_remove(true)
       |> Container.with_privileged(ryuk_privileged)
 
-    with {:ok, _} <- Api.pull_image(ryuk_config.image, conn),
-         {:ok, ryuk_container_id} <- Api.create_container(ryuk_config, conn),
-         :ok <- Api.start_container(ryuk_container_id, conn),
-         {:ok, container} <- Api.get_container(ryuk_container_id, conn),
+    with {:ok, container} <- create_and_start_container(ryuk_config, conn),
          {:ok, socket} <- create_ryuk_socket(container, docker_hostname),
          :ok <- register_ryuk_filter(session_id, socket) do
       {:ok}
@@ -342,7 +339,7 @@ defmodule Testcontainers do
           {:error, :no_container} ->
             Logger.debug("Container does not exist with hash: #{hash}")
 
-            create_and_start_container(
+            create_and_start_and_wait_for_container(
               config,
               config_builder,
               state
@@ -358,7 +355,7 @@ defmodule Testcontainers do
         end
 
       {:noreuse, config, _} ->
-        create_and_start_container(
+        create_and_start_and_wait_for_container(
           config,
           config_builder,
           state
@@ -366,14 +363,20 @@ defmodule Testcontainers do
     end
   end
 
-  defp create_and_start_container(config, config_builder, state) do
-    with :ok <- maybe_pull_image(config, state.conn),
-         {:ok, id} <- Api.create_container(config, state.conn),
-         :ok <- copy_to_container(id, config, state.conn),
-         :ok <- Api.start_container(id, state.conn),
-         {:ok, container} <- Api.get_container(id, state.conn),
+  defp create_and_start_and_wait_for_container(config, config_builder, state) do
+    with {:ok, container} <- create_and_start_container(config, state.conn),
          :ok <- ContainerBuilder.after_start(config_builder, container, state.conn),
          :ok <- wait_for_container(container, config.wait_strategies || [], state.conn) do
+      {:ok, container}
+    end
+  end
+
+  defp create_and_start_container(config, conn) do
+    with :ok <- maybe_pull_image(config, conn),
+         {:ok, id} <- Api.create_container(config, conn),
+         :ok <- copy_to_container(id, config, conn),
+         :ok <- Api.start_container(id, conn),
+         {:ok, container} <- Api.get_container(id, conn) do
       {:ok, container}
     end
   end
