@@ -276,7 +276,8 @@ defmodule Testcontainers do
       |> Container.with_auto_remove(true)
       |> Container.with_privileged(ryuk_privileged)
 
-    with {:ok, container} <- create_and_start_container(ryuk_config, conn),
+    with {:ok, _} <- Api.pull_image(ryuk_config.image, conn),
+         {:ok, container} <- create_and_start_container(ryuk_config, conn),
          {:ok, socket} <- create_ryuk_socket(container, docker_hostname),
          :ok <- register_ryuk_filter(session_id, socket) do
       {:ok}
@@ -364,7 +365,8 @@ defmodule Testcontainers do
   end
 
   defp create_and_start_and_wait_for_container(config, config_builder, state) do
-    with {:ok, container} <- create_and_start_container(config, state.conn),
+    with :ok <- maybe_pull_image(config, state.conn),
+         {:ok, container} <- create_and_start_container(config, state.conn),
          :ok <- ContainerBuilder.after_start(config_builder, container, state.conn),
          :ok <- wait_for_container(container, config.wait_strategies || [], state.conn) do
       {:ok, container}
@@ -372,8 +374,7 @@ defmodule Testcontainers do
   end
 
   defp create_and_start_container(config, conn) do
-    with :ok <- maybe_pull_image(config, conn),
-         {:ok, id} <- Api.create_container(config, conn),
+    with {:ok, id} <- Api.create_container(config, conn),
          :ok <- copy_to_container(id, config, conn),
          :ok <- Api.start_container(id, conn),
          {:ok, container} <- Api.get_container(id, conn) do
