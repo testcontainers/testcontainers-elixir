@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Install inotify-tools
+        run: sudo apt-get install -y inotify-tools
       - name: Uninstall unwanted packages
         run: sudo apt-get -q -y --purge remove podman moby-engine moby-buildx && sudo rm -rf /var/run/docker.sock
       - name: Configure podman
