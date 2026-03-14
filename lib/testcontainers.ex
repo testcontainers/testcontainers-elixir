@@ -344,9 +344,7 @@ defmodule Testcontainers do
     ryuk_config = resolve_pull_policy(ryuk_config, properties)
 
     with :ok <- maybe_pull_image(ryuk_config, conn),
-         {:ok, ryuk_container_id} <- Api.create_container(ryuk_config, conn),
-         :ok <- Api.start_container(ryuk_container_id, conn),
-         {:ok, container} <- Api.get_container(ryuk_container_id, conn),
+         {:ok, container} <- create_and_start_container(ryuk_config, conn),
          :ok <- connect_and_register_ryuk(container, docker_hostname, session_id) do
       {:ok}
     end
@@ -430,7 +428,7 @@ defmodule Testcontainers do
           {:error, :no_container} ->
             Logger.debug("Container does not exist with hash: #{hash}")
 
-            create_and_start_container(
+            create_and_start_and_wait_for_container(
               config,
               config_builder,
               state
@@ -446,7 +444,7 @@ defmodule Testcontainers do
         end
 
       {:noreuse, config, _} ->
-        create_and_start_container(
+        create_and_start_and_wait_for_container(
           config,
           config_builder,
           state
@@ -476,9 +474,12 @@ defmodule Testcontainers do
 
   defp resolve_pull_policy(config, _properties), do: config
 
-  defp start_and_wait_container(id, config, config_builder, state) do
-    with :ok <- Api.start_container(id, state.conn),
-         {:ok, container} <- Api.get_container(id, state.conn),
+  # defp start_and_wait_container(id, config, config_builder, state) do
+  #   with :ok <- Api.start_container(id, state.conn),
+  #        {:ok, container} <- Api.get_container(id, state.conn),
+
+  defp create_and_start_and_wait_for_container(config, config_builder, state) do
+    with {:ok, container} <- create_and_start_container(config, state.conn),
          :ok <- ContainerBuilder.after_start(config_builder, container, state.conn),
          :ok <- wait_for_container(container, config.wait_strategies || [], state.conn) do
       {:ok, container}
@@ -487,6 +488,16 @@ defmodule Testcontainers do
         Logger.info("Cleaning up container #{id} after failed start")
         Api.stop_container(id, state.conn)
         error
+    end
+  end
+
+  defp create_and_start_container(config, conn) do
+    with :ok <- maybe_pull_image(config, conn),
+         {:ok, id} <- Api.create_container(config, conn),
+         :ok <- copy_to_container(id, config, conn),
+         :ok <- Api.start_container(id, conn),
+         {:ok, container} <- Api.get_container(id, conn) do
+      {:ok, container}
     end
   end
 
