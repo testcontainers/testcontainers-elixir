@@ -10,7 +10,7 @@ defmodule Testcontainers.ToxiproxyContainer do
 
   alias Testcontainers.Container
   alias Testcontainers.ContainerBuilder
-  alias Testcontainers.PortWaitStrategy
+  alias Testcontainers.HttpWaitStrategy
   alias Testcontainers.ToxiproxyContainer
 
   @default_image "ghcr.io/shopify/toxiproxy"
@@ -24,6 +24,8 @@ defmodule Testcontainers.ToxiproxyContainer do
   @proxy_port_count 31
 
   @default_wait_timeout 60_000
+  @max_retries 3
+  @retry_delay_ms 500
 
   @enforce_keys [:image, :wait_timeout]
   defstruct [:image, :wait_timeout, check_image: @default_image, reuse: false]
@@ -144,7 +146,7 @@ defmodule Testcontainers.ToxiproxyContainer do
 
     headers = [{~c"content-type", ~c"application/json"}]
 
-    case :httpc.request(:post, {url, headers, ~c"application/json", body}, [], []) do
+    case httpc_request_with_retry(:post, {url, headers, ~c"application/json", body}) do
       {:ok, {{_, code, _}, _, _}} when code in [200, 201] ->
         # Return the mapped port on the host
         {:ok, Container.mapped_port(container, listen_port)}
@@ -198,7 +200,7 @@ defmodule Testcontainers.ToxiproxyContainer do
 
     url = ~c"http://#{host}:#{api_port}/proxies/#{name}"
 
-    case :httpc.request(:delete, {url, []}, [], []) do
+    case httpc_request_with_retry(:delete, {url, []}) do
       {:ok, {{_, 204, _}, _, _}} -> :ok
       {:ok, {{_, 404, _}, _, _}} -> {:error, :not_found}
       {:ok, {{_, code, _}, _, body}} -> {:error, {:http_error, code, body}}
@@ -217,7 +219,7 @@ defmodule Testcontainers.ToxiproxyContainer do
 
     url = ~c"http://#{host}:#{api_port}/reset"
 
-    case :httpc.request(:post, {url, [], ~c"application/json", "{}"}, [], []) do
+    case httpc_request_with_retry(:post, {url, [], ~c"application/json", "{}"}) do
       {:ok, {{_, 204, _}, _, _}} -> :ok
       {:ok, {{_, code, _}, _, body}} -> {:error, {:http_error, code, body}}
       {:error, reason} -> {:error, reason}
@@ -237,7 +239,7 @@ defmodule Testcontainers.ToxiproxyContainer do
 
     url = ~c"http://#{host}:#{api_port}/proxies"
 
-    case :httpc.request(:get, {url, []}, [], []) do
+    case httpc_request_with_retry(:get, {url, []}) do
       {:ok, {{_, 200, _}, _, body}} ->
         {:ok, Jason.decode!(to_string(body))}
 
@@ -253,6 +255,33 @@ defmodule Testcontainers.ToxiproxyContainer do
   Returns the number of proxy ports reserved.
   """
   def proxy_port_count, do: @proxy_port_count
+
+  defp httpc_request_with_retry(method, request, retries_left \\ @max_retries) do
+    http_opts = [timeout: 5_000, connect_timeout: 5_000]
+
+    result = :httpc.request(method, request, http_opts, [])
+
+    case result do
+      {:error, reason} when retries_left > 0 ->
+        retryable =
+          case reason do
+            :socket_closed_remotely -> true
+            {:failed_connect, _} -> true
+            :econnrefused -> true
+            _ -> false
+          end
+
+        if retryable do
+          Process.sleep(@retry_delay_ms)
+          httpc_request_with_retry(method, request, retries_left - 1)
+        else
+          result
+        end
+
+      _ ->
+        result
+    end
+  end
 
   # ContainerBuilder implementation
   defimpl ContainerBuilder do
@@ -272,10 +301,10 @@ defmodule Testcontainers.ToxiproxyContainer do
       new(config.image)
       |> with_exposed_ports(all_ports)
       |> with_waiting_strategy(
-        PortWaitStrategy.new(
-          "127.0.0.1",
+        HttpWaitStrategy.new(
+          "/version",
           ToxiproxyContainer.control_port(),
-          config.wait_timeout
+          timeout: config.wait_timeout
         )
       )
       |> with_reuse(config.reuse)

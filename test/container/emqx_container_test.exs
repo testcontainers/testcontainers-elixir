@@ -5,8 +5,6 @@ defmodule Testcontainers.Container.EmqxContainerTest do
   alias Testcontainers.Container.EmqxContainerTest
   alias Testcontainers.EmqxContainer
 
-  @moduletag timeout: 300_000
-
   describe "with default and minimal configuration" do
     container(:emqx, EmqxContainer.new())
 

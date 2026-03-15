@@ -7,8 +7,6 @@ defmodule Testcontainers.Container.PostgresContainerTest do
 
   alias Testcontainers.PostgresContainer
 
-  @moduletag timeout: 300_000
-
   describe "with default configuration" do
     container(:postgres, PostgresContainer.new())
 
