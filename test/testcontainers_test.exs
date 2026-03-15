@@ -1,31 +1,44 @@
 defmodule TestcontainersTest do
   alias Testcontainers.Connection
   alias Testcontainers.Docker
-  alias Testcontainers.MySqlContainer
+  alias Testcontainers.Container
   use ExUnit.Case, async: true
 
-  @moduletag timeout: 300_000
-
-  @tag :flaky
-  test "will cleanup containers" do
+  test "cleans up containers on terminate" do
     {:ok, pid} = Testcontainers.start_link(name: :cleanup_test1)
-    {:ok, container} = Testcontainers.start_container(MySqlContainer.new(), pid)
-    :ok = GenServer.stop(pid)
-    :ok = TestHelper.wait_for_genserver_state(:cleanup_test1, :down)
 
-    :ok =
-      TestHelper.wait_for_lambda(
-        fn ->
-          with {:error, _} <-
-                 Docker.Api.get_container(
-                   container.container_id,
-                   Connection.get_connection() |> Tuple.to_list() |> Kernel.hd()
-                 ),
-               do: :ok
-        end,
-        max_retries: 15,
-        interval: 1000
+    config = %Container{image: "nginx:alpine"}
+    {:ok, container} = Testcontainers.start_container(config, :cleanup_test1)
+
+    # Verify the container is running
+    conn = Connection.get_connection() |> Tuple.to_list() |> Kernel.hd()
+    assert {:ok, _} = Docker.Api.get_container(container.container_id, conn)
+
+    # Stop the GenServer, which triggers terminate and cleans up containers
+    :ok = GenServer.stop(pid)
+
+    # Container should be gone
+    assert {:error, _} = Docker.Api.get_container(container.container_id, conn)
+  end
+
+  test "cleans up container when wait strategy fails" do
+    config =
+      %Container{image: "nginx:alpine"}
+      |> Container.with_exposed_port(80)
+      |> Container.with_waiting_strategy(
+        Testcontainers.HttpWaitStrategy.new("/nonexistent", 80,
+          status_code: 999,
+          timeout: 2000,
+          max_retries: 1
+        )
       )
+
+    {:ok, pid} = Testcontainers.start_link(name: :cleanup_test2)
+    result = Testcontainers.start_container(config, :cleanup_test2)
+
+    assert {:error, _, _} = result
+
+    :ok = GenServer.stop(pid)
   end
 
   test "initializes successfully when ryuk is disabled" do

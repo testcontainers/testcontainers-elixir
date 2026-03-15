@@ -64,6 +64,13 @@ defmodule Testcontainers.Docker.Api do
     end
   end
 
+  def delete_image(image, conn) when is_binary(image) do
+    case Api.Image.image_delete(conn, image, force: true) do
+      {:ok, _} -> :ok
+      {:error, _} = error -> error
+    end
+  end
+
   def create_container(%Container{} = container, conn) do
     case Api.Container.container_create(conn, container_create_request(container)) do
       {:error, %Tesla.Env{status: other}} ->

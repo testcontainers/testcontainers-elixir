@@ -5,8 +5,6 @@ defmodule Testcontainers.Container.CephContainerTest do
   import Testcontainers.ExUnit
   alias Testcontainers.CephContainer
 
-  @moduletag timeout: 300_000
-
   @ceph_container CephContainer.new()
 
   container(:ceph, @ceph_container)

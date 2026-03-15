@@ -5,7 +5,7 @@ defmodule Testcontainers.LogWaitStrategy do
   """
   require Logger
 
-  @retry_delay 500
+  @retry_delay 200
   defstruct [:log_regex, :timeout, retry_delay: @retry_delay]
 
   # Public interface

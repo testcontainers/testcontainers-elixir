@@ -1,3 +1,3 @@
 Testcontainers.start_link()
 
-ExUnit.start()
+ExUnit.start(timeout: 300_000)

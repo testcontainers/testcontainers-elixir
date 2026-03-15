@@ -68,7 +68,9 @@ defmodule Testcontainers do
          docker_hostname: docker_hostname,
          session_id: session_id,
          properties: properties,
-         networks: MapSet.new()
+         networks: MapSet.new(),
+         containers: MapSet.new(),
+         images: MapSet.new()
        }}
     else
       error ->
@@ -171,14 +173,69 @@ defmodule Testcontainers do
   end
 
   @impl true
+  def handle_cast({:track_container, container_id, image}, state) do
+    {:noreply,
+     %{
+       state
+       | containers: MapSet.put(state.containers, container_id),
+         images: MapSet.put(state.images, image)
+     }}
+  end
+
+  def handle_cast({:track_image, image}, state) do
+    {:noreply, %{state | images: MapSet.put(state.images, image)}}
+  end
+
+  @impl true
   def handle_info(_msg, state) do
     {:noreply, state}
   end
 
   @impl true
+  def terminate(_reason, state) do
+    for container_id <- state.containers do
+      Logger.info("Terminating container #{container_id}")
+      Api.stop_container(container_id, state.conn)
+    end
+
+    for network <- state.networks do
+      Logger.info("Removing network #{network}")
+      Api.remove_network(network, state.conn)
+    end
+
+    if Map.get(state.properties, "cleanup.images", "false") == "true" do
+      for image <- state.images do
+        Logger.info("Removing image #{image}")
+        Api.delete_image(image, state.conn)
+      end
+    end
+
+    :ok
+  end
+
+  @impl true
   def handle_call({:start_container, config_builder}, from, state) do
+    self_pid = self()
+
     Task.async(fn ->
-      GenServer.reply(from, start_and_wait(config_builder, state))
+      result = start_and_wait(config_builder, state)
+
+      case result do
+        {:ok, container} ->
+          GenServer.cast(self_pid, {:track_container, container.container_id, container.image})
+
+        _ ->
+          # Track the image even on failure so it gets cleaned up on terminate
+          case config_builder do
+            %Container{image: image} when is_binary(image) ->
+              GenServer.cast(self_pid, {:track_image, image})
+
+            _ ->
+              :ok
+          end
+      end
+
+      GenServer.reply(from, result)
     end)
 
     {:noreply, state}
@@ -187,7 +244,7 @@ defmodule Testcontainers do
   @impl true
   def handle_call({:stop_container, container_id}, from, state) do
     Task.async(fn -> GenServer.reply(from, Api.stop_container(container_id, state.conn)) end)
-    {:noreply, state}
+    {:noreply, %{state | containers: MapSet.delete(state.containers, container_id)}}
   end
 
   @impl true
@@ -279,16 +336,37 @@ defmodule Testcontainers do
          {:ok, ryuk_container_id} <- Api.create_container(ryuk_config, conn),
          :ok <- Api.start_container(ryuk_container_id, conn),
          {:ok, container} <- Api.get_container(ryuk_container_id, conn),
-         {:ok, socket} <- create_ryuk_socket(container, docker_hostname),
-         :ok <- register_ryuk_filter(session_id, socket) do
+         :ok <- connect_and_register_ryuk(container, docker_hostname, session_id) do
       {:ok}
     end
+  end
+
+  defp connect_and_register_ryuk(container, docker_hostname, session_id, attempt \\ 1)
+
+  defp connect_and_register_ryuk(container, docker_hostname, session_id, attempt)
+       when attempt <= 5 do
+    with {:ok, socket} <- create_ryuk_socket(container, docker_hostname),
+         :ok <- register_ryuk_filter(session_id, socket) do
+      :ok
+    else
+      error ->
+        Logger.info(
+          "Failed to connect and register ryuk filter: #{inspect(error)}. Retrying... Attempt #{attempt}/5"
+        )
+
+        :timer.sleep(1000)
+        connect_and_register_ryuk(container, docker_hostname, session_id, attempt + 1)
+    end
+  end
+
+  defp connect_and_register_ryuk(_container, _docker_hostname, _session_id, _attempt) do
+    {:error, :ryuk_connection_failed}
   end
 
   defp create_ryuk_socket(container, docker_hostname, reattempt_count \\ 0)
 
   defp create_ryuk_socket(%Container{} = container, docker_hostname, reattempt_count)
-       when reattempt_count < 3 do
+       when reattempt_count < 5 do
     host_port = Container.mapped_port(container, 8080)
 
     case :gen_tcp.connect(~c"#{docker_hostname}", host_port, [
@@ -300,13 +378,10 @@ defmodule Testcontainers do
       {:ok, connected} ->
         {:ok, connected}
 
-      {:error, :econnrefused} ->
-        Logger.info("Connection refused. Retrying... Attempt #{reattempt_count + 1}/3")
-        :timer.sleep(5000)
+      {:error, reason} ->
+        Logger.info("Connection failed with #{inspect(reason)}. Retrying... Attempt #{reattempt_count + 1}/5")
+        :timer.sleep(1000)
         create_ryuk_socket(container, docker_hostname, reattempt_count + 1)
-
-      {:error, error} ->
-        {:error, error}
     end
   end
 
@@ -367,12 +442,22 @@ defmodule Testcontainers do
 
   defp create_and_start_container(config, config_builder, state) do
     with :ok <- maybe_pull_image(config, state.conn),
-         {:ok, id} <- Api.create_container(config, state.conn),
-         :ok <- Api.start_container(id, state.conn),
+         {:ok, id} <- Api.create_container(config, state.conn) do
+      start_and_wait_container(id, config, config_builder, state)
+    end
+  end
+
+  defp start_and_wait_container(id, config, config_builder, state) do
+    with :ok <- Api.start_container(id, state.conn),
          {:ok, container} <- Api.get_container(id, state.conn),
          :ok <- ContainerBuilder.after_start(config_builder, container, state.conn),
          :ok <- wait_for_container(container, config.wait_strategies || [], state.conn) do
       {:ok, container}
+    else
+      error ->
+        Logger.info("Cleaning up container #{id} after failed start")
+        Api.stop_container(id, state.conn)
+        error
     end
   end
 
