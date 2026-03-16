@@ -3,8 +3,8 @@ defmodule Testcontainers.HttpWaitStrategy do
   Considers the container as ready when a http request is successful.
   """
 
-  @timeout 5000
-  @max_retries 3
+  @timeout 60_000
+  @max_retries 10
 
   @typedoc """
   The HttpWaitStrategy struct
@@ -83,7 +83,7 @@ defmodule Testcontainers.HttpWaitStrategy do
           headers: wait_strategy.headers
         )
 
-      with response <- validate_response(raw_response),
+      with {:ok, response} <- validate_response(raw_response),
            :ok <- verify_status_code(wait_strategy, response),
            :ok <- verify_match(wait_strategy, response) do
         :ok
@@ -95,7 +95,7 @@ defmodule Testcontainers.HttpWaitStrategy do
 
     # Response evaluation
 
-    defp validate_response({:ok, response}), do: response
+    defp validate_response({:ok, response}), do: {:ok, response}
     defp validate_response({:error, reason}), do: {:error, reason}
 
     defp verify_status_code(wait_strategy, %{status: status_code})
@@ -130,11 +130,12 @@ defmodule Testcontainers.HttpWaitStrategy do
         {Tesla.Middleware.BaseUrl, base_url: base_url},
         {Tesla.Middleware.Timeout, timeout: request_timeout},
         {Tesla.Middleware.Retry,
-         delay: 1,
+         delay: 500,
          max_retries: wait_strategy.max_retries,
-         max_delay: 10,
+         max_delay: 5_000,
          should_retry: fn
-           _, _env, _context -> true
+           {:ok, _response}, _env, _context -> false
+           {:error, _reason}, _env, _context -> true
          end}
       ])
     end
