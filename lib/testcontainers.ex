@@ -467,7 +467,7 @@ defmodule Testcontainers do
            active: false,
            packet: :line,
            send_timeout: 10000
-         ]) do
+         ], 5000) do
       {:ok, connected} ->
         {:ok, connected}
 
