@@ -202,27 +202,38 @@ defmodule Testcontainers.KafkaContainer do
 
     # KRaft mode environment configuration
     defp with_kraft_config(container, config, host) do
+      # In container_ip mode (DooD), clients connect directly to the container's
+      # internal IP, so Kafka should advertise on the internal port.
+      # We use a separate BROKER listener to avoid conflicts with the CONTROLLER.
+      {listeners, advertised, security_map} =
+        if Testcontainers.running_in_container?() do
+          {
+            "BROKER://:#{config.internal_kafka_port},CONTROLLER://:#{config.controller_port}",
+            "BROKER://:#{config.internal_kafka_port}",
+            "CONTROLLER:PLAINTEXT,BROKER:PLAINTEXT"
+          }
+        else
+          {
+            "PLAINTEXT://:#{config.internal_kafka_port},CONTROLLER://:#{config.controller_port}",
+            "PLAINTEXT://#{host}:#{config.kafka_port}",
+            "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
+          }
+        end
+
+      inter_broker_name = if Testcontainers.running_in_container?(), do: "BROKER", else: "PLAINTEXT"
+
       container
       |> with_environment(:KAFKA_NODE_ID, "#{config.node_id}")
       |> with_environment(:KAFKA_PROCESS_ROLES, "broker,controller")
       |> with_environment(:KAFKA_CONTROLLER_LISTENER_NAMES, "CONTROLLER")
-      |> with_environment(:KAFKA_INTER_BROKER_LISTENER_NAME, "PLAINTEXT")
-      |> with_environment(
-        :KAFKA_LISTENERS,
-        "PLAINTEXT://:#{config.internal_kafka_port},CONTROLLER://:#{config.controller_port}"
-      )
-      |> with_environment(
-        :KAFKA_LISTENER_SECURITY_PROTOCOL_MAP,
-        "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
-      )
+      |> with_environment(:KAFKA_INTER_BROKER_LISTENER_NAME, inter_broker_name)
+      |> with_environment(:KAFKA_LISTENERS, listeners)
+      |> with_environment(:KAFKA_LISTENER_SECURITY_PROTOCOL_MAP, security_map)
       |> with_environment(
         :KAFKA_CONTROLLER_QUORUM_VOTERS,
         "#{config.node_id}@localhost:#{config.controller_port}"
       )
-      |> with_environment(
-        :KAFKA_ADVERTISED_LISTENERS,
-        "PLAINTEXT://#{host}:#{config.kafka_port}"
-      )
+      |> with_environment(:KAFKA_ADVERTISED_LISTENERS, advertised)
       |> with_environment(:KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR, "1")
       |> with_environment(:KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR, "1")
       |> with_environment(:KAFKA_TRANSACTION_STATE_LOG_MIN_ISR, "1")
