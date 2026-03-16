@@ -21,10 +21,10 @@ defmodule Testcontainers.ContainerTest do
       container2 = ContainerBuilder.build(Testcontainers.PostgresContainer.new())
 
       assert Testcontainers.Util.Hash.struct_to_hash(container1) ==
-               "aa66f22d5fbd75eca0328915af3fa749c624e53475988cdfcecd2b931a8a4d28"
+               "a0b9a403e485c224323eabc27b2b8e94a6353c785cdc27f9ac2b8a9b67a47cb1"
 
       assert Testcontainers.Util.Hash.struct_to_hash(container2) ==
-               "aa66f22d5fbd75eca0328915af3fa749c624e53475988cdfcecd2b931a8a4d28"
+               "a0b9a403e485c224323eabc27b2b8e94a6353c785cdc27f9ac2b8a9b67a47cb1"
     end
   end
 
