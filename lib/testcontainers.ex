@@ -462,28 +462,59 @@ defmodule Testcontainers do
        when reattempt_count < 5 do
     host_port = Container.mapped_port(container, 8080)
 
-    case :gen_tcp.connect(~c"#{docker_hostname}", host_port, [
-           :binary,
-           active: false,
-           packet: :line,
-           send_timeout: 10000
-         ], 5000) do
+    case try_tcp_connect(docker_hostname, host_port) do
       {:ok, connected} ->
         {:ok, connected}
 
       {:error, reason} ->
-        Logger.info(
-          "Connection failed with #{inspect(reason)}. Retrying... Attempt #{reattempt_count + 1}/5"
-        )
+        # If connecting via docker_hostname:mapped_port fails and we're in a container,
+        # try the container's internal IP on its internal port. In DooD (Docker-outside-of-Docker)
+        # both containers are on the same bridge network, so direct IP access works.
+        case try_container_internal_connect(container, 8080, reason) do
+          {:ok, connected} ->
+            {:ok, connected}
 
-        :timer.sleep(1000)
-        create_ryuk_socket(container, docker_hostname, reattempt_count + 1)
+          {:error, _} ->
+            Logger.info(
+              "Connection to Ryuk failed (#{inspect(reason)}). Retrying... Attempt #{reattempt_count + 1}/5"
+            )
+
+            :timer.sleep(1000)
+            create_ryuk_socket(container, docker_hostname, reattempt_count + 1)
+        end
     end
   end
 
   defp create_ryuk_socket(%Container{} = _container, _docker_hostname, _reattempt_count) do
     Logger.info("Ryuk host refused to connect")
     {:error, :econnrefused}
+  end
+
+  defp try_tcp_connect(host, port) do
+    :gen_tcp.connect(~c"#{host}", port, [
+      :binary,
+      active: false,
+      packet: :line,
+      send_timeout: 10000
+    ], 5000)
+  end
+
+  defp try_container_internal_connect(%Container{ip_address: ip}, internal_port, original_reason)
+       when is_binary(ip) and ip != "" do
+    if running_in_container?() do
+      Logger.info(
+        "Connection via mapped port failed (#{inspect(original_reason)}). " <>
+          "Trying container internal IP #{ip}:#{internal_port}"
+      )
+
+      try_tcp_connect(ip, internal_port)
+    else
+      {:error, original_reason}
+    end
+  end
+
+  defp try_container_internal_connect(_container, _internal_port, original_reason) do
+    {:error, original_reason}
   end
 
   defp register_ryuk_filter(value, socket) do
