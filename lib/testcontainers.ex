@@ -59,8 +59,7 @@ defmodule Testcontainers do
       |> Base.encode16()
 
     with {:ok, docker_hostname} <- get_docker_hostname(docker_host_url, conn),
-         {:ok} <- start_reaper(conn, session_id, properties, docker_host, docker_hostname),
-         {:ok, properties} <- PropertiesParser.read_property_file() do
+         {:ok} <- start_reaper(conn, session_id, properties, docker_host, docker_hostname) do
       Logger.info("Testcontainers initialized")
 
       {:ok,
@@ -333,7 +332,9 @@ defmodule Testcontainers do
       |> Container.with_auto_remove(true)
       |> Container.with_privileged(ryuk_privileged)
 
-    with {:ok, _} <- Api.pull_image(ryuk_config.image, conn),
+    ryuk_config = resolve_pull_policy(ryuk_config, properties)
+
+    with :ok <- maybe_pull_image(ryuk_config, conn),
          {:ok, ryuk_container_id} <- Api.create_container(ryuk_config, conn),
          :ok <- Api.start_container(ryuk_container_id, conn),
          {:ok, container} <- Api.get_container(ryuk_container_id, conn),
