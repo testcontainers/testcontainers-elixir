@@ -196,11 +196,13 @@ defmodule Testcontainers.Docker.Api do
   @dialyzer {:nowarn_function, create_network: 3}
   def create_network(name, conn, opts \\ []) when is_binary(name) do
     driver = Keyword.get(opts, :driver, "bridge")
+    labels = Keyword.get(opts, :labels, %{})
 
     body = %DockerEngineAPI.Model.NetworkCreateRequest{
       Name: name,
       Driver: driver,
-      CheckDuplicate: true
+      CheckDuplicate: true,
+      Labels: labels
     }
 
     case Api.Network.network_create(conn, body) do

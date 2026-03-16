@@ -254,8 +254,16 @@ defmodule Testcontainers do
 
   @impl true
   def handle_call({:create_network, network_name}, from, state) do
+    labels = %{
+      Constants.container_sessionId_label() => state.session_id,
+      Constants.container_version_label() => Constants.library_version(),
+      Constants.container_lang_label() => Constants.container_lang_value(),
+      Constants.container_label() => "true",
+      Constants.container_reuse() => "false"
+    }
+
     Task.async(fn ->
-      result = Api.create_network(network_name, state.conn)
+      result = Api.create_network(network_name, state.conn, labels: labels)
       GenServer.reply(from, result)
     end)
 

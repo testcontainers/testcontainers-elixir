@@ -2,27 +2,13 @@
 set -o pipefail
 
 TOTAL_RUNS=10
-CLEANUP_IMAGES=false
 FAILURES=()
 
-while [[ $# -gt 0 ]]; do
-  case $1 in
-    --cleanup-images) CLEANUP_IMAGES=true; shift ;;
-    *) echo "Unknown option: $1"; exit 1 ;;
-  esac
-done
 
 for i in $(seq 1 $TOTAL_RUNS); do
   echo "========================================"
   echo "Run $i/$TOTAL_RUNS"
   echo "========================================"
-
-  echo "Cleaning up Docker containers..."
-  docker rm -f $(docker ps -aq) &>/dev/null
-  if [ "$CLEANUP_IMAGES" = true ]; then
-    echo "Cleaning up Docker images..."
-    docker rmi -f $(docker images -q) &>/dev/null
-  fi
 
   echo "Running tests..."
   output=$(MIX_ENV=test mix test 2>&1)

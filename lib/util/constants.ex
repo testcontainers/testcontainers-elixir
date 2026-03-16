@@ -3,7 +3,7 @@ defmodule Testcontainers.Constants do
 
   def library_name, do: :testcontainers
   def library_version, do: "2.0.0-rc2"
-  def ryuk_version, do: "0.13.0"
+  def ryuk_version, do: "0.14.0"
   def container_label, do: "org.testcontainers"
   def container_lang_label, do: "org.testcontainers.lang"
   def container_reuse_hash_label, do: "org.testcontainers.reuse-hash"
