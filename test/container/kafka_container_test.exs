@@ -2,7 +2,6 @@ defmodule Testcontainers.Container.KafkaContainerTest do
   use ExUnit.Case, async: false
   import Testcontainers.ExUnit
 
-  alias Testcontainers.Container
   alias Testcontainers.KafkaContainer
 
   describe "new/0" do
