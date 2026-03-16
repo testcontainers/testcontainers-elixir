@@ -1,3 +1,10 @@
 Testcontainers.start_link()
 
-ExUnit.start(timeout: 300_000)
+exclude =
+  if Testcontainers.running_in_container?() do
+    [:dood_limitation]
+  else
+    []
+  end
+
+ExUnit.start(timeout: 300_000, exclude: exclude)

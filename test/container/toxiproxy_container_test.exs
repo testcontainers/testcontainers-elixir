@@ -232,6 +232,7 @@ defmodule Testcontainers.Container.ToxiproxyContainerTest do
       {:ok, network_name: network_name}
     end
 
+    @tag :dood_limitation
     test "can proxy and inject faults into Redis traffic", %{network_name: network_name} do
       alias Testcontainers.RedisContainer
       alias Testcontainers.ContainerBuilder

@@ -70,6 +70,7 @@ defmodule Testcontainers.NetworkTest do
   end
 
   describe "containers on shared network" do
+    @tag :dood_limitation
     test "containers can communicate via hostname" do
       network_name = "test-network-comm-#{:rand.uniform(100_000)}"
 

@@ -30,6 +30,7 @@ defmodule Testcontainers.Container.EmqxContainerTest do
       |> EmqxContainer.with_ports(1884, 8883, 8083, 8084, 18084)
     )
 
+    @tag :dood_limitation
     test "provides a ready-to-use emqx container" do
       host = EmqxContainer.host()
       port = 1884
