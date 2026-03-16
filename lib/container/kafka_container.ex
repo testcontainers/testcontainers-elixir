@@ -188,45 +188,16 @@ defmodule Testcontainers.KafkaContainer do
     end
 
     @doc """
-    After the container starts, create any specified topics and update
-    advertised listeners in DooD mode.
+    After the container starts, create any specified topics.
     """
     @impl true
     def after_start(config, container, conn) do
-      # In DooD mode, update advertised listeners with the actual container IP
-      # so Kafka clients can reach the broker
-      if Testcontainers.running_in_container?() and
-           is_binary(container.ip_address) and container.ip_address != "" do
-        update_advertised_listeners(container, config, conn)
-      end
-
       # Create topics if specified
       Enum.each(config.topics, fn topic ->
         create_topic(container.container_id, conn, topic, config.internal_kafka_port)
       end)
 
       :ok
-    end
-
-    defp update_advertised_listeners(container, config, conn) do
-      advertised = "BROKER://#{container.ip_address}:#{config.internal_kafka_port}"
-
-      cmd = [
-        "/opt/kafka/bin/kafka-configs.sh",
-        "--bootstrap-server",
-        "localhost:#{config.internal_kafka_port}",
-        "--alter",
-        "--entity-type",
-        "brokers",
-        "--entity-name",
-        "#{config.node_id}",
-        "--add-config",
-        "advertised.listeners=[#{advertised}]"
-      ]
-
-      Testcontainers.Docker.Api.start_exec(container.container_id, cmd, conn)
-      # Give Kafka a moment to apply the config change
-      :timer.sleep(2000)
     end
 
     # KRaft mode environment configuration

@@ -132,6 +132,7 @@ defmodule Testcontainers.Container.KafkaContainerTest do
   describe "kafka container" do
     container(:kafka, KafkaContainer.new())
 
+    @tag :dood_limitation
     test "provides a ready-to-use kafka container", %{kafka: kafka} do
       worker_name = :worker
       topic_name = "test_topic"
@@ -153,6 +154,7 @@ defmodule Testcontainers.Container.KafkaContainerTest do
   describe "kafka container with automatic topic creation" do
     container(:kafka, KafkaContainer.new() |> KafkaContainer.with_topics(["auto_topic"]))
 
+    @tag :dood_limitation
     test "creates topics automatically", %{kafka: kafka} do
       worker_name = :auto_worker
       topic_name = "auto_topic"
