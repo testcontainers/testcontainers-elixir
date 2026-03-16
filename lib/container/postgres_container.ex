@@ -175,14 +175,14 @@ defmodule Testcontainers.PostgresContainer do
   @doc """
   Returns the port on the _host machine_ where the Postgres container is listening.
   """
-  def port(%Container{} = container), do: Container.mapped_port(container, @default_port)
+  def port(%Container{} = container), do: Testcontainers.get_port(container, @default_port)
 
   @doc """
   Returns the connection parameters to connect to the database from the _host machine_.
   """
   def connection_parameters(%Container{} = container) do
     [
-      hostname: Testcontainers.get_host(),
+      hostname: Testcontainers.get_host(container),
       port: port(container),
       username: container.environment[:POSTGRES_USER],
       password: container.environment[:POSTGRES_PASSWORD],

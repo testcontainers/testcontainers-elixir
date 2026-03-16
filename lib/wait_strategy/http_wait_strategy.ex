@@ -141,9 +141,9 @@ defmodule Testcontainers.HttpWaitStrategy do
     end
 
     defp get_base_url(%HttpWaitStrategy{} = wait_strategy, %Container{} = container) do
-      port = Container.mapped_port(container, wait_strategy.port)
+      port = Testcontainers.get_port(container, wait_strategy.port)
 
-      "#{wait_strategy.protocol}://#{Testcontainers.get_host()}:#{port}/"
+      "#{wait_strategy.protocol}://#{Testcontainers.get_host(container)}:#{port}/"
     end
   end
 end

@@ -108,7 +108,7 @@ defmodule Testcontainers.EmqxContainer do
   Returns the port on the _host machine_ where the Emqx container is listening.
   """
   def mqtt_port(%Container{} = container),
-    do: Container.mapped_port(container, @default_mqtt_port)
+    do: Testcontainers.get_port(container, @default_mqtt_port)
 
   defimpl ContainerBuilder do
     import Container

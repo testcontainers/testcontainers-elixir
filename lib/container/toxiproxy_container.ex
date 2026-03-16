@@ -80,7 +80,7 @@ defmodule Testcontainers.ToxiproxyContainer do
   Returns the mapped control port on the host for the running container.
   """
   def mapped_control_port(%Container{} = container) do
-    Container.mapped_port(container, @control_port)
+    Testcontainers.get_port(container, @control_port)
   end
 
   @doc """
@@ -92,7 +92,7 @@ defmodule Testcontainers.ToxiproxyContainer do
       |> then(&Application.put_env(:toxiproxy_ex, :host, &1))
   """
   def api_url(%Container{} = container) do
-    host = Testcontainers.get_host()
+    host = Testcontainers.get_host(container)
     port = mapped_control_port(container)
     "http://#{host}:#{port}"
   end
@@ -130,7 +130,7 @@ defmodule Testcontainers.ToxiproxyContainer do
   def create_proxy(%Container{} = container, name, upstream, opts \\ []) do
     listen_port = Keyword.get(opts, :listen_port, @first_proxy_port)
 
-    host = Testcontainers.get_host()
+    host = Testcontainers.get_host(container)
     api_port = mapped_control_port(container)
 
     :inets.start()
@@ -149,11 +149,11 @@ defmodule Testcontainers.ToxiproxyContainer do
     case httpc_request_with_retry(:post, {url, headers, ~c"application/json", body}) do
       {:ok, {{_, code, _}, _, _}} when code in [200, 201] ->
         # Return the mapped port on the host
-        {:ok, Container.mapped_port(container, listen_port)}
+        {:ok, Testcontainers.get_port(container, listen_port)}
 
       {:ok, {{_, 409, _}, _, _}} ->
         # Proxy already exists, return the port
-        {:ok, Container.mapped_port(container, listen_port)}
+        {:ok, Testcontainers.get_port(container, listen_port)}
 
       {:ok, {{_, code, _}, _, response_body}} ->
         {:error, {:http_error, code, response_body}}
@@ -193,7 +193,7 @@ defmodule Testcontainers.ToxiproxyContainer do
   Deletes a proxy from Toxiproxy.
   """
   def delete_proxy(%Container{} = container, name) do
-    host = Testcontainers.get_host()
+    host = Testcontainers.get_host(container)
     api_port = mapped_control_port(container)
 
     :inets.start()
@@ -212,7 +212,7 @@ defmodule Testcontainers.ToxiproxyContainer do
   Resets Toxiproxy, removing all toxics and re-enabling all proxies.
   """
   def reset(%Container{} = container) do
-    host = Testcontainers.get_host()
+    host = Testcontainers.get_host(container)
     api_port = mapped_control_port(container)
 
     :inets.start()
@@ -232,7 +232,7 @@ defmodule Testcontainers.ToxiproxyContainer do
   Returns a map of proxy names to their configurations.
   """
   def list_proxies(%Container{} = container) do
-    host = Testcontainers.get_host()
+    host = Testcontainers.get_host(container)
     api_port = mapped_control_port(container)
 
     :inets.start()

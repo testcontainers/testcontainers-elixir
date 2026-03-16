@@ -122,7 +122,7 @@ defmodule Testcontainers.RedisContainer do
   @doc """
   Returns the port on the _host machine_ where the Redis container is listening.
   """
-  def port(%Container{} = container), do: Container.mapped_port(container, @default_port)
+  def port(%Container{} = container), do: Testcontainers.get_port(container, @default_port)
 
   @doc """
   Generates the connection URL for accessing the Redis service running within the container.
@@ -141,7 +141,7 @@ defmodule Testcontainers.RedisContainer do
   def connection_url(%Container{} = container) do
     password = container.environment[:REDIS_PASSWORD]
     auth_part = if password, do: ":#{password}@", else: ""
-    "redis://#{auth_part}#{Testcontainers.get_host()}:#{port(container)}/"
+    "redis://#{auth_part}#{Testcontainers.get_host(container)}:#{port(container)}/"
   end
 
   defimpl ContainerBuilder do

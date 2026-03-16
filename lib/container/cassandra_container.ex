@@ -62,13 +62,13 @@ defmodule Testcontainers.CassandraContainer do
   @doc """
   Retrieves the port mapped by the Docker host for the Cassandra container.
   """
-  def port(%Container{} = container), do: Container.mapped_port(container, @default_port)
+  def port(%Container{} = container), do: Testcontainers.get_port(container, @default_port)
 
   @doc """
   Generates the connection URL for accessing the Cassandra service running within the container.
   """
   def connection_uri(%Container{} = container) do
-    "#{Testcontainers.get_host()}:#{port(container)}"
+    "#{Testcontainers.get_host(container)}:#{port(container)}"
   end
 
   defimpl ContainerBuilder do

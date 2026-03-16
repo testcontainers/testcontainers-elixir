@@ -76,7 +76,7 @@ defmodule Mix.Tasks.Testcontainers.Run do
 
         {:ok, container} = Testcontainers.start_container(container_def)
         port = PostgresContainer.port(container)
-        {container, create_env(port)}
+        {container, create_env(container, port)}
 
       "mysql" ->
         container_def =
@@ -89,7 +89,7 @@ defmodule Mix.Tasks.Testcontainers.Run do
 
         {:ok, container} = Testcontainers.start_container(container_def)
         port = MySqlContainer.port(container)
-        {container, create_env(port)}
+        {container, create_env(container, port)}
 
       _ ->
         raise("Unsupported database: #{database}")
@@ -108,13 +108,13 @@ defmodule Mix.Tasks.Testcontainers.Run do
     module.with_persistent_volume(config, db_volume)
   end
 
-  defp create_env(port) do
+  defp create_env(container, port) do
     [
-      {"DATABASE_URL", "ecto://test:test@#{Testcontainers.get_host()}:#{port}/test"},
+      {"DATABASE_URL", "ecto://test:test@#{Testcontainers.get_host(container)}:#{port}/test"},
       # for backward compability, will be removed in future releases
       {"DB_USER", "test"},
       {"DB_PASSWORD", "test"},
-      {"DB_HOST", Testcontainers.get_host()},
+      {"DB_HOST", Testcontainers.get_host(container)},
       {"DB_PORT", Integer.to_string(port)}
     ]
   end

@@ -175,7 +175,7 @@ defmodule Testcontainers.CephContainer do
       iex> CephContainer.port(container)
       32768 # This value will be different depending on the mapped port.
   """
-  def port(%Container{} = container), do: Container.mapped_port(container, @default_port)
+  def port(%Container{} = container), do: Testcontainers.get_port(container, @default_port)
 
   @doc """
   Generates the connection URL for accessing the Ceph service running within the container.
@@ -192,7 +192,7 @@ defmodule Testcontainers.CephContainer do
       "http://localhost:32768" # This value will be different depending on the mapped port.
   """
   def connection_url(%Container{} = container) do
-    "http://#{Testcontainers.get_host()}:#{port(container)}"
+    "http://#{Testcontainers.get_host(container)}:#{port(container)}"
   end
 
   @doc """
@@ -203,7 +203,7 @@ defmodule Testcontainers.CephContainer do
     [
       port: CephContainer.port(container),
       scheme: "http://",
-      host: Testcontainers.get_host(),
+      host: Testcontainers.get_host(container),
       access_key_id: container.environment[:CEPH_DEMO_ACCESS_KEY],
       secret_access_key: container.environment[:CEPH_DEMO_SECRET_KEY]
     ]

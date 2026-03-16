@@ -60,13 +60,22 @@ defmodule Testcontainers do
       |> Base.encode16()
 
     with {:ok, docker_hostname} <- get_docker_hostname(docker_host_url, conn, properties),
+         use_container_ip <- should_use_container_ip?(docker_hostname),
          {:ok} <- start_reaper(conn, session_id, properties, docker_host, docker_hostname) do
-      Logger.info("Testcontainers initialized")
+      if use_container_ip do
+        Logger.info(
+          "Testcontainers initialized in container networking mode " <>
+            "(using container IPs directly)"
+        )
+      else
+        Logger.info("Testcontainers initialized")
+      end
 
       {:ok,
        %{
          conn: conn,
          docker_hostname: docker_hostname,
+         use_container_ip: use_container_ip,
          session_id: session_id,
          properties: properties,
          networks: MapSet.new(),
@@ -80,7 +89,46 @@ defmodule Testcontainers do
   end
 
   @doc false
-  def get_host(name \\ __MODULE__), do: wait_for_call(:get_host, name)
+  def get_host(), do: wait_for_call(:get_host, __MODULE__)
+
+  @doc """
+  Returns the host to use for connecting to the given container.
+
+  In standard mode, returns the same as `get_host/0` (the Docker host).
+  In container networking mode (DooD), returns the container's internal IP
+  since mapped ports on the bridge gateway may be unreachable.
+  """
+  def get_host(%Container{} = container), do: get_host(container, __MODULE__)
+  def get_host(name) when is_atom(name), do: wait_for_call(:get_host, name)
+
+  def get_host(%Container{} = container, name) do
+    case wait_for_call(:get_connection_mode, name) do
+      :container_ip when is_binary(container.ip_address) and container.ip_address != "" ->
+        container.ip_address
+
+      _ ->
+        wait_for_call(:get_host, name)
+    end
+  end
+
+  @doc """
+  Returns the port to use for connecting to the given container on the specified internal port.
+
+  In standard mode, returns the host-mapped port (same as `Container.mapped_port/2`).
+  In container networking mode (DooD), returns the internal port directly
+  since we connect to the container's IP on the bridge network.
+  """
+  def get_port(%Container{} = container, port), do: get_port(container, port, __MODULE__)
+
+  def get_port(%Container{} = container, port, name) do
+    case wait_for_call(:get_connection_mode, name) do
+      :container_ip ->
+        port
+
+      _ ->
+        Container.mapped_port(container, port)
+    end
+  end
 
   @doc """
   Starts a new container based on the provided configuration, applying any specified wait strategies.
@@ -254,6 +302,12 @@ defmodule Testcontainers do
   end
 
   @impl true
+  def handle_call(:get_connection_mode, _from, state) do
+    mode = if state.use_container_ip, do: :container_ip, else: :mapped_port
+    {:reply, mode, state}
+  end
+
+  @impl true
   def handle_call({:create_network, network_name}, from, state) do
     labels = %{
       Constants.container_sessionId_label() => state.session_id,
@@ -282,6 +336,33 @@ defmodule Testcontainers do
   end
 
   # private functions
+
+  defp should_use_container_ip?(docker_hostname) do
+    if running_in_container?() and docker_hostname != "localhost" do
+      # Probe the bridge gateway to check if mapped ports are reachable.
+      # If hairpin NAT is blocked (common in DooD), we fall back to
+      # connecting to containers via their internal IPs.
+      case :gen_tcp.connect(~c"#{docker_hostname}", 0, [], 2000) do
+        {:ok, socket} ->
+          :gen_tcp.close(socket)
+          false
+
+        {:error, :econnrefused} ->
+          # Connection refused means the host IS reachable, just no service on port 0
+          false
+
+        {:error, reason} ->
+          Logger.info(
+            "Bridge gateway #{docker_hostname} unreachable (#{inspect(reason)}). " <>
+              "Switching to container networking mode (direct IP access)"
+          )
+
+          true
+      end
+    else
+      false
+    end
+  end
 
   @doc false
   def running_in_container?(
