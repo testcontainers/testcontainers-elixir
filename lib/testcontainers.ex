@@ -15,6 +15,7 @@ defmodule Testcontainers do
   alias Testcontainers.Connection
   alias Testcontainers.Container
   alias Testcontainers.ContainerBuilder
+  alias Testcontainers.PullPolicy
   alias Testcontainers.Util.PropertiesParser
 
   import Testcontainers.Constants
@@ -441,11 +442,26 @@ defmodule Testcontainers do
   end
 
   defp create_and_start_container(config, config_builder, state) do
+    config = resolve_pull_policy(config, state.properties)
+
     with :ok <- maybe_pull_image(config, state.conn),
          {:ok, id} <- Api.create_container(config, state.conn) do
       start_and_wait_container(id, config, config_builder, state)
     end
   end
+
+  defp resolve_pull_policy(%{pull_policy: nil} = config, properties) do
+    pull_policy =
+      case Map.get(properties, "pull.policy", "always") do
+        "missing" -> PullPolicy.never_pull()
+        "never" -> PullPolicy.never_pull()
+        _ -> PullPolicy.always_pull()
+      end
+
+    %{config | pull_policy: pull_policy}
+  end
+
+  defp resolve_pull_policy(config, _properties), do: config
 
   defp start_and_wait_container(id, config, config_builder, state) do
     with :ok <- Api.start_container(id, state.conn),
