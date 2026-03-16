@@ -59,7 +59,7 @@ defmodule Testcontainers do
       :crypto.hash(:sha, "#{inspect(self())}#{DateTime.utc_now() |> DateTime.to_string()}")
       |> Base.encode16()
 
-    with {:ok, docker_hostname} <- get_docker_hostname(docker_host_url, conn),
+    with {:ok, docker_hostname} <- get_docker_hostname(docker_host_url, conn, properties),
          {:ok} <- start_reaper(conn, session_id, properties, docker_host, docker_hostname) do
       Logger.info("Testcontainers initialized")
 
@@ -283,21 +283,103 @@ defmodule Testcontainers do
 
   # private functions
 
-  defp get_docker_hostname(docker_host_url, conn) do
+  @doc false
+  def running_in_container?(
+        dockerenv_path \\ "/.dockerenv",
+        cgroup_path \\ "/proc/1/cgroup"
+      ) do
+    if File.exists?(dockerenv_path) do
+      true
+    else
+      case File.read(cgroup_path) do
+        {:ok, content} ->
+          Regex.match?(~r/(docker|kubepods|lxc|containerd)/, content)
+
+        {:error, _} ->
+          false
+      end
+    end
+  end
+
+  @doc false
+  def parse_gateway_from_proc_route(content) do
+    content
+    |> String.split("\n")
+    |> Enum.drop(1)
+    |> Enum.map(&String.split(&1, "\t"))
+    |> Enum.find(fn
+      [_iface, destination | _rest] -> destination == "00000000"
+      _ -> false
+    end)
+    |> case do
+      [_iface, _destination, gateway_hex | _rest] ->
+        decode_hex_gateway(gateway_hex)
+
+      _ ->
+        {:error, :no_default_route}
+    end
+  end
+
+  defp decode_hex_gateway(hex) when byte_size(hex) == 8 do
+    {value, ""} = Integer.parse(hex, 16)
+
+    a = Bitwise.band(value, 0xFF)
+    b = Bitwise.band(Bitwise.bsr(value, 8), 0xFF)
+    c = Bitwise.band(Bitwise.bsr(value, 16), 0xFF)
+    d = Bitwise.band(Bitwise.bsr(value, 24), 0xFF)
+
+    {:ok, "#{a}.#{b}.#{c}.#{d}"}
+  end
+
+  defp decode_hex_gateway(_), do: {:error, :invalid_gateway}
+
+  defp get_docker_hostname(docker_host_url, conn, properties) do
+    # Check for explicit host override first
+    host_override =
+      Map.get(properties, "tc.host.override") ||
+        System.get_env("TESTCONTAINERS_HOST_OVERRIDE")
+
+    if host_override do
+      Logger.debug("Using host override: #{host_override}")
+      {:ok, host_override}
+    else
+      do_get_docker_hostname(docker_host_url, conn)
+    end
+  end
+
+  defp do_get_docker_hostname(docker_host_url, conn) do
     case URI.parse(docker_host_url) do
       uri when uri.scheme == "http" or uri.scheme == "https" ->
         {:ok, uri.host}
 
       uri when uri.scheme == "http+unix" ->
-        if File.exists?("/.dockerenv") do
+        if running_in_container?() do
           Logger.debug("Running in docker environment, trying to get bridge network gateway")
 
           with {:ok, gateway} <- Api.get_bridge_gateway(conn) do
             {:ok, gateway}
           else
             {:error, reason} ->
-              Logger.debug("Failed to get bridge gateway: #{inspect(reason)}. Using localhost")
-              {:ok, "localhost"}
+              Logger.debug(
+                "Failed to get bridge gateway: #{inspect(reason)}. Trying /proc/net/route"
+              )
+
+              case File.read("/proc/net/route") do
+                {:ok, content} ->
+                  case parse_gateway_from_proc_route(content) do
+                    {:ok, gateway} ->
+                      Logger.debug("Found gateway from /proc/net/route: #{gateway}")
+                      {:ok, gateway}
+
+                    {:error, _} ->
+                      Logger.debug("Failed to parse /proc/net/route. Using localhost")
+                      {:ok, "localhost"}
+                  end
+
+                {:error, _} ->
+                  Logger.debug("Cannot read /proc/net/route. Using localhost")
+                  {:ok, "localhost"}
+              end
           end
         else
           Logger.debug("Not running in docker environment, using localhost")
@@ -541,8 +623,21 @@ defmodule Testcontainers do
   end
 
   defp apply_docker_socket_volume_binding(config, docker_host) do
-    case {os_type(), URI.parse(docker_host)} do
-      {os, uri} -> handle_docker_socket_binding(config, os, uri)
+    socket_override = System.get_env("TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE")
+
+    if socket_override do
+      Logger.debug("Using docker socket override: #{socket_override}")
+
+      Container.with_bind_mount(
+        config,
+        socket_override,
+        "/var/run/docker.sock",
+        "rw"
+      )
+    else
+      case {os_type(), URI.parse(docker_host)} do
+        {os, uri} -> handle_docker_socket_binding(config, os, uri)
+      end
     end
   end
 
