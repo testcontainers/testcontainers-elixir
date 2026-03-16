@@ -188,10 +188,18 @@ defmodule Testcontainers.KafkaContainer do
     end
 
     @doc """
-    After the container starts, create any specified topics.
+    After the container starts, create any specified topics and update
+    advertised listeners in DooD mode.
     """
     @impl true
     def after_start(config, container, conn) do
+      # In DooD mode, update advertised listeners with the actual container IP
+      # so Kafka clients can reach the broker
+      if Testcontainers.running_in_container?() and
+           is_binary(container.ip_address) and container.ip_address != "" do
+        update_advertised_listeners(container, config, conn)
+      end
+
       # Create topics if specified
       Enum.each(config.topics, fn topic ->
         create_topic(container.container_id, conn, topic, config.internal_kafka_port)
@@ -200,33 +208,54 @@ defmodule Testcontainers.KafkaContainer do
       :ok
     end
 
+    defp update_advertised_listeners(container, config, conn) do
+      advertised = "BROKER://#{container.ip_address}:#{config.internal_kafka_port}"
+
+      cmd = [
+        "/opt/kafka/bin/kafka-configs.sh",
+        "--bootstrap-server",
+        "localhost:#{config.internal_kafka_port}",
+        "--alter",
+        "--entity-type",
+        "brokers",
+        "--entity-name",
+        "#{config.node_id}",
+        "--add-config",
+        "advertised.listeners=[#{advertised}]"
+      ]
+
+      Testcontainers.Docker.Api.start_exec(container.container_id, cmd, conn)
+      # Give Kafka a moment to apply the config change
+      :timer.sleep(2000)
+    end
+
     # KRaft mode environment configuration
     defp with_kraft_config(container, config, host) do
-      # In container_ip mode (DooD), clients connect directly to the container's
-      # internal IP, so Kafka should advertise on the internal port.
-      # We use a separate BROKER listener to avoid conflicts with the CONTROLLER.
-      {listeners, advertised, security_map} =
+      # In container_ip mode (DooD), use a BROKER listener name.
+      # The advertised listener will be updated in after_start with the
+      # actual container IP, since it's not known at build time.
+      {listeners, advertised, security_map, inter_broker} =
         if Testcontainers.running_in_container?() do
           {
             "BROKER://:#{config.internal_kafka_port},CONTROLLER://:#{config.controller_port}",
-            "BROKER://:#{config.internal_kafka_port}",
-            "CONTROLLER:PLAINTEXT,BROKER:PLAINTEXT"
+            "BROKER://localhost:#{config.internal_kafka_port}",
+            "CONTROLLER:PLAINTEXT,BROKER:PLAINTEXT",
+            "BROKER"
           }
         else
           {
             "PLAINTEXT://:#{config.internal_kafka_port},CONTROLLER://:#{config.controller_port}",
             "PLAINTEXT://#{host}:#{config.kafka_port}",
-            "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
+            "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT",
+            "PLAINTEXT"
           }
         end
-
-      inter_broker_name = if Testcontainers.running_in_container?(), do: "BROKER", else: "PLAINTEXT"
 
       container
       |> with_environment(:KAFKA_NODE_ID, "#{config.node_id}")
       |> with_environment(:KAFKA_PROCESS_ROLES, "broker,controller")
       |> with_environment(:KAFKA_CONTROLLER_LISTENER_NAMES, "CONTROLLER")
-      |> with_environment(:KAFKA_INTER_BROKER_LISTENER_NAME, inter_broker_name)
+      |> with_environment(:KAFKA_INTER_BROKER_LISTENER_NAME, inter_broker)
       |> with_environment(:KAFKA_LISTENERS, listeners)
       |> with_environment(:KAFKA_LISTENER_SECURITY_PROTOCOL_MAP, security_map)
       |> with_environment(
