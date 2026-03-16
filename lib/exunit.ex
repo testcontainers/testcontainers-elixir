@@ -75,4 +75,54 @@ defmodule Testcontainers.ExUnit do
         end
     end
   end
+
+  @doc """
+  Creates and manages the lifecycle of a Docker Compose environment within ExUnit tests.
+
+  When the `:shared` option is set to `true`, the compose environment is created once for all
+  tests in the module. When omitted or set to `false`, a new compose environment is created
+  for each individual test.
+
+  ## Parameters
+
+    * `name`: The key that should be used to reference the compose environment in test cases.
+    * `config`: A `%Testcontainers.DockerCompose{}` struct with the compose configuration.
+    * `options`: Optional keyword list. Supports the following options:
+      * `:shared` - If set to `true`, the compose environment is shared across all tests.
+
+  ## Examples
+
+      defmodule MyComposeTest do
+        use ExUnit.Case
+
+        alias Testcontainers.DockerCompose
+
+        compose :my_env, DockerCompose.new("test/fixtures")
+        # ...
+      end
+  """
+  defmacro compose(name, config, options \\ []) do
+    run_block =
+      quote do
+        {:ok, env} = Testcontainers.start_compose(unquote(config))
+        ExUnit.Callbacks.on_exit(fn -> Testcontainers.stop_compose(env) end)
+        {:ok, %{unquote(name) => env}}
+      end
+
+    case Keyword.get(options, :shared, false) do
+      true ->
+        quote do
+          setup_all do
+            unquote(run_block)
+          end
+        end
+
+      _ ->
+        quote do
+          setup do
+            unquote(run_block)
+          end
+        end
+    end
+  end
 end
