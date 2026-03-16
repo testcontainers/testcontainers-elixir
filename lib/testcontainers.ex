@@ -102,12 +102,10 @@ defmodule Testcontainers do
   def get_host(name) when is_atom(name), do: wait_for_call(:get_host, name)
 
   def get_host(%Container{} = container, name) do
-    case wait_for_call(:get_connection_mode, name) do
-      :container_ip when is_binary(container.ip_address) and container.ip_address != "" ->
-        container.ip_address
-
-      _ ->
-        wait_for_call(:get_host, name)
+    if use_container_ip?(container, name) do
+      container.ip_address
+    else
+      wait_for_call(:get_host, name)
     end
   end
 
@@ -121,12 +119,25 @@ defmodule Testcontainers do
   def get_port(%Container{} = container, port), do: get_port(container, port, __MODULE__)
 
   def get_port(%Container{} = container, port, name) do
+    if use_container_ip?(container, name) do
+      port
+    else
+      Container.mapped_port(container, port)
+    end
+  end
+
+  # Returns true when we should use the container's internal IP and port.
+  # Only applies when in container_ip mode AND the container is on the default
+  # bridge network. Containers on custom networks are not reachable from the
+  # test container via internal IP.
+  defp use_container_ip?(%Container{} = container, name) do
     case wait_for_call(:get_connection_mode, name) do
       :container_ip ->
-        port
+        is_binary(container.ip_address) and container.ip_address != "" and
+          is_nil(container.network)
 
       _ ->
-        Container.mapped_port(container, port)
+        false
     end
   end
 

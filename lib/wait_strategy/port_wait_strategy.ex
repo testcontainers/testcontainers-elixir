@@ -21,8 +21,6 @@ defmodule Testcontainers.PortWaitStrategy do
   # Private functions and implementations
 
   defimpl Testcontainers.WaitStrategy do
-    alias Testcontainers.Container
-
     @impl true
     def wait_until_container_is_ready(wait_strategy, container, _conn) do
       host = Testcontainers.get_host(container)
