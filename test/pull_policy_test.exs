@@ -1,6 +1,8 @@
 defmodule Testcontainers.PullPolicyTest do
   use ExUnit.Case, async: true
 
+  @moduletag :needs_registry
+
   test "always_pull/0 fetches image from remote repository" do
     config = %Testcontainers.Container{
       image: "alpine:latest",

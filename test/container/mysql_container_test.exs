@@ -8,8 +8,6 @@ defmodule Testcontainers.Container.MySqlContainerTest do
 
   alias Testcontainers.MySqlContainer
 
-  @moduletag timeout: 300_000
-
   describe "with default configuration" do
     @mysql_container MySqlContainer.new()
 

@@ -5,8 +5,6 @@ defmodule Testcontainers.NetworkTest do
   alias Testcontainers.ContainerBuilder
   alias Testcontainers.RedisContainer
 
-  @moduletag timeout: 180_000
-
   describe "create_network/1" do
     test "creates a new Docker network" do
       network_name = "test-network-#{:rand.uniform(100_000)}"

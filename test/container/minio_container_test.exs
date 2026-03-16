@@ -5,8 +5,6 @@ defmodule Testcontainers.Container.MinioContainerTest do
   import Testcontainers.ExUnit
   alias Testcontainers.MinioContainer
 
-  @moduletag timeout: 300_000
-
   @minio_container MinioContainer.new()
 
   container(:minio, @minio_container)

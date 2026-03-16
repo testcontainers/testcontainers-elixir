@@ -38,3 +38,6 @@ testcontainers_elixir-*.tar
 .mix/
 .hex/
 .nix-mix/
+
+# test runs
+test_run_*.log

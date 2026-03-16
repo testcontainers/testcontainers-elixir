@@ -8,8 +8,6 @@ defmodule Testcontainers.Container.SharedMySqlContainerTest do
 
   alias Testcontainers.MySqlContainer
 
-  @moduletag timeout: 300_000
-
   container(:mysql, MySqlContainer.new(), shared: true)
 
   test "can select 1", %{mysql: mysql} do

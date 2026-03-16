@@ -6,14 +6,6 @@ defmodule Testcontainers.Container.ToxiproxyContainerTest do
   alias Testcontainers.Container
   alias Testcontainers.ToxiproxyContainer
 
-  @moduletag timeout: 120_000
-
-  setup_all do
-    # Start :inets once for all tests to avoid connection pool issues
-    :inets.start()
-    :ok
-  end
-
   describe "new/0" do
     test "creates a new ToxiproxyContainer struct with default configurations" do
       config = ToxiproxyContainer.new()

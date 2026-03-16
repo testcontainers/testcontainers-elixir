@@ -29,7 +29,7 @@ defmodule Testcontainers.Container do
     hostname: nil,
     reuse: false,
     force_reuse: false,
-    pull_policy: Testcontainers.PullPolicy.always_pull()
+    pull_policy: nil
   ]
 
   @doc """

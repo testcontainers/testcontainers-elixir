@@ -5,8 +5,6 @@ defmodule Testcontainers.Container.CassandraContainerTest do
   import Testcontainers.ExUnit
   alias Testcontainers.CassandraContainer
 
-  @moduletag timeout: 300_000
-
   @cassandra_container CassandraContainer.new()
 
   test "cassandra defaults" do
