@@ -143,7 +143,7 @@ defmodule Testcontainers.Container.KafkaContainerTest do
 
       :ok = create_topic(worker_name, topic_name, [])
 
-      {:ok, _} = KafkaEx.produce(topic_name, 0, "hey", worker_name: worker_name, required_acks: 1)
+      {:ok, _} = produce_with_retry(topic_name, "hey", worker_name, 5)
       stream = KafkaEx.stream(topic_name, 0, worker_name: :worker)
       [response] = Enum.take(stream, 1)
 
