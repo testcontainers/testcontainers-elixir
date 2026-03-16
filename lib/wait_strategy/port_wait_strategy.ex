@@ -25,9 +25,13 @@ defmodule Testcontainers.PortWaitStrategy do
 
     @impl true
     def wait_until_container_is_ready(wait_strategy, container, _conn) do
-      with host_port when not is_nil(host_port) <-
-             Container.mapped_port(container, wait_strategy.port),
-           do: perform_port_check(wait_strategy, host_port)
+      host = Testcontainers.get_host(container)
+      host_port = Testcontainers.get_port(container, wait_strategy.port)
+
+      case {host, host_port} do
+        {_, nil} -> {:error, :port_not_mapped, wait_strategy}
+        _ -> perform_port_check(%{wait_strategy | ip: host}, host_port)
+      end
     end
 
     defp perform_port_check(wait_strategy, host_port) do

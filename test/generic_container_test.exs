@@ -22,7 +22,7 @@ defmodule Testcontainers.GenericContainerTest do
       config = %Testcontainers.Container{image: "redis:latest", network_mode: "host"}
       assert {:ok, container} = Testcontainers.start_container(config)
       Process.sleep(5000)
-      assert :ok = port_open?("127.0.0.1", 6379)
+      assert :ok = port_open?(Testcontainers.get_host(), 6379)
       assert :ok = Testcontainers.stop_container(container.container_id)
     end
   end

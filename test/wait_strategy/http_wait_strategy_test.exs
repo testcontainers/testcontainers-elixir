@@ -13,8 +13,9 @@ defmodule Testcontainers.HttpWaitStrategyTest do
 
     assert {:ok, container} = Testcontainers.start_container(config)
 
-    host_port = Container.mapped_port(container, port)
-    url = ~c"http://localhost:#{host_port}/"
+    host = Testcontainers.get_host(container)
+    host_port = Testcontainers.get_port(container, port)
+    url = ~c"http://#{host}:#{host_port}/"
     {:ok, {_status, _headers, body}} = :httpc.request(:get, {url, []}, [], [])
     assert to_string(body) =~ "Welcome to nginx!"
 

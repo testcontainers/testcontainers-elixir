@@ -136,7 +136,7 @@ defmodule Testcontainers.Container.KafkaContainerTest do
     test "provides a ready-to-use kafka container", %{kafka: kafka} do
       worker_name = :worker
       topic_name = "test_topic"
-      uris = [{"localhost", Container.mapped_port(kafka, 9092)}]
+      uris = [{Testcontainers.get_host(kafka), Testcontainers.get_port(kafka, 9092)}]
 
       {:ok, pid} = KafkaEx.create_worker(:worker, uris: uris, consumer_group: "kafka_ex")
       on_exit(fn -> :ok = KafkaEx.stop_worker(pid) end)
@@ -157,7 +157,7 @@ defmodule Testcontainers.Container.KafkaContainerTest do
     test "creates topics automatically", %{kafka: kafka} do
       worker_name = :auto_worker
       topic_name = "auto_topic"
-      uris = [{"localhost", Container.mapped_port(kafka, 9092)}]
+      uris = [{Testcontainers.get_host(kafka), Testcontainers.get_port(kafka, 9092)}]
 
       {:ok, pid} = KafkaEx.create_worker(worker_name, uris: uris, consumer_group: "kafka_ex")
       on_exit(fn -> :ok = KafkaEx.stop_worker(pid) end)
@@ -182,7 +182,7 @@ defmodule Testcontainers.Container.KafkaContainerTest do
 
     test "bootstrap_servers returns the correct connection string", %{kafka: kafka} do
       bootstrap = KafkaContainer.bootstrap_servers(kafka)
-      assert bootstrap =~ ~r/^localhost:\d+$/
+      assert bootstrap =~ ~r/^[\w\.]+:\d+$/
     end
 
     test "port returns the mapped port", %{kafka: kafka} do
