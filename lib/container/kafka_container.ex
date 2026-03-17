@@ -156,15 +156,15 @@ defmodule Testcontainers.KafkaContainer do
   Returns the bootstrap servers string for connecting to the Kafka container.
   """
   def bootstrap_servers(%Container{} = container) do
-    port = Container.mapped_port(container, @default_internal_kafka_port)
-    "#{Testcontainers.get_host()}:#{port}"
+    port = Testcontainers.get_port(container, @default_internal_kafka_port)
+    "#{Testcontainers.get_host(container)}:#{port}"
   end
 
   @doc """
   Returns the port on the host machine where the Kafka container is listening.
   """
   def port(%Container{} = container),
-    do: Container.mapped_port(container, @default_internal_kafka_port)
+    do: Testcontainers.get_port(container, @default_internal_kafka_port)
 
   defimpl Testcontainers.ContainerBuilder do
     import Container

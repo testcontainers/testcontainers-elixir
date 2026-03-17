@@ -63,14 +63,23 @@ defmodule Testcontainers do
       :crypto.hash(:sha, "#{inspect(self())}#{DateTime.utc_now() |> DateTime.to_string()}")
       |> Base.encode16()
 
-    with {:ok, docker_hostname} <- get_docker_hostname(docker_host_url, conn),
+    with {:ok, docker_hostname} <- get_docker_hostname(docker_host_url, conn, properties),
+         use_container_ip <- should_use_container_ip?(docker_hostname),
          {:ok} <- start_reaper(conn, session_id, properties, docker_host, docker_hostname) do
-      Logger.info("Testcontainers initialized")
+      if use_container_ip do
+        Logger.info(
+          "Testcontainers initialized in container networking mode " <>
+            "(using container IPs directly)"
+        )
+      else
+        Logger.info("Testcontainers initialized")
+      end
 
       {:ok,
        %{
          conn: conn,
          docker_hostname: docker_hostname,
+         use_container_ip: use_container_ip,
          session_id: session_id,
          properties: properties,
          networks: MapSet.new(),
@@ -85,7 +94,57 @@ defmodule Testcontainers do
   end
 
   @doc false
-  def get_host(name \\ __MODULE__), do: wait_for_call(:get_host, name)
+  def get_host(), do: wait_for_call(:get_host, __MODULE__)
+
+  @doc """
+  Returns the host to use for connecting to the given container.
+
+  In standard mode, returns the same as `get_host/0` (the Docker host).
+  In container networking mode (DooD), returns the container's internal IP
+  since mapped ports on the bridge gateway may be unreachable.
+  """
+  def get_host(%Container{} = container), do: get_host(container, __MODULE__)
+  def get_host(name) when is_atom(name), do: wait_for_call(:get_host, name)
+
+  def get_host(%Container{} = container, name) do
+    if use_container_ip?(container, name) do
+      container.ip_address
+    else
+      wait_for_call(:get_host, name)
+    end
+  end
+
+  @doc """
+  Returns the port to use for connecting to the given container on the specified internal port.
+
+  In standard mode, returns the host-mapped port (same as `Container.mapped_port/2`).
+  In container networking mode (DooD), returns the internal port directly
+  since we connect to the container's IP on the bridge network.
+  """
+  def get_port(%Container{} = container, port), do: get_port(container, port, __MODULE__)
+
+  def get_port(%Container{} = container, port, name) do
+    if use_container_ip?(container, name) do
+      port
+    else
+      Container.mapped_port(container, port)
+    end
+  end
+
+  # Returns true when we should use the container's internal IP and port.
+  # Only applies when in container_ip mode AND the container is on the default
+  # bridge network. Containers on custom networks are not reachable from the
+  # test container via internal IP.
+  defp use_container_ip?(%Container{} = container, name) do
+    case wait_for_call(:get_connection_mode, name) do
+      :container_ip ->
+        is_binary(container.ip_address) and container.ip_address != "" and
+          is_nil(container.network)
+
+      _ ->
+        false
+    end
+  end
 
   @doc """
   Starts a new container based on the provided configuration, applying any specified wait strategies.
@@ -309,6 +368,12 @@ defmodule Testcontainers do
   end
 
   @impl true
+  def handle_call(:get_connection_mode, _from, state) do
+    mode = if state.use_container_ip, do: :container_ip, else: :mapped_port
+    {:reply, mode, state}
+  end
+
+  @impl true
   def handle_call({:create_network, network_name}, from, state) do
     labels = %{
       Constants.container_sessionId_label() => state.session_id,
@@ -372,6 +437,51 @@ defmodule Testcontainers do
 
   # private functions
 
+  defp should_use_container_ip?(docker_hostname) do
+    if running_in_container?() and docker_hostname != "localhost" do
+      # Probe the bridge gateway to check if mapped ports are reachable.
+      # If hairpin NAT is blocked (common in DooD), we fall back to
+      # connecting to containers via their internal IPs.
+      case :gen_tcp.connect(~c"#{docker_hostname}", 0, [], 2000) do
+        {:ok, socket} ->
+          :gen_tcp.close(socket)
+          false
+
+        {:error, :econnrefused} ->
+          # Connection refused means the host IS reachable, just no service on port 0
+          false
+
+        {:error, reason} ->
+          Logger.info(
+            "Bridge gateway #{docker_hostname} unreachable (#{inspect(reason)}). " <>
+              "Switching to container networking mode (direct IP access)"
+          )
+
+          true
+      end
+    else
+      false
+    end
+  end
+
+  @doc false
+  def running_in_container?(
+        dockerenv_path \\ "/.dockerenv",
+        cgroup_path \\ "/proc/1/cgroup"
+      ) do
+    if File.exists?(dockerenv_path) do
+      true
+    else
+      case File.read(cgroup_path) do
+        {:ok, content} ->
+          Regex.match?(~r/(docker|kubepods|lxc|containerd)/, content)
+
+        {:error, _} ->
+          false
+      end
+    end
+  end
+
   defp start_compose_env(%DockerCompose{} = compose, state) do
     with :ok <- ComposeCli.up(compose),
          {:ok, ps_entries} <- ComposeCli.ps(compose) do
@@ -407,6 +517,38 @@ defmodule Testcontainers do
     end
   end
 
+  @doc false
+  def parse_gateway_from_proc_route(content) do
+    content
+    |> String.split("\n")
+    |> Enum.drop(1)
+    |> Enum.map(&String.split(&1, "\t"))
+    |> Enum.find(fn
+      [_iface, destination | _rest] -> destination == "00000000"
+      _ -> false
+    end)
+    |> case do
+      [_iface, _destination, gateway_hex | _rest] ->
+        decode_hex_gateway(gateway_hex)
+
+      _ ->
+        {:error, :no_default_route}
+    end
+  end
+
+  defp decode_hex_gateway(hex) when byte_size(hex) == 8 do
+    {value, ""} = Integer.parse(hex, 16)
+
+    a = Bitwise.band(value, 0xFF)
+    b = Bitwise.band(Bitwise.bsr(value, 8), 0xFF)
+    c = Bitwise.band(Bitwise.bsr(value, 16), 0xFF)
+    d = Bitwise.band(Bitwise.bsr(value, 24), 0xFF)
+
+    {:ok, "#{a}.#{b}.#{c}.#{d}"}
+  end
+
+  defp decode_hex_gateway(_), do: {:error, :invalid_gateway}
+
   defp run_compose_wait_strategies(%DockerCompose{} = compose, services, state) do
     Enum.reduce_while(compose.wait_strategies, :ok, fn {service_name, strategies}, :ok ->
       case Map.get(services, service_name) do
@@ -437,21 +579,53 @@ defmodule Testcontainers do
     end)
   end
 
-  defp get_docker_hostname(docker_host_url, conn) do
+  defp get_docker_hostname(docker_host_url, conn, properties) do
+    # Check for explicit host override first
+    host_override =
+      Map.get(properties, "tc.host.override") ||
+        System.get_env("TESTCONTAINERS_HOST_OVERRIDE")
+
+    if host_override do
+      Logger.debug("Using host override: #{host_override}")
+      {:ok, host_override}
+    else
+      do_get_docker_hostname(docker_host_url, conn)
+    end
+  end
+
+  defp do_get_docker_hostname(docker_host_url, conn) do
     case URI.parse(docker_host_url) do
       uri when uri.scheme == "http" or uri.scheme == "https" ->
         {:ok, uri.host}
 
       uri when uri.scheme == "http+unix" ->
-        if File.exists?("/.dockerenv") do
+        if running_in_container?() do
           Logger.debug("Running in docker environment, trying to get bridge network gateway")
 
           with {:ok, gateway} <- Api.get_bridge_gateway(conn) do
             {:ok, gateway}
           else
             {:error, reason} ->
-              Logger.debug("Failed to get bridge gateway: #{inspect(reason)}. Using localhost")
-              {:ok, "localhost"}
+              Logger.debug(
+                "Failed to get bridge gateway: #{inspect(reason)}. Trying /proc/net/route"
+              )
+
+              case File.read("/proc/net/route") do
+                {:ok, content} ->
+                  case parse_gateway_from_proc_route(content) do
+                    {:ok, gateway} ->
+                      Logger.debug("Found gateway from /proc/net/route: #{gateway}")
+                      {:ok, gateway}
+
+                    {:error, _} ->
+                      Logger.debug("Failed to parse /proc/net/route. Using localhost")
+                      {:ok, "localhost"}
+                  end
+
+                {:error, _} ->
+                  Logger.debug("Cannot read /proc/net/route. Using localhost")
+                  {:ok, "localhost"}
+              end
           end
         else
           Logger.debug("Not running in docker environment, using localhost")
@@ -534,28 +708,59 @@ defmodule Testcontainers do
        when reattempt_count < 5 do
     host_port = Container.mapped_port(container, 8080)
 
-    case :gen_tcp.connect(~c"#{docker_hostname}", host_port, [
-           :binary,
-           active: false,
-           packet: :line,
-           send_timeout: 10000
-         ]) do
+    case try_tcp_connect(docker_hostname, host_port) do
       {:ok, connected} ->
         {:ok, connected}
 
       {:error, reason} ->
-        Logger.info(
-          "Connection failed with #{inspect(reason)}. Retrying... Attempt #{reattempt_count + 1}/5"
-        )
+        # If connecting via docker_hostname:mapped_port fails and we're in a container,
+        # try the container's internal IP on its internal port. In DooD (Docker-outside-of-Docker)
+        # both containers are on the same bridge network, so direct IP access works.
+        case try_container_internal_connect(container, 8080, reason) do
+          {:ok, connected} ->
+            {:ok, connected}
 
-        :timer.sleep(1000)
-        create_ryuk_socket(container, docker_hostname, reattempt_count + 1)
+          {:error, _} ->
+            Logger.info(
+              "Connection to Ryuk failed (#{inspect(reason)}). Retrying... Attempt #{reattempt_count + 1}/5"
+            )
+
+            :timer.sleep(1000)
+            create_ryuk_socket(container, docker_hostname, reattempt_count + 1)
+        end
     end
   end
 
   defp create_ryuk_socket(%Container{} = _container, _docker_hostname, _reattempt_count) do
     Logger.info("Ryuk host refused to connect")
     {:error, :econnrefused}
+  end
+
+  defp try_tcp_connect(host, port) do
+    :gen_tcp.connect(~c"#{host}", port, [
+      :binary,
+      active: false,
+      packet: :line,
+      send_timeout: 10000
+    ], 5000)
+  end
+
+  defp try_container_internal_connect(%Container{ip_address: ip}, internal_port, original_reason)
+       when is_binary(ip) and ip != "" do
+    if running_in_container?() do
+      Logger.info(
+        "Connection via mapped port failed (#{inspect(original_reason)}). " <>
+          "Trying container internal IP #{ip}:#{internal_port}"
+      )
+
+      try_tcp_connect(ip, internal_port)
+    else
+      {:error, original_reason}
+    end
+  end
+
+  defp try_container_internal_connect(_container, _internal_port, original_reason) do
+    {:error, original_reason}
   end
 
   defp register_ryuk_filter(value, socket) do
@@ -695,8 +900,21 @@ defmodule Testcontainers do
   end
 
   defp apply_docker_socket_volume_binding(config, docker_host) do
-    case {os_type(), URI.parse(docker_host)} do
-      {os, uri} -> handle_docker_socket_binding(config, os, uri)
+    socket_override = System.get_env("TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE")
+
+    if socket_override do
+      Logger.debug("Using docker socket override: #{socket_override}")
+
+      Container.with_bind_mount(
+        config,
+        socket_override,
+        "/var/run/docker.sock",
+        "rw"
+      )
+    else
+      case {os_type(), URI.parse(docker_host)} do
+        {os, uri} -> handle_docker_socket_binding(config, os, uri)
+      end
     end
   end
 

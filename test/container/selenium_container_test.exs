@@ -9,6 +9,7 @@ defmodule Testcontainers.Container.SeleniumContainerTest do
   describe "with default configuration" do
     container(:selenium, SeleniumContainer.new())
 
+    @tag :dood_limitation
     test "provides a ready-to-use selenium container", %{selenium: selenium} do
       assert Container.mapped_port(selenium, 4400) > 0
       assert Container.mapped_port(selenium, 4400) != 4400

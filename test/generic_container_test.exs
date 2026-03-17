@@ -15,6 +15,7 @@ defmodule Testcontainers.GenericContainerTest do
   # This doesnt work on rootless docker, because binding ports to host requires root (i guess)
   # run test with --exclude needs_root if you are running rootless
   @tag :needs_root
+  @tag :dood_limitation
   test "can start and stop generic container with network mode set to host" do
     if not is_os(:linux) do
       Logger.warning("Host is not Linux, therefore not running network_mode test")

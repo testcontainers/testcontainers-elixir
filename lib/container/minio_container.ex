@@ -49,13 +49,13 @@ defmodule Testcontainers.MinioContainer do
   @doc """
   Retrieves the port mapped by the Docker host for the Minio container.
   """
-  def port(%Container{} = container), do: Container.mapped_port(container, @default_s3_port)
+  def port(%Container{} = container), do: Testcontainers.get_port(container, @default_s3_port)
 
   @doc """
   Generates the connection URL for accessing the Minio service running within the container.
   """
   def connection_url(%Container{} = container) do
-    "http://#{Testcontainers.get_host()}:#{port(container)}"
+    "http://#{Testcontainers.get_host(container)}:#{port(container)}"
   end
 
   @doc """
@@ -66,7 +66,7 @@ defmodule Testcontainers.MinioContainer do
     [
       port: MinioContainer.port(container),
       scheme: "http://",
-      host: Testcontainers.get_host(),
+      host: Testcontainers.get_host(container),
       access_key_id: container.environment[:MINIO_ROOT_USER],
       secret_access_key: container.environment[:MINIO_ROOT_PASSWORD]
     ]

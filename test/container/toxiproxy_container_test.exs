@@ -118,8 +118,8 @@ defmodule Testcontainers.Container.ToxiproxyContainerTest do
     test "can access toxiproxy API", %{toxiproxy: toxiproxy} do
       :inets.start()
 
-      host = Testcontainers.get_host()
-      port = ToxiproxyContainer.mapped_control_port(toxiproxy)
+      host = Testcontainers.get_host(toxiproxy)
+      port = Testcontainers.get_port(toxiproxy, ToxiproxyContainer.control_port())
       url = ~c"http://#{host}:#{port}/version"
 
       {:ok, {{_, 200, _}, _, body}} = :httpc.request(:get, {url, []}, [], [])
@@ -232,6 +232,7 @@ defmodule Testcontainers.Container.ToxiproxyContainerTest do
       {:ok, network_name: network_name}
     end
 
+    @tag :dood_limitation
     test "can proxy and inject faults into Redis traffic", %{network_name: network_name} do
       alias Testcontainers.RedisContainer
       alias Testcontainers.ContainerBuilder
