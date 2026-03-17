@@ -18,6 +18,10 @@ defmodule Testcontainers do
   alias Testcontainers.ContainerBuilder
   alias Testcontainers.PullPolicy
   alias Testcontainers.Util.PropertiesParser
+  alias Testcontainers.DockerCompose
+  alias Testcontainers.Compose.Cli, as: ComposeCli
+  alias Testcontainers.Compose.ComposeService
+  alias Testcontainers.Compose.ComposeEnvironment
 
   import Testcontainers.Constants
   import Testcontainers.Container, only: [os_type: 0]
@@ -80,7 +84,8 @@ defmodule Testcontainers do
          properties: properties,
          networks: MapSet.new(),
          containers: MapSet.new(),
-         images: MapSet.new()
+         images: MapSet.new(),
+         compose_envs: []
        }}
     else
       error ->
@@ -195,6 +200,38 @@ defmodule Testcontainers do
   end
 
   @doc """
+  Starts a Docker Compose environment based on the provided configuration.
+
+  ## Parameters
+
+  - `config`: A `%DockerCompose{}` struct containing the configuration.
+
+  ## Returns
+
+  - `{:ok, compose_env}` if the compose environment starts successfully.
+  - `{:error, reason}` on failure.
+  """
+  def start_compose(config, name \\ __MODULE__) do
+    wait_for_call({:start_compose, config}, name)
+  end
+
+  @doc """
+  Stops a running Docker Compose environment.
+
+  ## Parameters
+
+  - `compose_env`: A `%ComposeEnvironment{}` struct representing the running environment.
+
+  ## Returns
+
+  - `:ok` if the compose environment stops successfully.
+  - `{:error, reason}` on failure.
+  """
+  def stop_compose(compose_env, name \\ __MODULE__) do
+    wait_for_call({:stop_compose, compose_env}, name)
+  end
+
+  @doc """
   Creates a Docker network.
 
   Networks allow containers to communicate with each other using hostnames.
@@ -246,6 +283,19 @@ defmodule Testcontainers do
     {:noreply, %{state | images: MapSet.put(state.images, image)}}
   end
 
+  def handle_cast({:track_compose_env, compose_env}, state) do
+    {:noreply, %{state | compose_envs: [compose_env | state.compose_envs]}}
+  end
+
+  def handle_cast({:untrack_compose_env, compose_env}, state) do
+    updated =
+      Enum.reject(state.compose_envs, fn env ->
+        env.project_name == compose_env.project_name
+      end)
+
+    {:noreply, %{state | compose_envs: updated}}
+  end
+
   @impl true
   def handle_info(_msg, state) do
     {:noreply, state}
@@ -253,6 +303,11 @@ defmodule Testcontainers do
 
   @impl true
   def terminate(_reason, state) do
+    for compose_env <- Map.get(state, :compose_envs, []) do
+      Logger.info("Stopping compose environment #{compose_env.project_name}")
+      ComposeCli.down(compose_env.compose)
+    end
+
     for container_id <- state.containers do
       Logger.info("Terminating container #{container_id}")
       Api.stop_container(container_id, state.conn)
@@ -346,6 +401,40 @@ defmodule Testcontainers do
     {:noreply, %{state | networks: MapSet.delete(state.networks, network_name)}}
   end
 
+  @impl true
+  def handle_call({:start_compose, %DockerCompose{} = compose}, from, state) do
+    self_pid = self()
+
+    Task.async(fn ->
+      result = start_compose_env(compose, state)
+
+      case result do
+        {:ok, compose_env} ->
+          GenServer.cast(self_pid, {:track_compose_env, compose_env})
+
+        _ ->
+          :ok
+      end
+
+      GenServer.reply(from, result)
+    end)
+
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_call({:stop_compose, %ComposeEnvironment{} = compose_env}, from, state) do
+    self_pid = self()
+
+    Task.async(fn ->
+      result = ComposeCli.down(compose_env.compose)
+      GenServer.cast(self_pid, {:untrack_compose_env, compose_env})
+      GenServer.reply(from, result)
+    end)
+
+    {:noreply, state}
+  end
+
   # private functions
 
   defp should_use_container_ip?(docker_hostname) do
@@ -393,6 +482,41 @@ defmodule Testcontainers do
     end
   end
 
+  defp start_compose_env(%DockerCompose{} = compose, state) do
+    with :ok <- ComposeCli.up(compose),
+         {:ok, ps_entries} <- ComposeCli.ps(compose) do
+      services =
+        ps_entries
+        |> Enum.map(fn entry ->
+          service_name = Map.get(entry, "Service", "")
+          container_id = Map.get(entry, "ID", "")
+          service_state = Map.get(entry, "State", "")
+          publishers = Map.get(entry, "Publishers", [])
+          ports = ComposeCli.parse_publishers(publishers)
+
+          %ComposeService{
+            service_name: service_name,
+            container_id: container_id,
+            state: service_state,
+            exposed_ports: ports
+          }
+        end)
+        |> Map.new(fn service -> {service.service_name, service} end)
+
+      # Run per-service wait strategies if configured
+      with :ok <- run_compose_wait_strategies(compose, services, state) do
+        compose_env = %ComposeEnvironment{
+          compose: compose,
+          project_name: compose.project_name,
+          docker_host: state.docker_hostname,
+          services: services
+        }
+
+        {:ok, compose_env}
+      end
+    end
+  end
+
   @doc false
   def parse_gateway_from_proc_route(content) do
     content
@@ -424,6 +548,36 @@ defmodule Testcontainers do
   end
 
   defp decode_hex_gateway(_), do: {:error, :invalid_gateway}
+
+  defp run_compose_wait_strategies(%DockerCompose{} = compose, services, state) do
+    Enum.reduce_while(compose.wait_strategies, :ok, fn {service_name, strategies}, :ok ->
+      case Map.get(services, service_name) do
+        nil ->
+          {:halt, {:error, {:service_not_found, service_name}}}
+
+        %ComposeService{container_id: container_id} ->
+          case Api.get_container(container_id, state.conn) do
+            {:ok, container} ->
+              result =
+                Enum.reduce(strategies, :ok, fn
+                  strategy, :ok ->
+                    WaitStrategy.wait_until_container_is_ready(strategy, container, state.conn)
+
+                  _, error ->
+                    error
+                end)
+
+              case result do
+                :ok -> {:cont, :ok}
+                error -> {:halt, error}
+              end
+
+            {:error, _} = error ->
+              {:halt, error}
+          end
+      end
+    end)
+  end
 
   defp get_docker_hostname(docker_host_url, conn, properties) do
     # Check for explicit host override first
