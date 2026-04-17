@@ -59,6 +59,8 @@ defmodule TestcontainersElixir.MixProject do
       {:myxql, "~> 0.4", only: [:dev, :test]},
       # postgres
       {:postgrex, "~> 0.14", only: [:dev, :test]},
+      # mongo
+      {:mongodb_driver, "~> 1.6.2", only: [:dev, :test]},
       # redis
       {:redix, "~> 1.0", only: [:dev, :test]},
       # ceph and minio
