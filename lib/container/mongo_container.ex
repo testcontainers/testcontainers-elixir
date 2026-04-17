@@ -127,13 +127,23 @@ defmodule Testcontainers.MongoContainer do
     %{config | port: port}
   end
 
+  @doc """
+  mounts persistent volume in Mongo data path used for the Mongo container.
+
+  ## Examples
+
+      iex> config = MongoContainer.new()
+      iex> config = MongoContainer.with_persistent_volume(config, "data_volume")
+      iex> config.persistent_volume
+      "data_volume"
+  """
   def with_persistent_volume(%__MODULE__{} = config, persistent_volume)
       when is_binary(persistent_volume) do
     %{config | persistent_volume: persistent_volume}
   end
 
   @doc """
-  Overrides the default wait timeout used for the Mongo container.
+  Mounts the default wait timeout used for the Mongo container.
 
   Note: this timeout will be used for each individual wait strategy.
 

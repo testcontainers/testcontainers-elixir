@@ -6,8 +6,6 @@ defmodule Testcontainers.Container.MongoContainerTest do
 
   alias Testcontainers.CommandWaitStrategy
   alias Testcontainers.ContainerBuilder
-  alias Testcontainers.Connection
-  alias Testcontainers.Docker.Api
   alias Testcontainers.MongoContainer
 
   describe "new/0 and builder options" do
@@ -125,40 +123,25 @@ defmodule Testcontainers.Container.MongoContainerTest do
                "mongodb://test:test@#{host}:#{port}/test?replicaSet=rs0"
     end
 
-    test "is reachable and can insert/query a document via mongosh", %{mongo: mongo} do
-      command = [
-        "sh",
-        "-c",
-        "mongosh --quiet --username test --password test --authenticationDatabase admin --eval \"db = db.getSiblingDB('test'); db.artists.insertOne({name: 'FKA Twigs'}); if (db.artists.countDocuments({name: 'FKA Twigs'}) !== 1) { quit(1) }\" || mongo --quiet --username test --password test --authenticationDatabase admin --eval \"db = db.getSiblingDB('test'); db.artists.insert({name: 'FKA Twigs'}); if (db.artists.count({name: 'FKA Twigs'}) < 1) { quit(1) }\""
-      ]
+    test "is reachable and can insert/query a document", %{mongo: mongo} do
+      connection_params = MongoContainer.connection_parameters(mongo) ++ [auth_source: "admin"]
+      {:ok, pid} = Mongo.start_link(connection_params)
 
-      assert :ok == exec_and_wait(mongo.container_id, command)
-    end
-  end
+      on_exit(fn ->
+        if Process.alive?(pid) do
+          GenServer.stop(pid)
+        end
+      end)
 
-  defp exec_and_wait(container_id, command) do
-    {conn, _url, _host} = Connection.get_connection()
+      assert {:ok, %{inserted_id: _id}} =
+               Mongo.insert_one(pid, "artists", %{name: "FKA Twigs"})
 
-    with {:ok, exec_id} <- Api.start_exec(container_id, command, conn),
-         :ok <- wait_for_exec(exec_id, conn) do
-      :ok
-    end
-  end
+      artists =
+        pid
+        |> Mongo.find("artists", %{name: "FKA Twigs"})
+        |> Enum.to_list()
 
-  defp wait_for_exec(exec_id, conn) do
-    case Api.inspect_exec(exec_id, conn) do
-      {:ok, %{running: true}} ->
-        Process.sleep(100)
-        wait_for_exec(exec_id, conn)
-
-      {:ok, %{running: false, exit_code: 0}} ->
-        :ok
-
-      {:ok, %{running: false, exit_code: code}} ->
-        {:error, {:exec_failed, code}}
-
-      {:error, reason} ->
-        {:error, reason}
+      assert length(artists) == 1
     end
   end
 end
