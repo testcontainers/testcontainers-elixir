@@ -8,6 +8,7 @@
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Usage](#usage)
+- [Configuration](#configuration)
 - [API Documentation](#api-documentation)
 - [Contributing](#contributing)
 - [License](#license)
@@ -198,6 +199,78 @@ While the old task will continue to work, we recommend updating to `mix testcont
 ### Logging
 
 Testcontainers use the standard Logger, see https://hexdocs.pm/logger/Logger.html.
+
+## Configuration
+
+### Pull policy
+
+By default, Testcontainers pulls an image only when it isn't already present in the local Docker daemon. This avoids Docker Hub rate limits on repeated test runs. The policy per container can be overridden:
+
+```elixir
+alias Testcontainers.{Container, PullPolicy}
+
+# pulled only if not present locally (default)
+%Container{image: "redis:7", pull_policy: PullPolicy.pull_if_missing()}
+
+# always pull, bypassing any cached image
+%Container{image: "redis:7", pull_policy: PullPolicy.always_pull()}
+
+# never pull; expect the image to exist locally
+%Container{image: "redis:7", pull_policy: PullPolicy.never_pull()}
+
+# conditional pull; pass a 2-arity function
+%Container{
+  image: "redis:7",
+  pull_policy: PullPolicy.pull_condition(fn _config, _conn -> should_pull?() end)
+}
+```
+
+The global default can also be set in `~/.testcontainers.properties` via `pull.policy` (`missing` — default, `always`, or `never`).
+
+### Naming containers
+
+Give a container a stable name so other containers on the same network can reference it by name:
+
+```elixir
+Testcontainers.Container.new("postgres:16")
+|> Testcontainers.Container.with_name("my-postgres")
+```
+
+The name is passed straight through to Docker's `/containers/create` as the `name` query parameter, so the usual Docker rules apply (must be unique on the daemon, `[a-zA-Z0-9][a-zA-Z0-9_.-]+`).
+
+### Private registries
+
+If the image lives on a registry that requires authentication, Testcontainers automatically resolves credentials from the user's Docker config on image pull. The lookup order is:
+
+1. `Container.auth` if set explicitly — always wins.
+2. The `auths` map in `$DOCKER_CONFIG/config.json` (or `~/.docker/config.json` if `DOCKER_CONFIG` is unset). The registry host of the image is matched against entries in the map.
+3. Anonymous pull.
+
+Only the `auths` map is consulted; credential-helper binaries (`credsStore`, `credHelpers`) are not invoked. If an auto-resolved credential is rejected with a 4xx, the pull is retried once anonymously to keep stale entries in `config.json` from breaking pulls that would otherwise succeed without auth.
+
+To log in before running tests:
+
+```bash
+docker login myregistry.example.com
+```
+
+### TLS-secured Docker hosts
+
+Testcontainers recognizes TLS-secured Docker daemons out of the box. Point it at one with:
+
+- `DOCKER_HOST=https://docker.example.internal:2376`, or
+- `DOCKER_HOST=tcp://docker.example.internal:2376` plus `DOCKER_TLS_VERIFY=1`.
+
+The client looks for `ca.pem`, `cert.pem`, and `key.pem` in the directory named by `DOCKER_CERT_PATH` (or `~/.docker` if unset); whichever files are present are used to build the SSL context, matching the Docker CLI's behavior. When `DOCKER_TLS_VERIFY` is unset, peer verification is disabled and a warning is logged.
+
+### Ryuk under SELinux / rootless Docker
+
+On distributions that enforce SELinux (for example Fedora), the Ryuk reaper container may be denied write access to the Docker socket unless it runs privileged. Enable it with either:
+
+- the `ryuk.container.privileged=true` property in `~/.testcontainers.properties`, or
+- the `TESTCONTAINERS_RYUK_CONTAINER_PRIVILEGED=true` environment variable (takes precedence over the property).
+
+Ryuk only runs privileged when one of these is set to `true` or `1`.
 
 ## API Documentation
 
