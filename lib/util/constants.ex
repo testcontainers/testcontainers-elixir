@@ -2,7 +2,7 @@ defmodule Testcontainers.Constants do
   @moduledoc false
 
   def library_name, do: :testcontainers
-  def library_version, do: "2.2.0"
+  def library_version, do: "2.3.0"
   def ryuk_version, do: "0.14.0"
   def container_label, do: "org.testcontainers"
   def container_lang_label, do: "org.testcontainers.lang"
