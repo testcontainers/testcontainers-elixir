@@ -1,7 +1,7 @@
 defmodule Mix.Tasks.Testcontainers.Run do
   use Mix.Task
-  alias Testcontainers.PostgresContainer
   alias Testcontainers.MySqlContainer
+  alias Testcontainers.PostgresContainer
 
   @shortdoc "Runs a Mix sub-task (test, phx.server, etc) with a database container"
   @moduledoc """

@@ -1,6 +1,6 @@
 defmodule Testcontainers.HttpWaitStrategyTest do
-  alias Testcontainers.HttpWaitStrategy
   alias Testcontainers.Container
+  alias Testcontainers.HttpWaitStrategy
   use ExUnit.Case, async: true
 
   test "can wait for a http request and retrieve content" do

@@ -4,10 +4,10 @@ defmodule Testcontainers.CephContainer do
   Provides functionality for creating and managing Ceph container configurations.
   """
 
-  alias Testcontainers.LogWaitStrategy
   alias Testcontainers.CephContainer
-  alias Testcontainers.ContainerBuilder
   alias Testcontainers.Container
+  alias Testcontainers.ContainerBuilder
+  alias Testcontainers.LogWaitStrategy
 
   import Testcontainers.Container, only: [is_valid_image: 1]
 
@@ -19,6 +19,8 @@ defmodule Testcontainers.CephContainer do
   @default_secret_key Uniq.UUID.uuid4()
   @default_port 8080
   @default_wait_timeout 300_000
+
+  @type t :: %__MODULE__{}
 
   @enforce_keys [:image, :access_key, :secret_key, :bucket, :port, :wait_timeout]
   defstruct [
@@ -230,7 +232,7 @@ defmodule Testcontainers.CephContainer do
 
     - Raises `ArgumentError` if the provided image is not compatible with the default Ceph image.
     """
-    @spec build(%CephContainer{}) :: %Container{}
+    @spec build(CephContainer.t()) :: Container.t()
     @impl true
     def build(%CephContainer{} = config) do
       new(config.image)

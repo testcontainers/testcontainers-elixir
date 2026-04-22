@@ -12,7 +12,7 @@ defmodule Testcontainers.ContainerBuilderHelperTest do
     {:noreuse, built, nil} = ContainerBuilderHelper.build(builder, state)
     assert Map.get(built.labels, container_reuse()) == "false"
     assert Map.get(built.labels, container_reuse_hash_label()) == nil
-    assert Map.get(built.labels, container_sessionId_label()) == "123"
+    assert Map.get(built.labels, container_session_id_label()) == "123"
     assert Map.get(built.labels, container_version_label()) == library_version()
     assert Map.get(built.labels, container_lang_label()) == container_lang_value()
     assert Map.get(built.labels, container_label()) == "true"
@@ -27,7 +27,7 @@ defmodule Testcontainers.ContainerBuilderHelperTest do
     assert hash != nil
     assert Map.get(built.labels, container_reuse()) == "true"
     assert Map.get(built.labels, container_reuse_hash_label()) != nil
-    assert Map.get(built.labels, container_sessionId_label()) == "123"
+    assert Map.get(built.labels, container_session_id_label()) == "123"
     assert Map.get(built.labels, container_version_label()) == library_version()
     assert Map.get(built.labels, container_lang_label()) == container_lang_value()
     assert Map.get(built.labels, container_label()) == "true"

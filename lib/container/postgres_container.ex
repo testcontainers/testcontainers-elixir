@@ -8,9 +8,9 @@ defmodule Testcontainers.PostgresContainer do
   """
 
   alias Testcontainers.CommandWaitStrategy
-  alias Testcontainers.PostgresContainer
   alias Testcontainers.Container
   alias Testcontainers.ContainerBuilder
+  alias Testcontainers.PostgresContainer
 
   import Testcontainers.Container, only: [is_valid_image: 1]
 
@@ -22,6 +22,8 @@ defmodule Testcontainers.PostgresContainer do
   @default_database "test"
   @default_port 5432
   @default_wait_timeout 60_000
+
+  @type t :: %__MODULE__{}
 
   @enforce_keys [:image, :user, :password, :database, :port, :wait_timeout, :persistent_volume]
   defstruct [
@@ -211,7 +213,7 @@ defmodule Testcontainers.PostgresContainer do
 
     - Raises `ArgumentError` if the provided image is not compatible with the default Postgres image.
     """
-    @spec build(%PostgresContainer{}) :: %Container{}
+    @spec build(PostgresContainer.t()) :: Container.t()
     @impl true
     def build(%PostgresContainer{} = config) do
       new(config.image)

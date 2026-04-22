@@ -1,8 +1,9 @@
 defmodule Testcontainers.ContainerBuilderHelper do
+  @moduledoc false
   import Testcontainers.Constants
-  alias Testcontainers.Util.Hash
   alias Testcontainers.Container
   alias Testcontainers.ContainerBuilder
+  alias Testcontainers.Util.Hash
 
   def build(builder, state) when is_map(state) and is_struct(builder) do
     config =
@@ -18,13 +19,13 @@ defmodule Testcontainers.ContainerBuilderHelper do
       config
       |> Container.with_label(container_reuse(), "true")
       |> Container.with_label(container_reuse_hash_label(), hash)
-      |> Container.with_label(container_sessionId_label(), state.session_id)
+      |> Container.with_label(container_session_id_label(), state.session_id)
       |> Container.with_label(container_version_label(), library_version())
       |> Kernel.then(&{:reuse, &1, hash})
     else
       config
       |> Container.with_label(container_reuse(), "false")
-      |> Container.with_label(container_sessionId_label(), state.session_id)
+      |> Container.with_label(container_session_id_label(), state.session_id)
       |> Container.with_label(container_version_label(), library_version())
       |> Kernel.then(&{:noreuse, &1, nil})
     end

@@ -3,10 +3,10 @@ defmodule Testcontainers.EmqxContainer do
   Provides functionality for creating and managing EMQX container configurations.
   """
 
-  alias Testcontainers.ContainerBuilder
   alias Testcontainers.Container
-  alias Testcontainers.PortWaitStrategy
+  alias Testcontainers.ContainerBuilder
   alias Testcontainers.EmqxContainer
+  alias Testcontainers.PortWaitStrategy
 
   import Testcontainers.Container, only: [is_valid_image: 1]
 
@@ -17,7 +17,7 @@ defmodule Testcontainers.EmqxContainer do
   @default_mqtts_port 8883
   @default_mqtt_over_ws_port 8083
   @default_mqtt_over_wss_port 8084
-  @default_dashboard_port 18083
+  @default_dashboard_port 18_083
   @default_wait_timeout 60_000
 
   @enforce_keys [:image, :mqtt_port, :wait_timeout]
@@ -160,7 +160,6 @@ defmodule Testcontainers.EmqxContainer do
       ]
 
     @impl true
-    # TODO Implement the `after_start/3` function for the `ContainerBuilder` protocol.
     def after_start(_config, _container, _conn), do: :ok
   end
 end

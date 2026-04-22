@@ -28,30 +28,34 @@ defmodule Testcontainers.DockerSocketPathStrategy do
     end
 
     def execute(strategy, _input) do
-      Enum.reduce_while(
-        if length(strategy.socket_paths) == 0 do
-          default_socket_paths()
-        else
-          strategy.socket_paths
-        end,
-        {:error, {:docker_socket_not_found, []}},
-        fn path, {:error, {:docker_socket_not_found, tried_paths}} ->
-          if path != nil && File.exists?(path) do
-            path_with_scheme = "unix://" <> path
-
-            case DockerUrl.test_docker_host(path_with_scheme) do
-              :ok ->
-                {:halt, {:ok, path_with_scheme}}
-
-              {:error, reason} ->
-                Logger.debug("Docker socket path #{path} failed: #{reason}")
-                {:cont, {:error, {:docker_socket_not_found, tried_paths ++ [path]}}}
-            end
-          else
-            {:cont, {:error, {:docker_socket_not_found, tried_paths ++ [path]}}}
-          end
+      paths =
+        case strategy.socket_paths do
+          [] -> default_socket_paths()
+          paths -> paths
         end
-      )
+
+      Enum.reduce_while(paths, {:error, {:docker_socket_not_found, []}}, &try_socket_path/2)
+    end
+
+    defp try_socket_path(path, {:error, {:docker_socket_not_found, tried_paths}}) do
+      if path != nil && File.exists?(path) do
+        probe_socket(path, tried_paths)
+      else
+        {:cont, {:error, {:docker_socket_not_found, tried_paths ++ [path]}}}
+      end
+    end
+
+    defp probe_socket(path, tried_paths) do
+      path_with_scheme = "unix://" <> path
+
+      case DockerUrl.test_docker_host(path_with_scheme) do
+        :ok ->
+          {:halt, {:ok, path_with_scheme}}
+
+        {:error, reason} ->
+          Logger.debug("Docker socket path #{path} failed: #{reason}")
+          {:cont, {:error, {:docker_socket_not_found, tried_paths ++ [path]}}}
+      end
     end
   end
 end

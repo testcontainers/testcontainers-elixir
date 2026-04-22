@@ -1,8 +1,8 @@
 defmodule Testcontainers.Connection.DockerHostStrategy.DockerHostFromEnvTest do
   use ExUnit.Case, async: true
 
-  alias Testcontainers.DockerHostStrategyEvaluator
   alias Testcontainers.DockerHostFromEnvStrategy
+  alias Testcontainers.DockerHostStrategyEvaluator
 
   describe "DockerHostFromEnvStrategy" do
     setup do

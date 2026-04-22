@@ -2,12 +2,12 @@ defprotocol Testcontainers.ContainerBuilder do
   @moduledoc """
   All types of predefined containers must implement this protocol.
   """
-  @spec build(t()) :: %Testcontainers.Container{}
+  @spec build(t()) :: Testcontainers.Container.t()
   def build(builder)
 
   @doc """
   Do stuff after container has started.
   """
-  @spec after_start(t(), %Testcontainers.Container{}, %Tesla.Env{}) :: :ok | {:error, term()}
+  @spec after_start(t(), Testcontainers.Container.t(), Tesla.Env.t()) :: :ok | {:error, term()}
   def after_start(builder, container, connection)
 end

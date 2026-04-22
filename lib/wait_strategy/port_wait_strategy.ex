@@ -73,7 +73,7 @@ defmodule Testcontainers.PortWaitStrategy do
       end
     end
 
-    defp current_time_millis(), do: System.monotonic_time(:millisecond)
+    defp current_time_millis, do: System.monotonic_time(:millisecond)
 
     defp reached_timeout?(timeout, start_time), do: current_time_millis() - start_time > timeout
 

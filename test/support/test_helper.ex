@@ -1,4 +1,5 @@
 defmodule TestHelper do
+  @moduledoc false
   @doc """
   Waits for the specified GenServer to change its running state (either start or stop).
 

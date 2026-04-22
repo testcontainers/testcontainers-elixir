@@ -4,13 +4,13 @@ defmodule Testcontainers.Connection do
 
   require Logger
 
+  alias DockerEngineAPI.Connection
   alias Testcontainers.Constants
-  alias Testcontainers.DockerUrl
+  alias Testcontainers.DockerHostFromEnvStrategy
+  alias Testcontainers.DockerHostFromPropertiesStrategy
   alias Testcontainers.DockerHostStrategyEvaluator
   alias Testcontainers.DockerSocketPathStrategy
-  alias Testcontainers.DockerHostFromPropertiesStrategy
-  alias Testcontainers.DockerHostFromEnvStrategy
-  alias DockerEngineAPI.Connection
+  alias Testcontainers.DockerUrl
 
   @timeout 300_000
 
@@ -29,9 +29,10 @@ defmodule Testcontainers.Connection do
   end
 
   defp get_docker_host_url do
-    with {:ok, docker_host} <- get_docker_host() do
-      {DockerUrl.construct(docker_host), docker_host}
-    else
+    case get_docker_host() do
+      {:ok, docker_host} ->
+        {DockerUrl.construct(docker_host), docker_host}
+
       {:error, error} ->
         exit(error)
     end

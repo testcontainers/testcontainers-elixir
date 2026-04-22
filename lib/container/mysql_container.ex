@@ -9,8 +9,8 @@ defmodule Testcontainers.MySqlContainer do
 
   alias Testcontainers.Container
   alias Testcontainers.ContainerBuilder
-  alias Testcontainers.MySqlContainer
   alias Testcontainers.LogWaitStrategy
+  alias Testcontainers.MySqlContainer
 
   import Testcontainers.Container, only: [is_valid_image: 1]
 
@@ -22,6 +22,8 @@ defmodule Testcontainers.MySqlContainer do
   @default_database "test"
   @default_port 3306
   @default_wait_timeout 180_000
+
+  @type t :: %__MODULE__{}
 
   @enforce_keys [:image, :user, :password, :database, :port, :wait_timeout, :persistent_volume]
   defstruct [
@@ -211,7 +213,7 @@ defmodule Testcontainers.MySqlContainer do
 
     - Raises `ArgumentError` if the provided image is not compatible with the default MySql image.
     """
-    @spec build(%MySqlContainer{}) :: %Container{}
+    @spec build(MySqlContainer.t()) :: Container.t()
     @impl true
     def build(%MySqlContainer{} = config) do
       new(config.image)

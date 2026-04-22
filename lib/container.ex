@@ -8,6 +8,8 @@ defmodule Testcontainers.Container do
 
   require Logger
 
+  @type t :: %__MODULE__{}
+
   @enforce_keys [:image]
   defstruct [
     :image,
@@ -51,7 +53,7 @@ defmodule Testcontainers.Container do
            when is_atom(name) and name == @os_type
 
   @dialyzer {:nowarn_function, os_type: 0}
-  def os_type() do
+  def os_type do
     cond do
       is_os(:linux) -> :linux
       is_os(:macos) -> :macos
@@ -335,7 +337,8 @@ defmodule Testcontainers.Container do
 
   Available options:
 
-    * `TestContainers.PullPolicy.always_pull()` - default, always pulls image from the remote repository
+    * `TestContainers.PullPolicy.pull_if_missing()` - default, pulls image only if not already present locally (avoids registry rate limits)
+    * `TestContainers.PullPolicy.always_pull()` - always pulls image from the remote repository
     * `TestContainers.PullPolicy.never_pull()` - does not pull images, use when working with local images
     * `TestContainers.PullPolicy.pull_condition(expr)` - pulls image if expression returns `true`
   """
@@ -353,7 +356,7 @@ defmodule Testcontainers.Container do
     Do stuff after container has started.
     """
     @impl true
-    @spec after_start(%Testcontainers.Container{}, %Testcontainers.Container{}, %Tesla.Env{}) ::
+    @spec after_start(Testcontainers.Container.t(), Testcontainers.Container.t(), Tesla.Env.t()) ::
             :ok
     def after_start(_config, _container, _conn), do: :ok
   end

@@ -6,9 +6,9 @@ defmodule Testcontainers.RedisContainer do
   Provides functionality for creating and managing Redis container configurations.
   """
 
-  alias Testcontainers.ContainerBuilder
-  alias Testcontainers.Container
   alias Testcontainers.CommandWaitStrategy
+  alias Testcontainers.Container
+  alias Testcontainers.ContainerBuilder
   alias Testcontainers.RedisContainer
 
   import Testcontainers.Container, only: [is_valid_image: 1]
@@ -18,6 +18,8 @@ defmodule Testcontainers.RedisContainer do
   @default_image_with_tag "#{@default_image}:#{@default_tag}"
   @default_port 6379
   @default_wait_timeout 60_000
+
+  @type t :: %__MODULE__{}
 
   @enforce_keys [:image, :port, :wait_timeout]
   defstruct [
@@ -165,7 +167,7 @@ defmodule Testcontainers.RedisContainer do
 
     - Raises `ArgumentError` if the provided image is not compatible with the default Redis image.
     """
-    @spec build(%RedisContainer{}) :: %Container{}
+    @spec build(RedisContainer.t()) :: Container.t()
     @impl true
     def build(%RedisContainer{} = config) do
       container =

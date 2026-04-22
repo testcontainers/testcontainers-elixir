@@ -1,4 +1,5 @@
 defmodule Test.NginxContainer do
+  @moduledoc false
   defstruct []
 
   defimpl Testcontainers.ContainerBuilder do

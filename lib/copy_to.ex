@@ -1,4 +1,5 @@
 defmodule Testcontainers.CopyTo do
+  @moduledoc false
   alias Testcontainers.Docker
 
   @doc """
