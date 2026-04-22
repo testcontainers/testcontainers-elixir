@@ -450,6 +450,32 @@ defmodule Testcontainers do
   end
 
   @doc false
+  # Resolves whether Ryuk should run in privileged mode.
+  #
+  # Mirrors testcontainers-dotnet: honors the `ryuk.container.privileged`
+  # property and the `TESTCONTAINERS_RYUK_CONTAINER_PRIVILEGED` environment
+  # variable. The environment variable takes precedence when both are set.
+  # Values `"true"` and `"1"` are treated as truthy.
+  def ryuk_privileged?(properties) when is_map(properties) do
+    env_value = System.get_env("TESTCONTAINERS_RYUK_CONTAINER_PRIVILEGED")
+    prop_value = Map.get(properties, "ryuk.container.privileged")
+
+    value = env_value || prop_value
+
+    truthy?(value)
+  end
+
+  defp truthy?(value) when is_binary(value) do
+    case String.downcase(String.trim(value)) do
+      "true" -> true
+      "1" -> true
+      _ -> false
+    end
+  end
+
+  defp truthy?(_), do: false
+
+  @doc false
   def running_in_container?(
         dockerenv_path \\ "/.dockerenv",
         cgroup_path \\ "/proc/1/cgroup"
@@ -667,7 +693,7 @@ defmodule Testcontainers do
   end
 
   defp start_ryuk(conn, session_id, properties, docker_host, docker_hostname) do
-    ryuk_privileged = Map.get(properties, "ryuk.container.privileged", "false") == "true"
+    ryuk_privileged = ryuk_privileged?(properties)
 
     ryuk_config =
       Container.new("testcontainers/ryuk:#{Constants.ryuk_version()}")
