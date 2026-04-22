@@ -213,6 +213,30 @@ defmodule Testcontainers.ContainerTest do
     end
   end
 
+  describe "with_name/2" do
+    test "defaults to nil" do
+      container = Container.new("my-image")
+      assert container.name == nil
+    end
+
+    test "sets the name on the container" do
+      container =
+        Container.new("my-image")
+        |> Container.with_name("my-container")
+
+      assert container.name == "my-container"
+    end
+
+    test "overwrites a previously set name" do
+      container =
+        Container.new("my-image")
+        |> Container.with_name("first")
+        |> Container.with_name("second")
+
+      assert container.name == "second"
+    end
+  end
+
   describe "with_privileged/2" do
     test "sets privileged to true" do
       container = Container.new("my-image")

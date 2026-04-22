@@ -88,7 +88,9 @@ defmodule Testcontainers.Docker.Api do
   end
 
   def create_container(%Container{} = container, conn) do
-    case Api.Container.container_create(conn, container_create_request(container)) do
+    opts = if container.name, do: [name: container.name], else: []
+
+    case Api.Container.container_create(conn, container_create_request(container), opts) do
       {:error, %Tesla.Env{status: other}} ->
         {:error, {:http_error, other}}
 

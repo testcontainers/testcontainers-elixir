@@ -41,6 +41,26 @@ defmodule TestcontainersTest do
     :ok = GenServer.stop(pid)
   end
 
+  test "assigns custom name to container via Container.with_name/2" do
+    name = "testcontainers-name-#{:rand.uniform(1_000_000)}"
+
+    config =
+      Container.new("nginx:alpine")
+      |> Container.with_name(name)
+
+    {:ok, pid} = Testcontainers.start_link(name: :name_test)
+    {:ok, container} = Testcontainers.start_container(config, :name_test)
+
+    conn = Connection.get_connection() |> Tuple.to_list() |> Kernel.hd()
+    {:ok, %DockerEngineAPI.Model.ContainerInspectResponse{Name: assigned_name}} =
+      DockerEngineAPI.Api.Container.container_inspect(conn, container.container_id)
+
+    # Docker returns the name prefixed with a leading "/"
+    assert assigned_name == "/" <> name
+
+    :ok = GenServer.stop(pid)
+  end
+
   test "initializes successfully when ryuk is disabled" do
     # Set environment variable to disable Ryuk
     System.put_env("TESTCONTAINERS_RYUK_DISABLED", "true")
