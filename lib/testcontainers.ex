@@ -18,6 +18,7 @@ defmodule Testcontainers do
   alias Testcontainers.ContainerBuilder
   alias Testcontainers.CopyTo
   alias Testcontainers.Docker.Api
+  alias Testcontainers.Docker.Auth, as: DockerAuth
   alias Testcontainers.DockerCompose
   alias Testcontainers.PullPolicy
   alias Testcontainers.Util.PropertiesParser
@@ -868,7 +869,7 @@ defmodule Testcontainers do
   end
 
   defp maybe_pull_image(%{pull_policy: %{always_pull: true}} = config, conn) do
-    case Api.pull_image(config.image, conn, auth: config.auth) do
+    case Api.pull_image(config.image, conn, auth: resolve_auth(config)) do
       {:ok, _nil} -> :ok
       error -> error
     end
@@ -881,7 +882,7 @@ defmodule Testcontainers do
         :ok
 
       {:ok, false} ->
-        case Api.pull_image(config.image, conn, auth: config.auth) do
+        case Api.pull_image(config.image, conn, auth: resolve_auth(config)) do
           {:ok, _nil} -> :ok
           error -> error
         end
@@ -894,7 +895,7 @@ defmodule Testcontainers do
   defp maybe_pull_image(%{pull_policy: %{pull_condition: expr}} = config, conn)
        when is_function(expr) do
     with {:eval, true} <- {:eval, expr.(config, conn)},
-         {:ok, _nil} <- Api.pull_image(config.image, conn, auth: config.auth) do
+         {:ok, _nil} <- Api.pull_image(config.image, conn, auth: resolve_auth(config)) do
       :ok
     else
       {:eval, reason} ->
@@ -912,6 +913,12 @@ defmodule Testcontainers do
   defp maybe_pull_image(_config, _conn) do
     :ok
   end
+
+  # Use the explicitly configured auth if present; otherwise try to
+  # auto-resolve credentials from the user's Docker config.
+  defp resolve_auth(%{auth: auth}) when is_binary(auth) and auth != "", do: auth
+  defp resolve_auth(%{image: image}) when is_binary(image), do: DockerAuth.resolve(image, nil)
+  defp resolve_auth(_), do: nil
 
   defp copy_to_container(id, config, conn) do
     Enum.reduce(config.copy_to, :ok, fn
