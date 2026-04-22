@@ -159,7 +159,7 @@ defmodule Testcontainers.Docker.Auth do
       payload = %{
         "username" => username,
         "password" => password,
-        "serveraddress" => server_address
+        "serveraddress" => normalize_server_address(server_address)
       }
 
       payload
@@ -174,6 +174,35 @@ defmodule Testcontainers.Docker.Auth do
         nil
     end
   end
+
+  # Docker config.json keys are often stored as URLs (e.g.
+  # "https://index.docker.io/v1/") but the Docker Engine API's
+  # `serveraddress` field expects a bare domain/IP (optionally with port) —
+  # podman in particular rejects a full URL with HTTP 400.
+  @doc false
+  @spec normalize_server_address(String.t()) :: String.t()
+  def normalize_server_address(address) when is_binary(address) do
+    address
+    |> strip_scheme()
+    |> strip_trailing_path()
+    |> canonicalize_docker_hub()
+  end
+
+  defp strip_scheme(address) do
+    case String.split(address, "://", parts: 2) do
+      [_scheme, rest] -> rest
+      [single] -> single
+    end
+  end
+
+  defp strip_trailing_path(address) do
+    address
+    |> String.split("/", parts: 2)
+    |> List.first()
+  end
+
+  defp canonicalize_docker_hub("index.docker.io"), do: "docker.io"
+  defp canonicalize_docker_hub(host), do: host
 
   defp maybe_warn_cred_helper(config, registry) do
     cond do

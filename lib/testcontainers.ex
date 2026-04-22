@@ -869,7 +869,7 @@ defmodule Testcontainers do
   end
 
   defp maybe_pull_image(%{pull_policy: %{always_pull: true}} = config, conn) do
-    case Api.pull_image(config.image, conn, auth: resolve_auth(config)) do
+    case pull_with_fallback(config, conn) do
       {:ok, _nil} -> :ok
       error -> error
     end
@@ -882,7 +882,7 @@ defmodule Testcontainers do
         :ok
 
       {:ok, false} ->
-        case Api.pull_image(config.image, conn, auth: resolve_auth(config)) do
+        case pull_with_fallback(config, conn) do
           {:ok, _nil} -> :ok
           error -> error
         end
@@ -895,7 +895,7 @@ defmodule Testcontainers do
   defp maybe_pull_image(%{pull_policy: %{pull_condition: expr}} = config, conn)
        when is_function(expr) do
     with {:eval, true} <- {:eval, expr.(config, conn)},
-         {:ok, _nil} <- Api.pull_image(config.image, conn, auth: resolve_auth(config)) do
+         {:ok, _nil} <- pull_with_fallback(config, conn) do
       :ok
     else
       {:eval, reason} ->
@@ -914,11 +914,46 @@ defmodule Testcontainers do
     :ok
   end
 
-  # Use the explicitly configured auth if present; otherwise try to
-  # auto-resolve credentials from the user's Docker config.
-  defp resolve_auth(%{auth: auth}) when is_binary(auth) and auth != "", do: auth
-  defp resolve_auth(%{image: image}) when is_binary(image), do: DockerAuth.resolve(image, nil)
-  defp resolve_auth(_), do: nil
+  # Pulls the image with the appropriate auth header. If auth was
+  # auto-resolved from ~/.docker/config.json (rather than set explicitly on
+  # the container config) and the pull fails with an HTTP 4xx, fall back to
+  # an anonymous pull — the daemon may reject stale or otherwise invalid
+  # auto-resolved credentials that we shouldn't have sent in the first place.
+  defp pull_with_fallback(config, conn) do
+    case resolve_auth(config) do
+      {:explicit, auth} ->
+        Api.pull_image(config.image, conn, auth: auth)
+
+      {:auto, auth} ->
+        case Api.pull_image(config.image, conn, auth: auth) do
+          {:error, {:http_error, status}} when status >= 400 and status < 500 ->
+            Logger.debug(
+              "Auto-resolved registry auth rejected (HTTP #{status}) for #{config.image}; retrying without auth"
+            )
+
+            Api.pull_image(config.image, conn, auth: nil)
+
+          result ->
+            result
+        end
+
+      :none ->
+        Api.pull_image(config.image, conn, auth: nil)
+    end
+  end
+
+  # Tag the auth source so pull_with_fallback knows whether it's safe to
+  # retry without credentials on a 4xx response.
+  defp resolve_auth(%{auth: auth}) when is_binary(auth) and auth != "", do: {:explicit, auth}
+
+  defp resolve_auth(%{image: image}) when is_binary(image) do
+    case DockerAuth.resolve(image, nil) do
+      nil -> :none
+      auth -> {:auto, auth}
+    end
+  end
+
+  defp resolve_auth(_), do: :none
 
   defp copy_to_container(id, config, conn) do
     Enum.reduce(config.copy_to, :ok, fn
