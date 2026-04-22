@@ -9,7 +9,17 @@ defmodule Testcontainers.DockerUrl do
         "http+unix://#{URI.encode_www_form(path)}"
 
       %URI{scheme: "tcp"} = uri ->
-        URI.to_string(%{uri | scheme: "http"})
+        if tls_verify?() do
+          URI.to_string(%{uri | scheme: "https"})
+        else
+          URI.to_string(%{uri | scheme: "http"})
+        end
+
+      %URI{scheme: "https"} = uri ->
+        URI.to_string(uri)
+
+      %URI{scheme: "http"} = uri ->
+        URI.to_string(uri)
 
       %URI{scheme: _, authority: _} = uri ->
         uri
@@ -27,4 +37,27 @@ defmodule Testcontainers.DockerUrl do
         {:error, reason}
     end
   end
+
+  @doc """
+  Returns true if `DOCKER_TLS_VERIFY` is set to a truthy value (`"1"` or `"true"`).
+  """
+  def tls_verify? do
+    case System.get_env("DOCKER_TLS_VERIFY") do
+      "1" -> true
+      "true" -> true
+      _ -> false
+    end
+  end
+
+  @doc """
+  Returns true if the URL uses the `https` scheme.
+  """
+  def https?(url) when is_binary(url) do
+    case URI.parse(url) do
+      %URI{scheme: "https"} -> true
+      _ -> false
+    end
+  end
+
+  def https?(_), do: false
 end
