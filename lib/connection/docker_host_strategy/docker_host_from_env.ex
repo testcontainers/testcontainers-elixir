@@ -14,7 +14,9 @@ defmodule Testcontainers.DockerHostFromEnvStrategy do
             {:ok, docker_host}
 
           {:error, reason} ->
-            {:error, docker_host_from_env: {reason, strategy.key}}
+            {:error,
+             docker_host_from_env:
+               {:ping_failed, key: strategy.key, value: docker_host, reason: reason}}
         end
       end
     end

@@ -14,7 +14,7 @@ defmodule Testcontainers.Connection.DockerHostStrategy.DockerHostFromPropertiesT
       }
 
       {:error,
-       "Failed to find docker host: [testcontainer_host_from_properties: {:econnrefused, \"tc.host\"}]"} =
+       "Failed to find docker host: [testcontainer_host_from_properties: {:ping_failed, [key: \"tc.host\", value: \"tcp://localhost:9999\", reason: :econnrefused]}]"} =
         DockerHostStrategyEvaluator.run_strategies([strategy], [])
     end
 

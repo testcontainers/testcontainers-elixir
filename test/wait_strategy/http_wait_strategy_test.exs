@@ -28,9 +28,7 @@ defmodule Testcontainers.HttpWaitStrategyTest do
     config =
       %Container{image: "nginx:alpine"}
       |> Container.with_exposed_port(port)
-      |> Container.with_waiting_strategy(
-        HttpWaitStrategy.new("/", port, status_code: 200)
-      )
+      |> Container.with_waiting_strategy(HttpWaitStrategy.new("/", port, status_code: 200))
 
     assert {:ok, container} = Testcontainers.start_container(config)
     assert :ok = Testcontainers.stop_container(container.container_id)

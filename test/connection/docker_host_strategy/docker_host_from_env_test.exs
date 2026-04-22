@@ -13,7 +13,7 @@ defmodule Testcontainers.Connection.DockerHostStrategy.DockerHostFromEnvTest do
       strategy = %DockerHostFromEnvStrategy{key: "X_DOCKER_HOST"}
 
       {:error,
-       "Failed to find docker host: [docker_host_from_env: {:econnrefused, \"X_DOCKER_HOST\"}]"} =
+       "Failed to find docker host: [docker_host_from_env: {:ping_failed, [key: \"X_DOCKER_HOST\", value: \"tcp://localhost:9999\", reason: :econnrefused]}]"} =
         DockerHostStrategyEvaluator.run_strategies([strategy], [])
     end
 

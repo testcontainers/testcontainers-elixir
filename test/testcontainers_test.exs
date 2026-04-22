@@ -133,6 +133,7 @@ defmodule TestcontainersTest do
     {:ok, container} = Testcontainers.start_container(config, :name_test)
 
     conn = Connection.get_connection() |> Tuple.to_list() |> Kernel.hd()
+
     {:ok, %DockerEngineAPI.Model.ContainerInspectResponse{Name: assigned_name}} =
       DockerEngineAPI.Api.Container.container_inspect(conn, container.container_id)
 

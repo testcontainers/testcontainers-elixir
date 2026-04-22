@@ -771,12 +771,17 @@ defmodule Testcontainers do
   end
 
   defp try_tcp_connect(host, port) do
-    :gen_tcp.connect(~c"#{host}", port, [
-      :binary,
-      active: false,
-      packet: :line,
-      send_timeout: 10_000
-    ], 5000)
+    :gen_tcp.connect(
+      ~c"#{host}",
+      port,
+      [
+        :binary,
+        active: false,
+        packet: :line,
+        send_timeout: 10_000
+      ],
+      5000
+    )
   end
 
   defp try_container_internal_connect(%Container{ip_address: ip}, internal_port, original_reason)

@@ -20,7 +20,9 @@ defmodule Testcontainers.DockerHostFromPropertiesStrategy do
           {:ok, docker_host}
 
         {:error, reason} ->
-          {:error, testcontainer_host_from_properties: {reason, key}}
+          {:error,
+           testcontainer_host_from_properties:
+             {:ping_failed, key: key, value: docker_host, reason: reason}}
       end
     end
 

@@ -55,14 +55,16 @@ defmodule Testcontainers.Util.PropertiesParserTest do
 
   describe "read_property_file/1" do
     test "reads properties from specified file" do
-      {:ok, props} = PropertiesParser.read_property_file("test/fixtures/.testcontainers.properties")
+      {:ok, props} =
+        PropertiesParser.read_property_file("test/fixtures/.testcontainers.properties")
 
       assert is_map(props)
       assert props["tc.host"] == "tcp://localhost:9999"
     end
 
     test "returns empty map for nonexistent file" do
-      {:ok, props} = PropertiesParser.read_property_file("/nonexistent/path/.testcontainers.properties")
+      {:ok, props} =
+        PropertiesParser.read_property_file("/nonexistent/path/.testcontainers.properties")
 
       assert props == %{}
     end

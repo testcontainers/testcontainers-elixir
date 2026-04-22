@@ -71,14 +71,18 @@ defmodule Testcontainers.Docker.AuthTest do
     end
 
     test "returns nil when the config file is missing" do
-      missing = Path.join(System.tmp_dir!(), "testcontainers-missing-#{System.unique_integer()}.json")
+      missing =
+        Path.join(System.tmp_dir!(), "testcontainers-missing-#{System.unique_integer()}.json")
+
       refute File.exists?(missing)
 
       assert Auth.resolve("library/redis:7", missing) == nil
     end
 
     test "returns nil when the config file is invalid JSON" do
-      path = Path.join(System.tmp_dir!(), "testcontainers-invalid-#{System.unique_integer()}.json")
+      path =
+        Path.join(System.tmp_dir!(), "testcontainers-invalid-#{System.unique_integer()}.json")
+
       File.write!(path, "this is not json")
 
       try do
