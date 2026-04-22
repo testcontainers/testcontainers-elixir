@@ -30,6 +30,7 @@ defmodule Testcontainers.Container do
     network_mode: nil,
     network: nil,
     hostname: nil,
+    name: nil,
     reuse: false,
     force_reuse: false,
     pull_policy: nil
@@ -282,6 +283,17 @@ defmodule Testcontainers.Container do
   """
   def with_hostname(%__MODULE__{} = config, hostname) when is_binary(hostname) do
     %__MODULE__{config | hostname: hostname}
+  end
+
+  @doc """
+  Sets a custom name for the container (equivalent to `docker run --name`).
+
+  Must match `/?[a-zA-Z0-9][a-zA-Z0-9_.-]+`. This is useful when other
+  containers need to reference this container by name on a shared Docker
+  network.
+  """
+  def with_name(%__MODULE__{} = config, name) when is_binary(name) do
+    %__MODULE__{config | name: name}
   end
 
   def with_copy_to(%__MODULE__{} = config, target, source)
