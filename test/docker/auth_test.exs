@@ -29,7 +29,7 @@ defmodule Testcontainers.Docker.AuthTest do
   end
 
   describe "resolve/2" do
-    test "returns header for a Docker Hub image" do
+    test "returns header for a Docker Hub image with canonical serveraddress" do
       header = Auth.resolve("library/redis:7", @fixture)
 
       assert is_binary(header)
@@ -38,8 +38,19 @@ defmodule Testcontainers.Docker.AuthTest do
       assert decoded == %{
                "username" => "alice",
                "password" => "s3cret",
-               "serveraddress" => "https://index.docker.io/v1/"
+               "serveraddress" => "docker.io"
              }
+    end
+
+    test "serveraddress never contains a scheme or path" do
+      # Regression: podman (and the Docker Engine API spec) reject a
+      # serveraddress that is a full URL; it must be a bare host (optionally
+      # with port).
+      header = Auth.resolve("library/redis:7", @fixture)
+      %{"serveraddress" => addr} = decode_header(header)
+
+      refute String.contains?(addr, "://")
+      refute String.contains?(addr, "/")
     end
 
     test "returns header for a private registry image" do
@@ -83,6 +94,24 @@ defmodule Testcontainers.Docker.AuthTest do
       refute String.contains?(header, "=")
       refute String.contains?(header, "+")
       refute String.contains?(header, "/")
+    end
+  end
+
+  describe "normalize_server_address/1" do
+    test "strips scheme and path from full URLs" do
+      assert Auth.normalize_server_address("https://index.docker.io/v1/") == "docker.io"
+      assert Auth.normalize_server_address("http://myreg.example.com/") == "myreg.example.com"
+    end
+
+    test "passes through bare hosts" do
+      assert Auth.normalize_server_address("myreg.example.com") == "myreg.example.com"
+      assert Auth.normalize_server_address("registry.internal:5000") == "registry.internal:5000"
+      assert Auth.normalize_server_address("localhost") == "localhost"
+    end
+
+    test "canonicalizes index.docker.io to docker.io" do
+      assert Auth.normalize_server_address("index.docker.io") == "docker.io"
+      assert Auth.normalize_server_address("https://index.docker.io/v1/") == "docker.io"
     end
   end
 
