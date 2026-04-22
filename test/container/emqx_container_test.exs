@@ -27,7 +27,7 @@ defmodule Testcontainers.Container.EmqxContainerTest do
       :emqx,
       EmqxContainer.new()
       |> EmqxContainer.with_image("emqx:5.5.1")
-      |> EmqxContainer.with_ports(1884, 8883, 8083, 8084, 18084)
+      |> EmqxContainer.with_ports(1884, 8883, 8083, 8084, 18_084)
     )
 
     @tag :dood_limitation

@@ -24,7 +24,6 @@ defmodule Testcontainers.DockerHostStrategyEvaluator do
   defp format_errors(errors) do
     errors
     |> Enum.reverse()
-    |> Enum.map(fn {:error, error} -> inspect(error) end)
-    |> Enum.join(", ")
+    |> Enum.map_join(", ", fn {:error, error} -> inspect(error) end)
   end
 end

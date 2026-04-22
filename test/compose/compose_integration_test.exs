@@ -3,8 +3,8 @@ defmodule Testcontainers.Compose.ComposeIntegrationTest do
 
   @moduletag :integration
 
-  alias Testcontainers.DockerCompose
   alias Testcontainers.Compose.ComposeEnvironment
+  alias Testcontainers.DockerCompose
 
   @fixtures_path Path.expand("../fixtures", __DIR__)
 

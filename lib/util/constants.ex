@@ -9,7 +9,7 @@ defmodule Testcontainers.Constants do
   def container_reuse_hash_label, do: "org.testcontainers.reuse-hash"
   def container_reuse, do: "org.testcontainers.reuse"
   def container_lang_value, do: Elixir |> Atom.to_string() |> String.downcase()
-  def container_sessionId_label, do: "org.testcontainers.session-id"
+  def container_session_id_label, do: "org.testcontainers.session-id"
   def container_version_label, do: "org.testcontainers.version"
   def user_agent, do: "tc-elixir/" <> __MODULE__.library_version()
 end

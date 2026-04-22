@@ -16,7 +16,7 @@ defmodule Testcontainers.Container.MongoContainerTest do
       assert config.user == "test"
       assert config.password == "test"
       assert config.database == "test"
-      assert config.port == 27017
+      assert config.port == 27_017
       assert config.wait_timeout == 180_000
     end
 

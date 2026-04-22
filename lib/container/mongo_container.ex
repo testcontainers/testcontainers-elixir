@@ -18,8 +18,10 @@ defmodule Testcontainers.MongoContainer do
   @default_user "test"
   @default_password "test"
   @default_database "test"
-  @default_port 27017
+  @default_port 27_017
   @default_wait_timeout 180_000
+
+  @type t :: %__MODULE__{}
 
   @enforce_keys [:image, :user, :password, :database, :port, :wait_timeout, :persistent_volume]
   defstruct [
@@ -251,7 +253,7 @@ defmodule Testcontainers.MongoContainer do
 
     - Raises `ArgumentError` if the provided image is not compatible with the default Mongo image.
     """
-    @spec build(%MongoContainer{}) :: %Container{}
+    @spec build(MongoContainer.t()) :: Container.t()
     @impl true
     def build(%MongoContainer{} = config) do
       new(config.image)

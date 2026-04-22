@@ -9,19 +9,19 @@ defmodule Testcontainers do
 
   require Logger
 
-  alias Testcontainers.CopyTo
-  alias Testcontainers.Constants
-  alias Testcontainers.WaitStrategy
-  alias Testcontainers.Docker.Api
+  alias Testcontainers.Compose.Cli, as: ComposeCli
+  alias Testcontainers.Compose.ComposeEnvironment
+  alias Testcontainers.Compose.ComposeService
   alias Testcontainers.Connection
+  alias Testcontainers.Constants
   alias Testcontainers.Container
   alias Testcontainers.ContainerBuilder
+  alias Testcontainers.CopyTo
+  alias Testcontainers.Docker.Api
+  alias Testcontainers.DockerCompose
   alias Testcontainers.PullPolicy
   alias Testcontainers.Util.PropertiesParser
-  alias Testcontainers.DockerCompose
-  alias Testcontainers.Compose.Cli, as: ComposeCli
-  alias Testcontainers.Compose.ComposeService
-  alias Testcontainers.Compose.ComposeEnvironment
+  alias Testcontainers.WaitStrategy
 
   import Testcontainers.Constants
   import Testcontainers.Container, only: [os_type: 0]
@@ -94,7 +94,7 @@ defmodule Testcontainers do
   end
 
   @doc false
-  def get_host(), do: wait_for_call(:get_host, __MODULE__)
+  def get_host, do: wait_for_call(:get_host, __MODULE__)
 
   @doc """
   Returns the host to use for connecting to the given container.
@@ -334,22 +334,7 @@ defmodule Testcontainers do
 
     Task.async(fn ->
       result = start_and_wait(config_builder, state)
-
-      case result do
-        {:ok, container} ->
-          GenServer.cast(self_pid, {:track_container, container.container_id, container.image})
-
-        _ ->
-          # Track the image even on failure so it gets cleaned up on terminate
-          case config_builder do
-            %Container{image: image} when is_binary(image) ->
-              GenServer.cast(self_pid, {:track_image, image})
-
-            _ ->
-              :ok
-          end
-      end
-
+      track_result(self_pid, config_builder, result)
       GenServer.reply(from, result)
     end)
 
@@ -376,7 +361,7 @@ defmodule Testcontainers do
   @impl true
   def handle_call({:create_network, network_name}, from, state) do
     labels = %{
-      Constants.container_sessionId_label() => state.session_id,
+      Constants.container_session_id_label() => state.session_id,
       Constants.container_version_label() => Constants.library_version(),
       Constants.container_lang_label() => Constants.container_lang_value(),
       Constants.container_label() => "true",
@@ -551,31 +536,40 @@ defmodule Testcontainers do
 
   defp run_compose_wait_strategies(%DockerCompose{} = compose, services, state) do
     Enum.reduce_while(compose.wait_strategies, :ok, fn {service_name, strategies}, :ok ->
-      case Map.get(services, service_name) do
-        nil ->
-          {:halt, {:error, {:service_not_found, service_name}}}
+      run_service_wait_strategies(service_name, strategies, services, state)
+    end)
+  end
 
-        %ComposeService{container_id: container_id} ->
-          case Api.get_container(container_id, state.conn) do
-            {:ok, container} ->
-              result =
-                Enum.reduce(strategies, :ok, fn
-                  strategy, :ok ->
-                    WaitStrategy.wait_until_container_is_ready(strategy, container, state.conn)
+  defp run_service_wait_strategies(service_name, strategies, services, state) do
+    case Map.get(services, service_name) do
+      nil ->
+        {:halt, {:error, {:service_not_found, service_name}}}
 
-                  _, error ->
-                    error
-                end)
+      %ComposeService{container_id: container_id} ->
+        apply_wait_strategies_to_container(container_id, strategies, state)
+    end
+  end
 
-              case result do
-                :ok -> {:cont, :ok}
-                error -> {:halt, error}
-              end
+  defp apply_wait_strategies_to_container(container_id, strategies, state) do
+    case Api.get_container(container_id, state.conn) do
+      {:ok, container} ->
+        case reduce_wait_strategies(strategies, container, state) do
+          :ok -> {:cont, :ok}
+          error -> {:halt, error}
+        end
 
-            {:error, _} = error ->
-              {:halt, error}
-          end
-      end
+      {:error, _} = error ->
+        {:halt, error}
+    end
+  end
+
+  defp reduce_wait_strategies(strategies, container, state) do
+    Enum.reduce(strategies, :ok, fn
+      strategy, :ok ->
+        WaitStrategy.wait_until_container_is_ready(strategy, container, state.conn)
+
+      _, error ->
+        error
     end)
   end
 
@@ -599,38 +593,51 @@ defmodule Testcontainers do
         {:ok, uri.host}
 
       uri when uri.scheme == "http+unix" ->
-        if running_in_container?() do
-          Logger.debug("Running in docker environment, trying to get bridge network gateway")
+        resolve_unix_docker_hostname(conn)
+    end
+  end
 
-          with {:ok, gateway} <- Api.get_bridge_gateway(conn) do
-            {:ok, gateway}
-          else
-            {:error, reason} ->
-              Logger.debug(
-                "Failed to get bridge gateway: #{inspect(reason)}. Trying /proc/net/route"
-              )
+  defp resolve_unix_docker_hostname(conn) do
+    if running_in_container?() do
+      Logger.debug("Running in docker environment, trying to get bridge network gateway")
+      resolve_bridge_gateway(conn)
+    else
+      Logger.debug("Not running in docker environment, using localhost")
+      {:ok, "localhost"}
+    end
+  end
 
-              case File.read("/proc/net/route") do
-                {:ok, content} ->
-                  case parse_gateway_from_proc_route(content) do
-                    {:ok, gateway} ->
-                      Logger.debug("Found gateway from /proc/net/route: #{gateway}")
-                      {:ok, gateway}
+  defp resolve_bridge_gateway(conn) do
+    case Api.get_bridge_gateway(conn) do
+      {:ok, gateway} ->
+        {:ok, gateway}
 
-                    {:error, _} ->
-                      Logger.debug("Failed to parse /proc/net/route. Using localhost")
-                      {:ok, "localhost"}
-                  end
+      {:error, reason} ->
+        Logger.debug("Failed to get bridge gateway: #{inspect(reason)}. Trying /proc/net/route")
+        resolve_gateway_from_proc_route()
+    end
+  end
 
-                {:error, _} ->
-                  Logger.debug("Cannot read /proc/net/route. Using localhost")
-                  {:ok, "localhost"}
-              end
-          end
-        else
-          Logger.debug("Not running in docker environment, using localhost")
-          {:ok, "localhost"}
-        end
+  defp resolve_gateway_from_proc_route do
+    case File.read("/proc/net/route") do
+      {:ok, content} ->
+        resolve_gateway_from_content(content)
+
+      {:error, _} ->
+        Logger.debug("Cannot read /proc/net/route. Using localhost")
+        {:ok, "localhost"}
+    end
+  end
+
+  defp resolve_gateway_from_content(content) do
+    case parse_gateway_from_proc_route(content) do
+      {:ok, gateway} ->
+        Logger.debug("Found gateway from /proc/net/route: #{gateway}")
+        {:ok, gateway}
+
+      {:error, _} ->
+        Logger.debug("Failed to parse /proc/net/route. Using localhost")
+        {:ok, "localhost"}
     end
   end
 
@@ -643,14 +650,14 @@ defmodule Testcontainers do
 
     case ryuk_disabled do
       true ->
-        ryukDisabledMessage =
+        ryuk_disabled_message =
           """
           ********************************************************************************
           Ryuk has been disabled. This can cause unexpected behavior in your environment.
           ********************************************************************************
           """
 
-        IO.puts(ryukDisabledMessage)
+        IO.puts(ryuk_disabled_message)
 
         {:ok}
 
@@ -741,7 +748,7 @@ defmodule Testcontainers do
       :binary,
       active: false,
       packet: :line,
-      send_timeout: 10000
+      send_timeout: 10_000
     ], 5000)
   end
 
@@ -766,7 +773,7 @@ defmodule Testcontainers do
   defp register_ryuk_filter(value, socket) do
     :gen_tcp.send(
       socket,
-      "label=#{container_sessionId_label()}=#{value}&" <>
+      "label=#{container_session_id_label()}=#{value}&" <>
         "label=#{container_version_label()}=#{library_version()}&" <>
         "label=#{container_lang_label()}=#{container_lang_value()}&" <>
         "label=#{container_label()}=#{true}&" <>
@@ -781,6 +788,16 @@ defmodule Testcontainers do
         {:error, {:failed_to_register_ryuk_filter, reason}}
     end
   end
+
+  defp track_result(self_pid, _config_builder, {:ok, container}) do
+    GenServer.cast(self_pid, {:track_container, container.container_id, container.image})
+  end
+
+  defp track_result(self_pid, %Container{image: image}, _result) when is_binary(image) do
+    GenServer.cast(self_pid, {:track_image, image})
+  end
+
+  defp track_result(_self_pid, _config_builder, _result), do: :ok
 
   defp start_and_wait(config_builder, state) do
     case Testcontainers.ContainerBuilderHelper.build(config_builder, state) do
@@ -825,10 +842,10 @@ defmodule Testcontainers do
 
   defp resolve_pull_policy(%{pull_policy: nil} = config, properties) do
     pull_policy =
-      case Map.get(properties, "pull.policy", "always") do
-        "missing" -> PullPolicy.never_pull()
+      case Map.get(properties, "pull.policy", "missing") do
+        "always" -> PullPolicy.always_pull()
         "never" -> PullPolicy.never_pull()
-        _ -> PullPolicy.always_pull()
+        _ -> PullPolicy.pull_if_missing()
       end
 
     %{config | pull_policy: pull_policy}
@@ -850,14 +867,31 @@ defmodule Testcontainers do
     end
   end
 
-  defp maybe_pull_image(config = %{pull_policy: %{always_pull: true}}, conn) do
+  defp maybe_pull_image(%{pull_policy: %{always_pull: true}} = config, conn) do
     case Api.pull_image(config.image, conn, auth: config.auth) do
       {:ok, _nil} -> :ok
       error -> error
     end
   end
 
-  defp maybe_pull_image(config = %{pull_policy: %{pull_condition: expr}}, conn)
+  defp maybe_pull_image(%{pull_policy: %{pull_if_missing: true}} = config, conn) do
+    case Api.image_exists?(config.image, conn) do
+      {:ok, true} ->
+        Logger.debug("Image #{config.image} already present locally, skipping pull")
+        :ok
+
+      {:ok, false} ->
+        case Api.pull_image(config.image, conn, auth: config.auth) do
+          {:ok, _nil} -> :ok
+          error -> error
+        end
+
+      error ->
+        error
+    end
+  end
+
+  defp maybe_pull_image(%{pull_policy: %{pull_condition: expr}} = config, conn)
        when is_function(expr) do
     with {:eval, true} <- {:eval, expr.(config, conn)},
          {:ok, _nil} <- Api.pull_image(config.image, conn, auth: config.auth) do

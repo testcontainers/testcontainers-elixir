@@ -202,12 +202,12 @@ defmodule Testcontainers.Compose.CliTest do
         %{
           "URL" => "0.0.0.0",
           "TargetPort" => 6379,
-          "PublishedPort" => 32768,
+          "PublishedPort" => 32_768,
           "Protocol" => "tcp"
         }
       ]
 
-      assert Cli.parse_publishers(publishers) == [{6379, 32768}]
+      assert Cli.parse_publishers(publishers) == [{6379, 32_768}]
     end
 
     test "filters out publishers with PublishedPort of 0" do
@@ -228,21 +228,21 @@ defmodule Testcontainers.Compose.CliTest do
         %{
           "URL" => "0.0.0.0",
           "TargetPort" => 6379,
-          "PublishedPort" => 32768,
+          "PublishedPort" => 32_768,
           "Protocol" => "tcp"
         },
         %{
           "URL" => "0.0.0.0",
           "TargetPort" => 5432,
-          "PublishedPort" => 32769,
+          "PublishedPort" => 32_769,
           "Protocol" => "tcp"
         }
       ]
 
       result = Cli.parse_publishers(publishers)
       assert length(result) == 2
-      assert {6379, 32768} in result
-      assert {5432, 32769} in result
+      assert {6379, 32_768} in result
+      assert {5432, 32_769} in result
     end
 
     test "deduplicates port tuples" do
@@ -250,18 +250,18 @@ defmodule Testcontainers.Compose.CliTest do
         %{
           "URL" => "0.0.0.0",
           "TargetPort" => 6379,
-          "PublishedPort" => 32768,
+          "PublishedPort" => 32_768,
           "Protocol" => "tcp"
         },
         %{
           "URL" => "::",
           "TargetPort" => 6379,
-          "PublishedPort" => 32768,
+          "PublishedPort" => 32_768,
           "Protocol" => "tcp"
         }
       ]
 
-      assert Cli.parse_publishers(publishers) == [{6379, 32768}]
+      assert Cli.parse_publishers(publishers) == [{6379, 32_768}]
     end
 
     test "handles nil publishers" do

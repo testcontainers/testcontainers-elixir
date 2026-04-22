@@ -51,14 +51,13 @@ defmodule Testcontainers.LogWaitStrategy do
     end
 
     defp log_matches?(container_id, log_regex, conn) do
-      with {:ok, log_output} <- Docker.Api.stdout_logs(container_id, conn) do
-        Regex.match?(log_regex, log_output)
-      else
+      case Docker.Api.stdout_logs(container_id, conn) do
+        {:ok, log_output} -> Regex.match?(log_regex, log_output)
         _ -> false
       end
     end
 
-    defp get_current_time_millis(), do: System.monotonic_time(:millisecond)
+    defp get_current_time_millis, do: System.monotonic_time(:millisecond)
 
     defp reached_timeout?(start_time, timeout),
       do: get_current_time_millis() - start_time > timeout

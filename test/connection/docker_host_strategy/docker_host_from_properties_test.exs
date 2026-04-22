@@ -1,8 +1,8 @@
 defmodule Testcontainers.Connection.DockerHostStrategy.DockerHostFromPropertiesTest do
   use ExUnit.Case, async: true
 
-  alias Testcontainers.DockerHostStrategyEvaluator
   alias Testcontainers.DockerHostFromPropertiesStrategy
+  alias Testcontainers.DockerHostStrategyEvaluator
 
   describe "DockerHostFromPropertiesStrategy" do
     test "should return :econnrefused response if property file exist but is not an open url" do

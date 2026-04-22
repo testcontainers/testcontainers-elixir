@@ -45,6 +45,8 @@ defmodule Testcontainers.KafkaContainer do
   @default_wait_timeout 60_000
   @default_cluster_id "4L6g3nShT-eMCtK--X86sw"
 
+  @type t :: %__MODULE__{}
+
   @enforce_keys [
     :image,
     :kafka_port,
@@ -73,7 +75,7 @@ defmodule Testcontainers.KafkaContainer do
   """
   def new do
     # Select a random port in a high range to minimize conflicts
-    kafka_port = Enum.random(29000..29999)
+    kafka_port = Enum.random(29_000..29_999)
 
     %__MODULE__{
       image: @default_image_with_tag,
@@ -170,7 +172,7 @@ defmodule Testcontainers.KafkaContainer do
     import Container
 
     @impl true
-    @spec build(%KafkaContainer{}) :: %Container{}
+    @spec build(KafkaContainer.t()) :: Container.t()
     def build(%KafkaContainer{} = config) do
       host = Testcontainers.get_host()
 

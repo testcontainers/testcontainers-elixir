@@ -4,11 +4,11 @@ defmodule Testcontainers.SeleniumContainer do
   Work in progress. Not stable for use yet. Not yet documented for this very reason.
   Can use https://github.com/stuart/elixir-webdriver for client in tests
   """
-  alias Testcontainers.ContainerBuilder
   alias Testcontainers.Container
-  alias Testcontainers.SeleniumContainer
-  alias Testcontainers.PortWaitStrategy
+  alias Testcontainers.ContainerBuilder
   alias Testcontainers.LogWaitStrategy
+  alias Testcontainers.PortWaitStrategy
+  alias Testcontainers.SeleniumContainer
 
   import Testcontainers.Container, only: [is_valid_image: 1]
 
@@ -18,6 +18,8 @@ defmodule Testcontainers.SeleniumContainer do
   @default_port1 7900
   @default_port2 4400
   @default_wait_timeout 120_000
+
+  @type t :: %__MODULE__{}
 
   @enforce_keys [:image, :port1, :port2, :wait_timeout]
   defstruct [
@@ -72,7 +74,7 @@ defmodule Testcontainers.SeleniumContainer do
   defimpl ContainerBuilder do
     import Container
 
-    @spec build(%SeleniumContainer{}) :: %Container{}
+    @spec build(SeleniumContainer.t()) :: Container.t()
     @impl true
     def build(%SeleniumContainer{} = config) do
       new(config.image)

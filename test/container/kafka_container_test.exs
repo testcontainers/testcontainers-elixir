@@ -9,7 +9,7 @@ defmodule Testcontainers.Container.KafkaContainerTest do
       config = KafkaContainer.new()
 
       assert config.image == "apache/kafka:3.9.0"
-      assert config.kafka_port >= 29000 and config.kafka_port <= 29999
+      assert config.kafka_port >= 29_000 and config.kafka_port <= 29_999
       assert config.internal_kafka_port == 9092
       assert config.controller_port == 9093
       assert config.node_id == 1

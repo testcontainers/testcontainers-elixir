@@ -6,8 +6,8 @@ defmodule Testcontainers.CassandraContainer do
 
   alias Testcontainers.CassandraContainer
   alias Testcontainers.CommandWaitStrategy
-  alias Testcontainers.ContainerBuilder
   alias Testcontainers.Container
+  alias Testcontainers.ContainerBuilder
 
   import Testcontainers.Container, only: [is_valid_image: 1]
 
@@ -18,6 +18,8 @@ defmodule Testcontainers.CassandraContainer do
   @default_password "cassandra"
   @default_port 9042
   @default_wait_timeout 60_000
+
+  @type t :: %__MODULE__{}
 
   @enforce_keys [:image, :wait_timeout]
   defstruct [
@@ -75,7 +77,7 @@ defmodule Testcontainers.CassandraContainer do
     import Container
 
     @impl true
-    @spec build(%CassandraContainer{}) :: %Container{}
+    @spec build(CassandraContainer.t()) :: Container.t()
     def build(%CassandraContainer{} = config) do
       new(config.image)
       |> with_exposed_port(CassandraContainer.default_port())

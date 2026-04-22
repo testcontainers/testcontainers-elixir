@@ -34,9 +34,10 @@ defmodule Testcontainers.CommandWaitStrategy do
 
     # Main loop for waiting strategy
     defp perform_recursive_wait(wait_strategy, container_id, conn, started_at) do
-      with {:ok, 0} <- execute_command_and_wait(wait_strategy, container_id, conn) do
-        :ok
-      else
+      case execute_command_and_wait(wait_strategy, container_id, conn) do
+        {:ok, 0} ->
+          :ok
+
         {:ok, exit_code} ->
           handle_non_zero_exit(wait_strategy, container_id, exit_code, conn, started_at)
 
@@ -88,7 +89,7 @@ defmodule Testcontainers.CommandWaitStrategy do
       end
     end
 
-    defp get_current_time_millis(), do: System.monotonic_time(:millisecond)
+    defp get_current_time_millis, do: System.monotonic_time(:millisecond)
 
     defp timed_out?(started_at, timeout), do: get_current_time_millis() - started_at > timeout
 

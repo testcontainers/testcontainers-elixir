@@ -4,9 +4,9 @@ defmodule Testcontainers.MinioContainer do
   """
 
   alias Testcontainers.Container
-  alias Testcontainers.MinioContainer
   alias Testcontainers.ContainerBuilder
   alias Testcontainers.LogWaitStrategy
+  alias Testcontainers.MinioContainer
 
   @default_image "minio/minio"
   @default_tag "RELEASE.2023-11-11T08-14-41Z"
@@ -16,6 +16,8 @@ defmodule Testcontainers.MinioContainer do
   @default_s3_port 9000
   @default_ui_port 9001
   @default_wait_timeout 60_000
+
+  @type t :: %__MODULE__{}
 
   @enforce_keys [:image, :username, :password, :wait_timeout]
   defstruct [
@@ -75,7 +77,7 @@ defmodule Testcontainers.MinioContainer do
   defimpl ContainerBuilder do
     import Container
 
-    @spec build(%MinioContainer{}) :: %Container{}
+    @spec build(MinioContainer.t()) :: Container.t()
     @impl true
     def build(%MinioContainer{} = config) do
       new(config.image)

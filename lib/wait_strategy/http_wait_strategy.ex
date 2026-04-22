@@ -69,8 +69,8 @@ defmodule Testcontainers.HttpWaitStrategy do
   # Private functions and implementations
 
   defimpl Testcontainers.WaitStrategy do
-    alias Testcontainers.HttpWaitStrategy
     alias Testcontainers.Container
+    alias Testcontainers.HttpWaitStrategy
 
     @impl true
     def wait_until_container_is_ready(wait_strategy, container, _conn) do

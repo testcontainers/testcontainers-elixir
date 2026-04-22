@@ -3,7 +3,7 @@ defmodule Testcontainers.ConstantsTest do
 
   test "have correct values" do
     assert Testcontainers.Constants.container_label() == "org.testcontainers"
-    assert Testcontainers.Constants.container_sessionId_label() == "org.testcontainers.session-id"
+    assert Testcontainers.Constants.container_session_id_label() == "org.testcontainers.session-id"
 
     assert Testcontainers.Constants.container_reuse_hash_label() ==
              "org.testcontainers.reuse-hash"

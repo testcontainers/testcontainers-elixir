@@ -1,4 +1,5 @@
 defmodule Testcontainers.Util.ListFromDeepStruct do
+  @moduledoc false
   def from_deep_struct(%{} = map), do: convert(map)
 
   defp convert(%Regex{} = data) do

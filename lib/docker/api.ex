@@ -4,9 +4,9 @@ defmodule Testcontainers.Docker.Api do
   Internal docker api. Only for direct use by `Testcontainers`
   """
 
+  alias DockerEngineAPI.Api
   alias DockerEngineAPI.Model.ExecConfig
   alias DockerEngineAPI.Model.HostConfig
-  alias DockerEngineAPI.Api
   alias Testcontainers.Container
 
   def get_container(container_id, conn)
@@ -61,6 +61,22 @@ defmodule Testcontainers.Docker.Api do
 
       {:ok, %DockerEngineAPI.Model.ErrorResponse{} = error} ->
         {:error, {:failed_to_pull_image, error}}
+    end
+  end
+
+  def image_exists?(image, conn) when is_binary(image) do
+    case Api.Image.image_inspect(conn, image) do
+      {:ok, %DockerEngineAPI.Model.ImageInspect{}} ->
+        {:ok, true}
+
+      {:ok, %DockerEngineAPI.Model.ErrorResponse{}} ->
+        {:ok, false}
+
+      {:error, %Tesla.Env{status: 404}} ->
+        {:ok, false}
+
+      {:error, %Tesla.Env{status: other}} ->
+        {:error, {:http_error, other}}
     end
   end
 
@@ -177,11 +193,9 @@ defmodule Testcontainers.Docker.Api do
           config
           |> Enum.filter(fn cfg -> Map.get(cfg, :Gateway, nil) != nil end)
 
-        if length(with_gateway) > 0 do
-          gateway = with_gateway |> Kernel.hd() |> Map.get(:Gateway)
-          {:ok, gateway}
-        else
-          {:error, :no_gateway}
+        case with_gateway do
+          [] -> {:error, :no_gateway}
+          [first | _] -> {:ok, Map.get(first, :Gateway)}
         end
 
       {:error, reason} ->

@@ -17,14 +17,14 @@ defmodule Testcontainers.GenericContainerTest do
   @tag :needs_root
   @tag :dood_limitation
   test "can start and stop generic container with network mode set to host" do
-    if not is_os(:linux) do
-      Logger.warning("Host is not Linux, therefore not running network_mode test")
-    else
+    if is_os(:linux) do
       config = %Testcontainers.Container{image: "redis:latest", network_mode: "host"}
       assert {:ok, container} = Testcontainers.start_container(config)
       Process.sleep(5000)
       assert :ok = port_open?("127.0.0.1", 6379)
       assert :ok = Testcontainers.stop_container(container.container_id)
+    else
+      Logger.warning("Host is not Linux, therefore not running network_mode test")
     end
   end
 end

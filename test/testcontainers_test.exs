@@ -1,7 +1,7 @@
 defmodule TestcontainersTest do
   alias Testcontainers.Connection
-  alias Testcontainers.Docker
   alias Testcontainers.Container
+  alias Testcontainers.Docker
   use ExUnit.Case, async: true
 
   test "cleans up containers on terminate" do

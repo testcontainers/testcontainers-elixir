@@ -7,9 +7,9 @@ defmodule Testcontainers.RabbitMQContainer do
 
   NOTE: Currently untested, any developer who tries to add improvements on this container should consider moving this container implementation to a separate Elixir package.
   """
-  alias Testcontainers.ContainerBuilder
-  alias Testcontainers.Container
   alias Testcontainers.CommandWaitStrategy
+  alias Testcontainers.Container
+  alias Testcontainers.ContainerBuilder
   alias Testcontainers.RabbitMQContainer
 
   import Testcontainers.Container, only: [is_valid_image: 1]
@@ -27,6 +27,8 @@ defmodule Testcontainers.RabbitMQContainer do
     "chmod 400 /var/lib/rabbitmq/.erlang.cookie; rabbitmq-server"
   ]
   @default_wait_timeout 60_000
+
+  @type t :: %__MODULE__{}
 
   @enforce_keys [:image, :port, :wait_timeout]
   defstruct [
@@ -241,7 +243,8 @@ defmodule Testcontainers.RabbitMQContainer do
     ]
   end
 
-  # Provides the virtual host segment used in the AMQP URI specification defined in the AMQP 0-9-1, and interprets the virtual host for the connection URL based on the default value.
+  # Provides the virtual host segment used in the AMQP URI specification defined in the AMQP 0-9-1,
+  # and interprets the virtual host for the connection URL based on the default value.
   defp virtual_host_segment(container) do
     case container.environment[:RABBITMQ_DEFAULT_VHOST] do
       "/" -> ""
@@ -271,7 +274,7 @@ defmodule Testcontainers.RabbitMQContainer do
     - Raises `ArgumentError` if the provided image is not compatible with the default RabbitMQ image.
     """
     @impl true
-    @spec build(%RabbitMQContainer{}) :: %Container{}
+    @spec build(RabbitMQContainer.t()) :: Container.t()
     def build(%RabbitMQContainer{} = config) do
       new(config.image)
       |> with_exposed_port(config.port)
