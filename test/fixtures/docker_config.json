@@ -1,0 +1,10 @@
+{
+  "auths": {
+    "https://index.docker.io/v1/": {
+      "auth": "YWxpY2U6czNjcmV0"
+    },
+    "myreg.example.com": {
+      "auth": "Ym9iOmh1bnRlcjI="
+    }
+  }
+}
