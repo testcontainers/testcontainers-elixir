@@ -49,7 +49,9 @@ defmodule TestcontainersElixir.MixProject do
 
   defp deps do
     [
-      {:uniq, "~> 0.6"},
+      # Pinned below 0.6.3: that release added lib/scoped_uuid.ex, which fails to
+      # compile on Elixir 1.15 (unused here; we only call Uniq.UUID).
+      {:uniq, "== 0.6.2"},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.3", only: [:dev], runtime: false},
       {:ex_doc, "~> 0.30", only: :dev, runtime: false},
@@ -71,7 +73,7 @@ defmodule TestcontainersElixir.MixProject do
       # cassandra
       {:xandra, "~> 0.14", only: [:dev, :test]},
       # kafka
-      {:kafka_ex, "~> 0.13", only: [:dev, :test]},
+      {:kafka_ex, "~> 1.0", only: [:dev, :test]},
       # Zookeeper
       {:erlzk, "~> 0.6.2", only: [:dev, :test]},
       # EMQX
