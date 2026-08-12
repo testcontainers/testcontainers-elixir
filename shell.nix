@@ -12,6 +12,7 @@
     postgresql
     esbuild
     tailwindcss
+    cmake
   ];
 
   # Add basePackages + optional system packages per system

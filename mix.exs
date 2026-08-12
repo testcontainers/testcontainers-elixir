@@ -57,7 +57,7 @@ defmodule TestcontainersElixir.MixProject do
       {:ex_doc, "~> 0.30", only: :dev, runtime: false},
       {:tesla, "~> 1.7"},
       {:jason, "~> 1.4"},
-      {:hackney, "~> 1.20"},
+      {:hackney, "~> 1.20 or ~> 4.0 and >= 4.0.2"},
       # mysql
       {:myxql, "~> 0.4", only: [:dev, :test]},
       # postgres
@@ -67,7 +67,7 @@ defmodule TestcontainersElixir.MixProject do
       # redis
       {:redix, "~> 1.0", only: [:dev, :test]},
       # ceph and minio
-      {:ex_aws, "~> 2.1", only: [:dev, :test]},
+      {:ex_aws, "~> 2.1 or ~> 2.7", only: [:dev, :test]},
       {:ex_aws_s3, "~> 2.0", only: [:dev, :test]},
       {:sweet_xml, "~> 0.6", only: [:dev, :test]},
       # cassandra
