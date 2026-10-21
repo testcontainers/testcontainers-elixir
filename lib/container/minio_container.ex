@@ -1,6 +1,11 @@
 defmodule Testcontainers.MinioContainer do
   @moduledoc """
   Provides functionality for creating and managing Minio container configurations.
+
+  > #### Deprecated {: .warning}
+  >
+  > The `minio/minio` image has been removed from Docker Hub, so `new/0` raises.
+  > Use `Testcontainers.MinistackContainer` for an S3-compatible container instead.
   """
 
   alias Testcontainers.Container
@@ -15,7 +20,6 @@ defmodule Testcontainers.MinioContainer do
   @default_password "minioadmin"
   @default_s3_port 9000
   @default_ui_port 9001
-  @default_wait_timeout 60_000
 
   @type t :: %__MODULE__{}
 
@@ -28,13 +32,14 @@ defmodule Testcontainers.MinioContainer do
     reuse: false
   ]
 
-  def new,
-    do: %__MODULE__{
-      image: @default_image_with_tag,
-      username: @default_username,
-      password: @default_password,
-      wait_timeout: @default_wait_timeout
-    }
+  @deprecated "minio/minio is no longer available on Docker Hub, use Testcontainers.MinistackContainer instead"
+  def new do
+    raise ArgumentError, """
+    Testcontainers.MinioContainer is no longer supported: the #{@default_image_with_tag} image \
+    has been removed from Docker Hub. Use Testcontainers.MinistackContainer instead, which \
+    provides an S3-compatible API.
+    """
+  end
 
   @doc """
   Set the reuse flag to reuse the container if it is already running.
