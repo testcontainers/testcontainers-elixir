@@ -25,7 +25,10 @@ defmodule Testcontainers.Connection do
         user_agent: Constants.user_agent()
       )
 
-    options = maybe_add_tls_options(options, docker_host_url)
+    options =
+      options
+      |> maybe_add_tls_options(docker_host_url)
+      |> maybe_add_unix_socket_options(docker_host_url)
 
     {Connection.new(options), docker_host_url, docker_host}
   end
@@ -85,6 +88,21 @@ defmodule Testcontainers.Connection do
       adapter_opts = [
         recv_timeout: Keyword.get(options, :recv_timeout, @timeout),
         ssl_options: ssl_options
+      ]
+
+      Keyword.put(options, :adapter, {Tesla.Adapter.Hackney, adapter_opts})
+    else
+      options
+    end
+  end
+
+  # hackney 4 pools always connect over TCP, which breaks http+unix:// URLs
+  # (the socket path is resolved as a hostname). Bypass the pool for unix sockets.
+  defp maybe_add_unix_socket_options(options, url) do
+    if DockerUrl.unix_socket?(url) do
+      adapter_opts = [
+        recv_timeout: Keyword.get(options, :recv_timeout, @timeout),
+        pool: false
       ]
 
       Keyword.put(options, :adapter, {Tesla.Adapter.Hackney, adapter_opts})

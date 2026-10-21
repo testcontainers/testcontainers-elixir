@@ -1,7 +1,8 @@
 defmodule Testcontainers.DockerUrl do
   @moduledoc false
 
-  @test_client Tesla.client([], Tesla.Adapter.Hackney)
+  # pool: false is required for http+unix:// URLs on hackney 4, see Testcontainers.Connection
+  @test_client Tesla.client([], {Tesla.Adapter.Hackney, pool: false})
 
   def construct(docker_host) do
     case URI.parse(docker_host) do
@@ -60,4 +61,16 @@ defmodule Testcontainers.DockerUrl do
   end
 
   def https?(_), do: false
+
+  @doc """
+  Returns true if the URL uses the `http+unix` scheme.
+  """
+  def unix_socket?(url) when is_binary(url) do
+    case URI.parse(url) do
+      %URI{scheme: "http+unix"} -> true
+      _ -> false
+    end
+  end
+
+  def unix_socket?(_), do: false
 end
