@@ -57,7 +57,7 @@ defmodule TestcontainersElixir.MixProject do
       {:ex_doc, "~> 0.30", only: :dev, runtime: false},
       {:tesla, "~> 1.7"},
       {:jason, "~> 1.4"},
-      {:hackney, "~> 1.20 or ~> 4.0 and >= 4.0.2"},
+      {:hackney, "~> 4.9"},
       # mysql
       {:myxql, "~> 0.4", only: [:dev, :test]},
       # postgres
